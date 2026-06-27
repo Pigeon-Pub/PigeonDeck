@@ -6,32 +6,39 @@
 <style>
   html,body{margin:0;height:100%}
   .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  /* 卡片宽度 = 7 个预制色块的总宽：content 210 + padding 13×2 = 236 */
   .pop{width:236px;padding:13px}
   .pop-h{font:600 12px var(--font-ui);color:var(--ctx);margin-bottom:10px;display:flex;
     align-items:center;justify-content:space-between}
   .pop-h .pd-diff{font-weight:500}
-  /* 取色器面板（饱和度方块 + 色相条，纯静态示意） */
-  .sat{height:96px;border-radius:var(--r-ctl);border:1px solid rgba(0,0,0,.1);position:relative;
-    background:linear-gradient(0deg,#000,transparent),linear-gradient(90deg,#fff,#b8842c)}
+  /* 取色器面板：饱和度方块（overflow 裁角，避免左上缺块）+ 色相条 */
+  .sat{height:96px;border-radius:var(--r-ctl);border:1px solid var(--cbd);overflow:hidden;position:relative;
+    background:linear-gradient(0deg,#000,rgba(0,0,0,0)),linear-gradient(90deg,#fff,#b8842c)}
   .sat .dot{position:absolute;left:82%;top:24%;width:13px;height:13px;border-radius:50%;
     background:#b8842c;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
   .hue{height:10px;border-radius:999px;margin-top:10px;position:relative;
     background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
   .hue .k{position:absolute;left:13%;top:50%;width:13px;height:13px;border-radius:50%;
     background:#fff;border:1.5px solid var(--ctx);transform:translate(-50%,-50%)}
-  /* 当前色值行 */
+  /* HEX 行（去掉冗余的透明度数值，透明度交给下方滑杆） */
   .hexrow{display:flex;align-items:center;gap:8px;margin-top:11px}
   .hexrow .chip{width:28px;height:28px;border-radius:8px;border:1px solid rgba(0,0,0,.12);
     flex:none;background:#b8842c}
   .hexrow .pd-input{flex:1}
-  .hexrow .a{width:62px;flex:none}
-  /* 局部取色推荐 */
+  /* RGB 三通道微调 */
+  .rgb{display:flex;gap:6px;margin-top:8px}
+  .rgb .f{flex:1;display:flex;align-items:center;gap:6px;border:1px solid var(--cbd);
+    border-radius:999px;background:var(--cbg);padding:5px 10px}
+  .rgb .f b{font:600 10px var(--font-ui);color:var(--ctx2);flex:none}
+  .rgb .f input{width:100%;min-width:0;border:0;background:transparent;outline:none;
+    font:12px var(--font-ui);color:var(--ctx);font-variant-numeric:tabular-nums}
+  /* 局部取色推荐：7 色块铺满卡片宽度（与卡同宽） */
   .sug{margin-top:12px}
   .sug-h{font:600 10px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;color:var(--ctx2);
     margin-bottom:7px;display:flex;align-items:center;gap:6px}
   .sug-h small{font-weight:500;letter-spacing:0;text-transform:none;color:var(--ctx2);opacity:.85}
   .sug-row{display:flex;gap:6px}
-  .sug-row .s{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.1);cursor:pointer}
+  .sug-row .s{flex:1;aspect-ratio:1;border-radius:6px;border:1px solid rgba(0,0,0,.1);cursor:pointer}
   .sug-row .s.on{box-shadow:0 0 0 2px var(--csf),0 0 0 3.5px var(--c1)}
   /* 透明度 */
   .opa{margin-top:12px}
@@ -49,7 +56,12 @@
       <div class="hexrow">
         <span class="chip"></span>
         <input class="pd-input" value="#b8842c">
-        <input class="pd-input a" value="92%">
+      </div>
+
+      <div class="rgb">
+        <div class="f"><b>R</b><input value="184"></div>
+        <div class="f"><b>G</b><input value="132"></div>
+        <div class="f"><b>B</b><input value="44"></div>
       </div>
 
       <div class="sug">
