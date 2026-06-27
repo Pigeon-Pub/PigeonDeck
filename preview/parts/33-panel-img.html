@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  .panel{width:330px;display:flex;flex-direction:column;overflow:hidden}
+  .pbody{padding:12px 12px 11px}
+  .panel .pd-textarea{min-height:50px;margin-bottom:11px}
+  .modbar{padding:11px;border:1px solid var(--cbd);border-radius:var(--r-card);background:var(--cbg)}
+  .modbar-h{font:600 10.5px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;
+    color:var(--ctx2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .modbar-h::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c1)}
+  .replace{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .replace .thumb{width:46px;height:34px;border-radius:7px;flex:none;
+    background:linear-gradient(135deg,#e9ecf2,#dde1ea);border:1px solid var(--cbd)}
+  .replace .pd-btn{flex:1}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .grid2>div{min-width:0}
+  .grid2 .pd-label{margin-bottom:4px}
+  .adv{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;
+    margin-top:11px;padding:10px 11px;border:1px solid var(--cbd);border-radius:var(--r-ctl);
+    background:var(--cbg);cursor:pointer;font:500 12px var(--font-ui);color:var(--ctx)}
+  .adv .meta{font-size:11px;color:var(--ctx2)}
+  .adv .r{display:flex;align-items:center;gap:8px}
+  .pfoot{display:flex;align-items:center;justify-content:space-between;
+    padding:8px 9px 8px 13px;border-top:1px solid var(--cbd);background:var(--cbg)}
+  .pfoot .meta{font:11px var(--font-ui);color:var(--ctx2);font-variant-numeric:tabular-nums}
+  .pfoot .acts{display:flex;align-items:center;gap:6px}
+  .pfoot .pd-btn{min-height:28px;padding:0 13px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface panel">
+      <div class="pbody pd-scroll">
+        <textarea class="pd-textarea focused" placeholder="补充修改说明…">换成产品实拍图，并把圆角加大一点。</textarea>
+
+        <!-- 修改栏：图片元素 → 替换 + 尺寸/圆角/边框 -->
+        <div class="modbar">
+          <div class="modbar-h">修改栏 · 图片</div>
+          <div class="replace">
+            <span class="thumb"></span>
+            <button class="pd-btn">替换图片（本地 / URL）</button>
+          </div>
+          <div class="grid2">
+            <div>
+              <label class="pd-label">宽</label>
+              <div class="pd-num"><input value="240"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+            </div>
+            <div>
+              <label class="pd-label">高</label>
+              <div class="pd-num"><input value="160"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+            </div>
+          </div>
+          <div class="grid2">
+            <div>
+              <label class="pd-label">圆角</label>
+              <div class="pd-num"><input value="8"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+            </div>
+            <div>
+              <label class="pd-label">边框</label>
+              <select class="pd-select"><option>无</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="adv">
+          <span>高级样式</span>
+          <span class="r"><span class="meta">排版 · 尺寸 · 外观 · 调试</span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="pfoot">
+        <span class="meta">③ · img · 240×160px</span>
+        <span class="acts">
+          <button class="pd-iconbtn danger" title="删除批注"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button class="pd-btn primary">保存</button>
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

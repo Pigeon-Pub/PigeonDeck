@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  .panel{width:330px;display:flex;flex-direction:column;overflow:hidden}
+  .pbody{padding:12px 12px 11px}
+  .panel .pd-textarea{min-height:50px;margin-bottom:11px}
+  .modbar{padding:11px;border:1px solid var(--cbd);border-radius:var(--r-card);background:var(--cbg)}
+  .modbar-h{font:600 10.5px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;
+    color:var(--ctx2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .modbar-h::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c1)}
+  .mrow{display:flex;align-items:center;gap:12px;margin-top:8px}
+  .mrow .pd-label{margin:0;min-width:42px}
+  .mrow .pd-seg,.mrow .pd-range,.mrow .colorctl{flex:1}
+  .mrow .pd-range{margin-top:0}
+  .colorctl{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--cbd);
+    border-radius:999px;padding:5px 13px 5px 6px;background:var(--cbg)}
+  .colorctl .hex{font:12px var(--font-ui);color:var(--ctx);font-variant-numeric:tabular-nums}
+  .opaval{min-width:34px;text-align:right;font:12px var(--font-ui);color:var(--ctx2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .grid2>div{min-width:0}
+  .grid2 .pd-label{margin-bottom:4px}
+  .adv{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;
+    margin-top:11px;padding:10px 11px;border:1px solid var(--cbd);border-radius:var(--r-ctl);
+    background:var(--cbg);cursor:pointer;font:500 12px var(--font-ui);color:var(--ctx)}
+  .adv .meta{font-size:11px;color:var(--ctx2)}
+  .adv .r{display:flex;align-items:center;gap:8px}
+  .pfoot{display:flex;align-items:center;justify-content:space-between;
+    padding:8px 9px 8px 13px;border-top:1px solid var(--cbd);background:var(--cbg)}
+  .pfoot .meta{font:11px var(--font-ui);color:var(--ctx2);font-variant-numeric:tabular-nums}
+  .pfoot .acts{display:flex;align-items:center;gap:6px}
+  .pfoot .pd-btn{min-height:28px;padding:0 13px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface panel">
+      <div class="pbody pd-scroll">
+        <textarea class="pd-textarea focused" placeholder="补充修改说明…">主按钮换品牌金、圆角更柔、加一点阴影。</textarea>
+
+        <!-- 修改栏：按钮/容器 → 外观(背景/圆角/边框/阴影/不透明度) + 间距 -->
+        <div class="modbar">
+          <div class="modbar-h">修改栏 · 按钮 / 容器</div>
+          <div class="mrow">
+            <label class="pd-label">背景色</label>
+            <div class="colorctl"><span class="pd-swatch" style="background:#b8842c"></span><span class="hex">#b8842c</span></div>
+          </div>
+          <div class="grid2">
+            <div>
+              <label class="pd-label">圆角</label>
+              <div class="pd-num"><input value="12"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+            </div>
+            <div>
+              <label class="pd-label">边框</label>
+              <select class="pd-select"><option>无</option></select>
+            </div>
+          </div>
+          <div class="mrow">
+            <label class="pd-label">阴影</label>
+            <div class="pd-seg accent"><button>无</button><button class="on">轻</button><button>中</button><button>重</button></div>
+          </div>
+          <div class="mrow">
+            <label class="pd-label">不透明</label>
+            <div class="pd-range"><span class="knob" style="left:100%"></span></div>
+            <span class="opaval">100%</span>
+          </div>
+          <div class="grid2">
+            <div>
+              <label class="pd-label">外边距</label>
+              <div class="pd-num"><input value="0"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+            </div>
+            <div>
+              <label class="pd-label">内边距</label>
+              <div class="pd-num"><input value="14"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="adv">
+          <span>高级样式</span>
+          <span class="r"><span class="meta">排版 · 尺寸 · 外观 · 调试</span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="pfoot">
+        <span class="meta">④ · button.cta · 132×40px</span>
+        <span class="acts">
+          <button class="pd-iconbtn danger" title="删除批注"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button class="pd-btn primary">保存</button>
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
