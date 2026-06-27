@@ -7,8 +7,10 @@
   html,body{margin:0;height:100%}
   .wp{padding:22px}
   .stage{position:relative;display:inline-block;margin-top:6px}
-  /* 右键菜单贴在位号圆右下 */
-  .menu{position:absolute;left:18px;top:18px;z-index:5}
+  /* 右键菜单：从位号圆向下弹出，不遮挡被标注卡片（演示完整） */
+  .menu{position:absolute;left:-6px;top:96px;z-index:5}
+  .menu::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;
+    background:var(--csf);border-left:1px solid var(--cbd);border-top:1px solid var(--cbd);transform:rotate(45deg)}
 </style>
 </head>
 <body>
