@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  .panel{width:330px;display:flex;flex-direction:column;overflow:hidden}
+  .pbody{padding:12px 12px 11px}
+  .panel .pd-textarea{min-height:44px;margin-bottom:11px}
+  .adv-head{display:flex;align-items:center;justify-content:space-between;
+    font:500 12px var(--font-ui);color:var(--ctx);padding:0 1px 8px}
+  .advbox{border:1px solid var(--cbd);border-radius:var(--r-card);background:var(--cbg);
+    padding:10px;display:flex;gap:10px}
+  .scon{flex:1;min-width:0}
+  .prop + .prop{margin-top:12px}
+  .prop-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+  .prop-h .t{font:600 12px var(--font-ui);color:var(--ctx)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid2>div{min-width:0}
+  .pfoot{display:flex;align-items:center;justify-content:space-between;
+    padding:8px 9px 8px 13px;border-top:1px solid var(--cbd);background:var(--cbg)}
+  .pfoot .meta{font:11px var(--font-ui);color:var(--ctx2);font-variant-numeric:tabular-nums}
+  .pfoot .acts{display:flex;align-items:center;gap:6px}
+  .pfoot .pd-btn{min-height:28px;padding:0 13px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface panel">
+      <div class="pbody pd-scroll">
+        <textarea class="pd-textarea" placeholder="补充修改说明…">卡片宽度收窄到 240，改为弹性布局。</textarea>
+
+        <div class="adv-head">
+          <span>高级样式</span>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+
+        <div class="advbox">
+          <div class="pd-nav">
+            <button><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></svg></span>排版</button>
+            <button class="on chg"><span class="cnt">2</span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3 8.7 2.7a1 1 0 0 0-1.4 0L2.7 7.3a1 1 0 0 0 0 1.4l12.6 12.6a1 1 0 0 0 1.4 0l4.6-4.6a1 1 0 0 0 0-1.4Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/></svg></span>尺寸</button>
+            <button><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1.1a1.6 1.6 0 0 1 1.6-1.6H16c3 0 5.5-2.5 5.5-5.5C21.9 6 17.5 2 12 2Z"/></svg></span>外观</button>
+            <button><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7.13v-1a3 3 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.5 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M21 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></span>调试</button>
+          </div>
+
+          <!-- 右控件：尺寸分类 -->
+          <div class="scon">
+            <div class="prop">
+              <div class="grid2">
+                <div>
+                  <div class="prop-h"><span class="t">width</span><span class="pd-diff">280<i>→</i><b>240</b></span></div>
+                  <div class="pd-num"><input value="240"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+                </div>
+                <div>
+                  <div class="prop-h"><span class="t">height</span></div>
+                  <div class="pd-num"><input value="auto"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="prop">
+              <div class="grid2">
+                <div>
+                  <div class="prop-h"><span class="t">min-w</span></div>
+                  <div class="pd-num"><input value="160"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+                </div>
+                <div>
+                  <div class="prop-h"><span class="t">max-w</span></div>
+                  <div class="pd-num"><input value="320"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="prop">
+              <div class="prop-h"><span class="t">display</span><span class="pd-diff">block<i>→</i><b>flex</b></span></div>
+              <div class="pd-seg accent"><button>block</button><button class="on">flex</button><button>grid</button><button>inline</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pfoot">
+        <span class="meta">④ · div.card · 240×auto</span>
+        <span class="acts">
+          <button class="pd-iconbtn danger" title="删除批注"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button class="pd-btn primary">保存</button>
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  .spanel{width:340px;display:flex;flex-direction:column;overflow:hidden}
+  .shead{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 9px 10px 14px;border-bottom:1px solid var(--cbd)}
+  .shead .t{font-family:var(--font-serif);font-weight:600;font-size:15px;color:var(--ctx)}
+  .sbody{display:flex;gap:12px;padding:10px 14px 12px 8px}
+  .sbody .pd-nav{width:42px}
+  .scon{flex:1;min-width:0;max-height:300px;overflow:auto}
+  .scat{font:600 11px var(--font-ui);letter-spacing:.6px;text-transform:uppercase;
+    color:var(--ctx2);margin:1px 0 4px}
+  .about{display:flex;align-items:center;gap:10px;padding:9px 0 2px}
+  .about .ball{width:30px;height:30px;border-radius:50%;background:var(--c1);flex:none;
+    display:flex;align-items:center;justify-content:center;color:#fdf6e6}
+  .about .ball svg{width:17px;height:17px}
+  .about .nm{font-family:var(--font-serif);font-weight:600;font-size:14px;color:var(--ctx)}
+  .about .ver{font-size:11px;color:var(--ctx2);margin-top:1px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface spanel">
+      <div class="shead">
+        <span class="t">设置</span>
+        <button class="pd-iconbtn" title="关闭设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="sbody">
+        <div class="pd-nav">
+          <button><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></span>通用</button>
+          <button><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="7"/><path d="M12 6v4"/></svg></span>交互</button>
+          <button><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg></span>输出</button>
+          <button class="on"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg></span>帮助</button>
+        </div>
+        <!-- 右：帮助分类内容 -->
+        <div class="scon pd-scroll">
+          <div class="scat">帮助</div>
+          <div class="pd-srow"><span class="k">安装说明页<small>快速上手教程</small></span>
+            <button class="pd-btn">打开</button></div>
+          <div class="pd-srow"><span class="k">检查更新<small>当前已是最新</small></span>
+            <button class="pd-btn">检查</button></div>
+          <div class="pd-srow"><span class="k">反馈与问题</span>
+            <button class="pd-btn">提交反馈</button></div>
+          <div class="about">
+            <span class="ball"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.6 15.2Q10 9.2 17 10.1Q12.8 14.2 7.4 16.1Q5.7 16.6 4.6 15.2ZM9 12.6Q12 5.9 18.8 5Q16.4 9.8 12.4 11.7Q10.5 12.7 9 12.6ZM16.7 10L20.4 8.9 17.2 11.4Z"/></svg></span>
+            <div><div class="nm">PigeonDeck</div><div class="ver">版本 1.0.0 · V1</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

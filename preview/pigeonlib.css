@@ -321,6 +321,26 @@
             font:500 12px var(--font-ui); box-shadow:var(--sh-up); }
 .pd-toast svg { width:15px; height:15px; }
 
+/* 上下文菜单（位号圆右键 / 浏览器右键快速标注）— 圆角浮层，无竖线装饰 */
+.pd-menu { min-width:148px; padding:5px; border-radius:var(--r-card);
+           background:var(--csf); border:1px solid var(--cbd); box-shadow:var(--sh-up); }
+.pd-menu-item { display:flex; align-items:center; gap:9px; width:100%; box-sizing:border-box;
+                padding:7px 10px; border:0; border-radius:var(--r-ctl); background:transparent;
+                color:var(--ctx); font:500 12.5px var(--font-ui); cursor:pointer; text-align:left;
+                transition:background var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.pd-menu-item svg { width:15px; height:15px; color:var(--ctx2); flex:none; }
+.pd-menu-item:hover { background:var(--chv); }
+.pd-menu-item.danger { color:var(--cd); }
+.pd-menu-item.danger svg { color:var(--cd); }
+.pd-menu-item.danger:hover { background:rgba(178,58,46,0.10); }
+.pd-menu-sep { height:1px; margin:4px 6px; background:var(--cbd); }
+
+/* 滑杆（透明度等）— 药丸轨 + 金色拇指 */
+.pd-range { position:relative; height:6px; border-radius:999px; border:1px solid var(--cbd);
+            background:linear-gradient(90deg,var(--c1-soft),var(--c1)); }
+.pd-range .knob { position:absolute; top:50%; width:14px; height:14px; border-radius:50%;
+                  background:#fff; border:1.5px solid var(--c1); transform:translate(-50%,-50%); }
+
 /* 通用滚动条（面板内） */
 .pd-scroll::-webkit-scrollbar { width:6px; }
 .pd-scroll::-webkit-scrollbar-thumb { background:var(--cbd); border-radius:999px; }
