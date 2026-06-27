@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{padding:22px;display:flex;gap:22px;align-items:flex-start}
+  /* 被选中的图片（金选中框） */
+  .imgwrap{position:relative;flex:none}
+  .ph{width:150px;height:104px;border-radius:8px;
+    background:linear-gradient(135deg,#e9ecf2,#dde1ea);display:flex;align-items:center;justify-content:center}
+  .ph svg{width:34px;height:34px;color:#aab1c2}
+  .imgwrap .pd-selbox{inset:-4px}
+  /* 替换弹层 */
+  .rep{width:226px;padding:13px}
+  .rep-h{font:600 12px var(--font-ui);color:var(--ctx);margin-bottom:3px}
+  .rep-sub{font-size:11px;color:var(--ctx2);margin-bottom:11px}
+  .drop{border:1.5px dashed var(--cbd);border-radius:var(--r-ctl);background:var(--cbg);
+    padding:14px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+  .drop svg{width:22px;height:22px;color:var(--c1)}
+  .drop .d1{font-size:12px;color:var(--ctx)}
+  .or{display:flex;align-items:center;gap:8px;margin:11px 0;color:var(--ctx2);font-size:11px}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:var(--cbd)}
+  .urlrow{display:flex;gap:6px}
+  .urlrow .pd-input{flex:1}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="imgwrap">
+      <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></div>
+      <div class="pd-selbox"><span class="h tl"></span><span class="h tr"></span><span class="h bl"></span><span class="h br"></span></div>
+    </div>
+
+    <!-- 替换弹层：选择本地文件 / 粘贴 URL -->
+    <div class="pd-surface rep">
+      <div class="rep-h">替换图片</div>
+      <div class="rep-sub">双击图片进入 · 替换后即时预览</div>
+      <div class="drop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14a2 2 0 0 0 2-2v-4"/><path d="M3 15v4a2 2 0 0 0 2 2"/></svg>
+        <span class="d1">选择本地文件</span>
+        <button class="pd-btn">浏览…</button>
+      </div>
+      <div class="or">或</div>
+      <div class="urlrow">
+        <input class="pd-input" placeholder="粘贴图片 URL">
+        <button class="pd-btn primary">替换</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

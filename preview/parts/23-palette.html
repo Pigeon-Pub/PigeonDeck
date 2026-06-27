@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  .pop{width:236px;padding:13px}
+  .pop-h{font:600 12px var(--font-ui);color:var(--ctx);margin-bottom:10px;display:flex;
+    align-items:center;justify-content:space-between}
+  .pop-h .pd-diff{font-weight:500}
+  /* 取色器面板（饱和度方块 + 色相条，纯静态示意） */
+  .sat{height:96px;border-radius:var(--r-ctl);border:1px solid rgba(0,0,0,.1);position:relative;
+    background:linear-gradient(0deg,#000,transparent),linear-gradient(90deg,#fff,#b8842c)}
+  .sat .dot{position:absolute;left:82%;top:24%;width:13px;height:13px;border-radius:50%;
+    background:#b8842c;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+  .hue{height:10px;border-radius:999px;margin-top:10px;position:relative;
+    background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+  .hue .k{position:absolute;left:13%;top:50%;width:13px;height:13px;border-radius:50%;
+    background:#fff;border:1.5px solid var(--ctx);transform:translate(-50%,-50%)}
+  /* 当前色值行 */
+  .hexrow{display:flex;align-items:center;gap:8px;margin-top:11px}
+  .hexrow .chip{width:28px;height:28px;border-radius:8px;border:1px solid rgba(0,0,0,.12);
+    flex:none;background:#b8842c}
+  .hexrow .pd-input{flex:1}
+  .hexrow .a{width:62px;flex:none}
+  /* 局部取色推荐 */
+  .sug{margin-top:12px}
+  .sug-h{font:600 10px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;color:var(--ctx2);
+    margin-bottom:7px;display:flex;align-items:center;gap:6px}
+  .sug-h small{font-weight:500;letter-spacing:0;text-transform:none;color:var(--ctx2);opacity:.85}
+  .sug-row{display:flex;gap:6px}
+  .sug-row .s{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.1);cursor:pointer}
+  .sug-row .s.on{box-shadow:0 0 0 2px var(--csf),0 0 0 3.5px var(--c1)}
+  /* 透明度 */
+  .opa{margin-top:12px}
+  .opa-h{display:flex;justify-content:space-between;font-size:11px;color:var(--ctx2);margin-bottom:7px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface pop">
+      <div class="pop-h"><span>调色盘 · 展开</span><span class="pd-diff">#fafafa<i>→</i><b>#b8842c</b></span></div>
+
+      <div class="sat"><span class="dot"></span></div>
+      <div class="hue"><span class="k"></span></div>
+
+      <div class="hexrow">
+        <span class="chip"></span>
+        <input class="pd-input" value="#b8842c">
+        <input class="pd-input a" value="92%">
+      </div>
+
+      <div class="sug">
+        <div class="sug-h">局部取色推荐<small>取自元素及祖先链</small></div>
+        <div class="sug-row">
+          <span class="s on" style="background:#b8842c"></span>
+          <span class="s" style="background:#23262e"></span>
+          <span class="s" style="background:#faf7f0"></span>
+          <span class="s" style="background:#3f4756"></span>
+          <span class="s" style="background:#d9d3c4"></span>
+          <span class="s" style="background:#b23a2e"></span>
+          <span class="s" style="background:#5c8a4a"></span>
+        </div>
+      </div>
+
+      <div class="opa">
+        <div class="opa-h"><span>透明度</span><span>92%</span></div>
+        <div class="pd-range"><span class="knob" style="left:92%"></span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

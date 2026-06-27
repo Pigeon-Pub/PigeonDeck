@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{padding:22px}
+  .stage{position:relative;margin-top:6px}
+  /* 近似浏览器原生右键菜单（中性灰白，非 pigeonlib 面色） */
+  .ctx{position:absolute;left:30px;top:8px;width:232px;padding:5px;border-radius:8px;
+    background:#ffffff;border:1px solid #d7d9de;box-shadow:0 8px 26px -8px rgba(20,24,32,.28)}
+  .ci{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:5px;
+    font:13px var(--font-ui);color:#1f2328;cursor:default}
+  .ci svg{width:15px;height:15px;color:#6b7280;flex:none}
+  .ci.dim{color:#9aa0aa}
+  .ci.dim svg{color:#c2c6cd}
+  .csep{height:1px;margin:5px 8px;background:#e7e9ee}
+  /* PigeonDeck 快速标注项：金底高亮 + logo 小图标，和原生项拉开 */
+  .ci.pd{background:var(--c1-soft);color:var(--ctx);font-weight:500}
+  .ci.pd .ball{width:18px;height:18px;border-radius:50%;background:var(--c1);flex:none;
+    display:flex;align-items:center;justify-content:center;color:#fdf6e6}
+  .ci.pd .ball svg{width:12px;height:12px;color:#fdf6e6}
+  .ci.pd .lab{flex:1}
+  .ci.pd .kbd{margin-left:auto;font:11px var(--font-ui);color:var(--ctx2);white-space:nowrap}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <h1 class="wp-h">浏览器右键 · 快速标注</h1>
+    <p class="wp-sub">原生菜单中嵌入 PigeonDeck 入口</p>
+
+    <div class="stage" style="height:228px">
+      <div class="ctx">
+        <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>返回</div>
+        <div class="ci dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>前进</div>
+        <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>重新加载</div>
+        <div class="csep"></div>
+        <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制</div>
+        <!-- PigeonDeck 快速标注 -->
+        <div class="ci pd"><span class="ball"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.6 15.2Q10 9.2 17 10.1Q12.8 14.2 7.4 16.1Q5.7 16.6 4.6 15.2ZM9 12.6Q12 5.9 18.8 5Q16.4 9.8 12.4 11.7Q10.5 12.7 9 12.6ZM16.7 10L20.4 8.9 17.2 11.4Z"/></svg></span><span class="lab">用 PigeonDeck 快速标注</span><span class="kbd">Alt+P</span></div>
+        <div class="csep"></div>
+        <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>检查</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

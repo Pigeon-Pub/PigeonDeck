@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{padding:22px}
+  /* 双行富文本浮条（Word 迷你工具条风），浮在选区上方 */
+  .rtbar{display:inline-flex;flex-direction:column;gap:5px;margin:24px 0 16px;padding:6px}
+  .rtrow{display:flex;align-items:center;gap:5px}
+  .rtbar .sep{width:1px;height:18px;background:var(--cbd);margin:0 1px}
+  .rtbar .pd-select{width:auto;padding:5px 26px 5px 11px;min-height:0;font-size:12px;
+    background-position:right 9px center}
+  .selfont{width:96px}
+  .selsz{width:58px}
+  /* B I U S 切换组 */
+  .fmt{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:var(--cbg);border:1px solid var(--cbd)}
+  .fmt button{width:26px;height:24px;border:0;background:transparent;color:var(--ctx2);cursor:pointer;
+    border-radius:999px;font:13px/1 var(--font-ui)}
+  .fmt button.on{background:var(--csf);color:var(--c1);box-shadow:var(--sh)}
+  .fmt button.b{font-weight:800}
+  .fmt button.i{font-style:italic}
+  .fmt button.u{text-decoration:underline}
+  .fmt button.s{text-decoration:line-through}
+  /* 字色 / 高亮 / 上下标 / 对齐 / 列表 小按钮 */
+  .tb{display:inline-flex;align-items:center;gap:2px;height:26px;padding:0 7px;border:0;border-radius:999px;
+    background:transparent;color:var(--ctx);cursor:pointer;font:13px var(--font-ui)}
+  .tb:hover{background:var(--chv)}
+  .tb svg{width:15px;height:15px}
+  .tb .car{width:10px;height:10px;color:var(--ctx2)}
+  .tb .abar{display:block;height:3px;width:14px;border-radius:2px;margin-top:-2px}
+  .tb .col{flex-direction:column}
+  .sup{font-size:12px}.sup sup,.sup sub{font-size:9px}
+  /* 编辑中的文本元素 + 选中字符 run */
+  .para{font-size:15px;color:#3a4250;max-width:44ch;margin:0;line-height:1.85;
+    outline:1.5px solid var(--c1-edge);outline-offset:5px;border-radius:4px}
+  .run{background:var(--c1-soft);color:var(--c1);font-weight:700;font-size:1.16em;border-radius:2px;padding:0 1px}
+  .caret{display:inline-block;width:1.5px;height:1.05em;background:var(--c1);vertical-align:-2px;
+    margin-left:1px;animation:bl 1s step-end infinite}
+  @keyframes bl{50%{opacity:0}}
+  .hint{margin-top:22px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <h1 class="wp-h">双击文本 · 逐字符富文本</h1>
+    <p class="wp-sub">选中其中几个字 → 单独改格式（Word 式选区浮条）</p>
+
+    <!-- 双行全功能富文本浮条 -->
+    <div class="pd-surface rtbar">
+      <div class="rtrow">
+        <select class="pd-select selfont"><option>思源宋体</option></select>
+        <select class="pd-select selsz"><option>28</option></select>
+        <span class="sep"></span>
+        <button class="tb col" title="字体颜色">
+          <span style="font-weight:700;line-height:1">A</span><span class="abar" style="background:var(--c1)"></span>
+        </button>
+        <button class="tb" title="高亮">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+          <svg class="car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="rtrow">
+        <div class="fmt">
+          <button class="b on" title="加粗">B</button>
+          <button class="i" title="倾斜">I</button>
+          <button class="u" title="下划线">U</button>
+          <button class="s" title="删除线">S</button>
+        </div>
+        <span class="sep"></span>
+        <button class="tb sup" title="上标"><span>x<sup>2</sup></span></button>
+        <button class="tb sup" title="下标"><span>x<sub>2</sub></span></button>
+        <span class="sep"></span>
+        <button class="tb" title="对齐">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></svg>
+          <svg class="car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <button class="tb" title="列表">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 整段是正在编辑的文本元素；其中「今日截止」是当前选区，已单独放大+加粗+品牌金 -->
+    <p class="para">把这段里的 <span class="run">今日截止<span class="caret"></span></span> 这几个字单独放大、加粗、改成品牌金，其余文字不动。</p>
+
+    <div class="pd-freehint hint">选区浮条对选中字符生效 · 即时预览 · 进入撤销历史</div>
+  </div>
+</body>
+</html>

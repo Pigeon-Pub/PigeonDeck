@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{padding:20px 22px;display:flex;flex-direction:column;gap:11px;align-items:flex-start}
+  .lbl{font:600 10.5px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;color:var(--ctx2);margin:0 0 1px}
+  /* 语义着色：成功=橄榄绿勾，中性=金，警示=火漆红 */
+  .pd-toast.warn{background:var(--cd)}
+  .ico-ok{color:#9bd07f}
+  .ico-info{color:var(--c1)}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <p class="lbl">页面级轻提示</p>
+
+    <div class="pd-toast">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico-ok"><path d="M20 6 9 17l-5-5"/></svg>
+      已复制任务清单（英文）
+    </div>
+
+    <div class="pd-toast">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico-ok"><path d="M20 6 9 17l-5-5"/></svg>
+      批注已保存
+    </div>
+
+    <div class="pd-toast">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      ② 的目标元素未找到，已跳过显示（任务记录保留）
+    </div>
+
+    <div class="pd-toast warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      此页为 PDF，V1 暂不支持标注
+    </div>
+  </div>
+</body>
+</html>
