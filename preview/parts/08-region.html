@@ -5,10 +5,12 @@
 <link rel="stylesheet" href="../pigeonlib.css">
 <style>
   html,body{margin:0;height:100%}
-  .rpanel{position:absolute;left:206px;top:96px;width:150px;padding:10px}
+  .rpanel{position:absolute;left:206px;top:96px;width:158px;padding:10px}
+  /* 输入框随文本数量自适应增高，不出现滚动条 */
   .rpanel .rin{width:100%;box-sizing:border-box;font:12px var(--font-ui);color:var(--ctx);
     background:var(--cbg);border:1px solid var(--cbd);border-radius:var(--r-ctl);
-    padding:8px 9px;line-height:1.5;resize:none;outline:none}
+    padding:8px 10px;line-height:1.5;resize:none;outline:none;
+    field-sizing:content;min-height:38px;overflow:hidden}
   .rpanel .rrow{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:8px}
   .rpanel .pd-btn{min-height:26px;padding:0 11px;font-size:11px}
   .rpanel .pd-iconbtn{width:26px;height:26px}
@@ -34,7 +36,7 @@
 
     <!-- 小型区域批注面板 -->
     <div class="pd-surface rpanel">
-      <textarea class="rin" rows="2">这一块整体留白太挤，三张卡之间加大间距。</textarea>
+      <textarea class="rin" rows="1">这一块整体留白太挤，三张卡之间加大间距。</textarea>
       <div class="rrow">
         <button class="pd-iconbtn danger" title="删除区域批注"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         <button class="pd-btn primary">保存</button>

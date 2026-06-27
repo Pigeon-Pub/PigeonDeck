@@ -90,42 +90,41 @@
 }
 .pd-ball svg { width:23px; height:23px; }
 
-/* 单列纵向工具盘 — MarkIt 形态 pill 胶囊；列宽与悬浮球一致(42px) */
+/* 单列纵向工具盘 — 药丸胶囊；适当加宽，列宽由金底 Logo(42px) 决定 */
 .pd-toolbar {
-  padding:3px; border-radius:999px;
+  padding:5px; border-radius:999px;
   background:var(--csf); border:1px solid var(--cbd); box-shadow:var(--sh-up);
   display:inline-flex; flex-direction:column; align-items:center; gap:3px;
 }
 .pd-toolbar.is-active { border-color:var(--c1-edge); }
 
-/* 工具盘按钮（圆形 34px border-box，列宽 34+2*3+2*1=42 与球一致） */
+/* 工具盘按钮（圆形 38px） */
 .pd-tbtn {
   box-sizing:border-box;
-  width:34px; height:34px; border-radius:50%;
+  width:38px; height:38px; border-radius:50%;
   border:1px solid transparent; background:transparent; color:var(--ctx);
   display:flex; align-items:center; justify-content:center; cursor:pointer;
   transition:background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
   position:relative;
 }
-.pd-tbtn svg { width:19px; height:19px; }
+.pd-tbtn svg { width:20px; height:20px; }
 .pd-tbtn:hover { background:var(--chv); }
-/* 展开态 Logo：金底浅羽，与收起球一致 */
-.pd-tbtn.brand { background:var(--c1); color:#fdf6e6; }
+/* Logo：金底浅羽，收起/展开同尺寸 42px（不缩小） */
+.pd-tbtn.brand { width:42px; height:42px; background:var(--c1); color:#fdf6e6; }
 .pd-tbtn.brand:hover { background:var(--c1); filter:brightness(1.05); }
-.pd-tbtn.brand svg { width:21px; height:21px; }
+.pd-tbtn.brand svg { width:22px; height:22px; }
 .pd-tbtn.active { color:var(--c1); background:var(--c1-soft); border-color:var(--c1-edge); }
 
-/* 合并撤销/重做：横向药丸，左半撤销 / 右半重做，宽与按钮一致 */
-.pd-undoredo { box-sizing:border-box; display:flex; width:34px; height:21px; border-radius:999px;
-  overflow:hidden; border:1px solid var(--cbd); background:var(--cbg); }
+/* 合并撤销/重做：药丸底（同工具盘面色、无中缝），裸大 icon 占满列宽。左半撤销 / 右半重做 */
+.pd-undoredo { box-sizing:border-box; display:flex; width:42px; height:23px; border-radius:999px;
+  overflow:hidden; border:1px solid var(--cbd); background:var(--csf); }
 .pd-undoredo button {
-  flex:1; min-width:0; border:0; background:transparent; color:var(--ctx2);
-  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  flex:1; min-width:0; border:0; background:transparent; color:var(--ctx);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
   transition:background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.pd-undoredo button svg { width:12px; height:12px; }
+.pd-undoredo button svg { width:18px; height:18px; }
 .pd-undoredo button:hover { background:var(--chv); color:var(--c1); }
-.pd-undoredo button:first-child { border-right:1px solid var(--cbd); }
 
 /* tooltip */
 .pd-tip {
@@ -148,10 +147,10 @@
 .pd-title { font-family:var(--font-serif); font-weight:600; color:var(--ctx); }
 .pd-muted { color:var(--ctx2); }
 
-/* 文本按钮 */
+/* 文本按钮（单行 → 药丸形） */
 .pd-btn {
   display:inline-flex; align-items:center; justify-content:center; gap:6px;
-  min-height:30px; padding:0 14px; border-radius:var(--r-ctl);
+  min-height:30px; padding:0 15px; border-radius:999px;
   font:500 12px var(--font-ui); cursor:pointer;
   border:1px solid var(--cbd); background:var(--csf); color:var(--ctx);
   transition:background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
@@ -163,9 +162,9 @@
 .pd-btn.ghost { background:transparent; border-color:transparent; }
 .pd-btn.ghost:hover { background:var(--chv); }
 
-/* 小图标按钮（面板内 16px） */
+/* 小图标按钮（圆形） */
 .pd-iconbtn {
-  width:28px; height:28px; border-radius:var(--r-ctl);
+  width:28px; height:28px; border-radius:50%;
   display:inline-flex; align-items:center; justify-content:center;
   border:1px solid transparent; background:transparent; color:var(--ctx2);
   cursor:pointer; transition:background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
@@ -174,40 +173,45 @@
 .pd-iconbtn:hover { background:var(--chv); color:var(--ctx); }
 .pd-iconbtn.danger:hover { color:var(--cd); background:rgba(178,58,46,0.10); }
 
-/* 表单：字段 + 输入 */
+/* 表单：字段 + 输入。单行(input/select)→药丸；多行 textarea 保留圆角矩形 */
 .pd-field { display:block; margin-bottom:10px; }
 .pd-label { font-size:11px; color:var(--ctx2); margin-bottom:5px; display:block; letter-spacing:.2px; }
 .pd-input, .pd-textarea, .pd-select {
   width:100%; box-sizing:border-box; font:13px var(--font-ui);
   color:var(--ctx); background:var(--cbg); border:1px solid var(--cbd);
-  border-radius:var(--r-ctl); padding:9px 11px; outline:none;
+  padding:9px 13px; outline:none;
   transition:border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.pd-textarea { resize:none; line-height:1.5; }
+.pd-input, .pd-select { border-radius:999px; }
+.pd-textarea { border-radius:var(--r-ctl); resize:none; line-height:1.5; padding:9px 12px; }
 .pd-input:focus, .pd-textarea:focus, .pd-select:focus {
   border-color:var(--c1-edge); box-shadow:0 0 0 3px var(--c1-soft);
 }
 .pd-input.focused { border-color:var(--c1-edge); box-shadow:0 0 0 3px var(--c1-soft); }
 
-/* 数值控件：输入 + 单位 + 步进 */
+/* 数值控件（药丸）：输入 → 步进(+/−) → 单位 */
 .pd-num { display:flex; align-items:stretch; border:1px solid var(--cbd);
-          border-radius:var(--r-ctl); overflow:hidden; background:var(--cbg); }
-.pd-num input { flex:1; min-width:0; border:0; background:transparent; outline:none;
-                font:13px var(--font-ui); color:var(--ctx); padding:8px 10px; }
-.pd-num .unit { display:flex; align-items:center; padding:0 8px; color:var(--ctx2);
-                font-size:11px; border-left:1px solid var(--cbd); }
-.pd-num .step { display:flex; flex-direction:column; border-left:1px solid var(--cbd); }
+          border-radius:999px; overflow:hidden; background:var(--cbg); }
+.pd-num input { flex:1; min-width:34px; border:0; background:transparent; outline:none;
+                font:13px var(--font-ui); color:var(--ctx); padding:8px 12px; }
+.pd-num .unit { display:flex; align-items:center; padding:0 11px 0 8px; color:var(--ctx2);
+                font-size:11px; }
+.pd-num .step { display:flex; flex-direction:column; border-left:1px solid var(--cbd);
+                border-right:1px solid var(--cbd); }
 .pd-num .step button { flex:1; width:22px; border:0; background:transparent; color:var(--ctx2);
                        cursor:pointer; font-size:10px; line-height:1; }
 .pd-num .step button:hover { background:var(--chv); color:var(--ctx); }
 .pd-num .step button:first-child { border-bottom:1px solid var(--cbd); }
 
-/* 分段控件 */
-.pd-seg { display:inline-flex; gap:2px; padding:2px; border-radius:var(--r-ctl);
+/* 分段控件（药丸）；有图标的分段用图标 */
+.pd-seg { display:inline-flex; gap:2px; padding:2px; border-radius:999px;
           background:var(--cbg); border:1px solid var(--cbd); }
 .pd-seg button { border:0; background:transparent; color:var(--ctx2); cursor:pointer;
-                 font:500 12px var(--font-ui); padding:5px 12px; border-radius:7px;
+                 font:500 12px var(--font-ui); padding:5px 12px; border-radius:999px;
+                 display:inline-flex; align-items:center; justify-content:center;
                  transition:background var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.pd-seg button svg { width:15px; height:15px; }
+.pd-seg.icons button { padding:5px 11px; }
 .pd-seg button.on { background:var(--csf); color:var(--ctx); box-shadow:var(--sh); }
 .pd-seg.accent button.on { color:var(--c1); }
 
@@ -274,11 +278,11 @@
 .pd-selbox .h.tl{left:-4px;top:-4px} .pd-selbox .h.tr{right:-4px;top:-4px}
 .pd-selbox .h.bl{left:-4px;bottom:-4px} .pd-selbox .h.br{right:-4px;bottom:-4px}
 
-/* 粒度切换 */
+/* 粒度切换（药丸） */
 .pd-gran { position:absolute; display:inline-flex; gap:2px; padding:2px;
-           background:var(--csf); border:1px solid var(--cbd); border-radius:8px; box-shadow:var(--sh); }
+           background:var(--csf); border:1px solid var(--cbd); border-radius:999px; box-shadow:var(--sh); }
 .pd-gran button { border:0; background:transparent; color:var(--ctx2); cursor:pointer;
-                  font:500 11px var(--font-ui); padding:3px 9px; border-radius:6px; }
+                  font:500 11px var(--font-ui); padding:3px 10px; border-radius:999px; }
 .pd-gran button.on { background:var(--c1-soft); color:var(--c1); }
 
 /* 标注框 + 位号圆 */

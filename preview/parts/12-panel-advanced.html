@@ -8,6 +8,7 @@
   .wp{display:flex;align-items:center;justify-content:center;padding:0}
   .panel{width:330px;display:flex;flex-direction:column;overflow:hidden}
   .pbody{padding:12px 12px 11px}
+  .panel .pd-textarea{min-height:44px;margin-bottom:11px}
   /* 高级样式展开 */
   .adv-head{display:flex;align-items:center;justify-content:space-between;
     font:500 12px var(--font-ui);color:var(--ctx);padding:0 1px 8px}
@@ -46,7 +47,10 @@
   <div class="wp">
     <div class="pd-surface panel">
       <div class="pbody pd-scroll">
-        <!-- 高级样式（展开）：去掉「希望 AI 怎么改」，直接进入分类编辑 -->
+        <!-- ① 批注说明文本框（保留，去标题，靠占位提示用途） -->
+        <textarea class="pd-textarea" placeholder="补充修改说明…">把卡片背景换成品牌金，圆角更柔、略降不透明度。</textarea>
+
+        <!-- ② 高级样式（展开）：直接进入分类编辑 -->
         <div class="adv-head">
           <span>高级样式</span>
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -90,7 +94,7 @@
 
             <div class="prop">
               <div class="prop-h"><span class="t">圆角</span><span class="pd-diff">7px<i>→</i><b>12px</b></span></div>
-              <div class="pd-num num-sm"><input value="12"><span class="unit">px</span><span class="step"><button>+</button><button>−</button></span></div>
+              <div class="pd-num num-sm"><input value="12"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
             </div>
 
             <div class="prop">
