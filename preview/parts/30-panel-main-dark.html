@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0;background:#17171c}
+  .panel{width:330px;display:flex;flex-direction:column;overflow:hidden}
+  .pbody{padding:12px 12px 11px}
+  .panel .pd-textarea{min-height:50px;margin-bottom:11px}
+  .modbar{padding:11px;border:1px solid var(--cbd);border-radius:var(--r-card);background:var(--cbg)}
+  .modbar-h{font:600 10.5px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;
+    color:var(--ctx2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .modbar-h::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c1)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .grid2>div{min-width:0}
+  .grid2 .pd-label{margin-bottom:4px}
+  .colorctl{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--cbd);
+    border-radius:999px;padding:5px 13px 5px 6px;background:var(--cbg)}
+  .colorctl .hex{font:12px var(--font-ui);color:var(--ctx);font-variant-numeric:tabular-nums}
+  .mrow{display:flex;align-items:center;gap:12px;margin-top:8px}
+  .mrow .pd-label{margin:0;min-width:34px}
+  .adv{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;
+    margin-top:11px;padding:10px 11px;border:1px solid var(--cbd);border-radius:var(--r-ctl);
+    background:var(--cbg);cursor:pointer;font:500 12px var(--font-ui);color:var(--ctx)}
+  .adv .meta{font-size:11px;color:var(--ctx2)}
+  .adv .r{display:flex;align-items:center;gap:8px}
+  .pfoot{display:flex;align-items:center;justify-content:space-between;
+    padding:8px 9px 8px 13px;border-top:1px solid var(--cbd);background:var(--cbg)}
+  .pfoot .meta{font:11px var(--font-ui);color:var(--ctx2);font-variant-numeric:tabular-nums}
+  .pfoot .acts{display:flex;align-items:center;gap:6px}
+  .pfoot .pd-btn{min-height:28px;padding:0 13px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface panel">
+      <div class="pbody pd-scroll">
+        <textarea class="pd-textarea focused" placeholder="补充修改说明…">把标题文案改得更有紧迫感，并把字号加大、整体居中。</textarea>
+
+        <div class="modbar">
+          <div class="modbar-h">修改栏 · 文本元素</div>
+          <label class="pd-label">文字内容</label>
+          <input class="pd-input" value="限时优惠 · 今日截止">
+          <div class="grid2">
+            <div>
+              <label class="pd-label">字号</label>
+              <div class="pd-num"><input value="24"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+            </div>
+            <div>
+              <label class="pd-label">字重</label>
+              <select class="pd-select"><option>600 半粗</option></select>
+            </div>
+          </div>
+          <div class="mrow">
+            <label class="pd-label">颜色</label>
+            <div class="colorctl"><span class="pd-swatch" style="background:#ce9d4a"></span><span class="hex">#ce9d4a</span></div>
+          </div>
+          <div class="mrow">
+            <label class="pd-label">对齐</label>
+            <div class="pd-seg accent icons">
+              <button title="左对齐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg></button>
+              <button class="on" title="居中对齐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></svg></button>
+              <button title="右对齐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="adv">
+          <span>高级样式</span>
+          <span class="r"><span class="meta">排版 · 尺寸 · 外观 · 调试</span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="pfoot">
+        <span class="meta">② · h2 · 220×34px</span>
+        <span class="acts">
+          <button class="pd-iconbtn danger" title="删除批注"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button class="pd-btn primary">保存</button>
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
