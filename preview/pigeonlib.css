@@ -237,6 +237,21 @@
 /* 色块 */
 .pd-swatch { width:18px; height:18px; border-radius:6px; border:1px solid rgba(0,0,0,.12); flex:none; }
 
+/* 统一颜色控件（一行三件）：色块方 → 色值药丸 → 取色器。点色块展开调色盘 */
+.pd-color { display:flex; align-items:center; gap:9px; min-width:0; }
+.pd-color .sw { width:32px; height:32px; flex:none; border-radius:8px; border:1px solid var(--cbd);
+                padding:0; cursor:pointer; position:relative; }
+.pd-color .sw::after { content:""; position:absolute; inset:0; border-radius:7px;
+                       box-shadow:inset 0 0 0 1px rgba(0,0,0,.14); }
+.pd-color .val { flex:1; min-width:0; border:1px solid var(--cbd); border-radius:999px;
+                 background:var(--cbg); outline:none; font:13px var(--font-ui); color:var(--ctx);
+                 padding:9px 14px; font-variant-numeric:tabular-nums; }
+.pd-color .eye { flex:none; width:30px; height:30px; border:0; background:transparent;
+                 color:var(--ctx2); cursor:pointer; display:flex; align-items:center; justify-content:center;
+                 transition:color var(--t-fast) var(--ease); }
+.pd-color .eye svg { width:17px; height:17px; }
+.pd-color .eye:hover { color:var(--c1); }
+
 /* 窄竖向分类导航（高级样式 / 设置共用）：圆形选中 + 变更角标 */
 .pd-nav { display:flex; flex-direction:column; gap:2px; width:46px; flex:none; }
 .pd-nav button { position:relative; display:flex; flex-direction:column; align-items:center; gap:3px;

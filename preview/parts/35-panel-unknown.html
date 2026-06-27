@@ -9,27 +9,22 @@
   .panel{width:330px;display:flex;flex-direction:column;overflow:hidden}
   .pbody{padding:12px 12px 11px}
   .panel .pd-textarea{min-height:50px;margin-bottom:11px}
-  .modbar{padding:11px;border:1px solid var(--cbd);border-radius:var(--r-card);background:var(--cbg)}
-  .modbar-h{font:600 10.5px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;
-    color:var(--ctx2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-  .modbar-h::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c1)}
+  .modbox{border:1px solid var(--cbd);border-radius:var(--r-card);background:var(--cbg);padding:11px}
+  .modbox-h{font:600 10.5px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;
+    color:var(--ctx2);margin-bottom:9px;display:flex;align-items:center;gap:6px}
+  .modbox-h::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c1)}
   /* 自动适配说明条 */
-  .autonote{display:flex;gap:7px;align-items:flex-start;padding:7px 9px;margin-bottom:10px;
+  .autonote{display:flex;gap:7px;align-items:flex-start;padding:7px 9px;margin-bottom:11px;
     border-radius:var(--r-ctl);background:var(--c1-soft);border:1px solid var(--c1-edge);
     font:11.5px/1.45 var(--font-ui);color:var(--ctx)}
   .autonote svg{width:14px;height:14px;color:var(--c1);flex:none;margin-top:1px}
-  /* 自动检出标记 */
   .auto{font:600 9px var(--font-ui);color:var(--c1);background:var(--c1-soft);
     border:1px solid var(--c1-edge);border-radius:999px;padding:1px 6px;margin-left:6px;vertical-align:middle}
-  .mrow{display:flex;align-items:center;gap:12px;margin-top:8px}
-  .mrow .pd-label{margin:0;min-width:54px;display:flex;align-items:center}
-  .mrow .colorctl{flex:1}
-  .colorctl{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--cbd);
-    border-radius:999px;padding:5px 13px 5px 6px;background:var(--cbg)}
-  .colorctl .hex{font:12px var(--font-ui);color:var(--ctx);font-variant-numeric:tabular-nums}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .prop + .prop{margin-top:11px}
+  .prop-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+  .prop-h .t{font:600 12px var(--font-ui);color:var(--ctx);display:flex;align-items:center}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .grid2>div{min-width:0}
-  .grid2 .pd-label{margin-bottom:4px;display:flex;align-items:center}
   .adv{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;
     margin-top:11px;padding:10px 11px;border:1px solid var(--cbd);border-radius:var(--r-ctl);
     background:var(--cbg);cursor:pointer;font:500 12px var(--font-ui);color:var(--ctx)}
@@ -48,30 +43,41 @@
       <div class="pbody pd-scroll">
         <textarea class="pd-textarea focused" placeholder="补充修改说明…">这块区域底色和内边距想再调一下。</textarea>
 
-        <!-- 修改栏：陌生元素 → 按当前 computed style 自动挑选相关控件 -->
-        <div class="modbar">
-          <div class="modbar-h">修改栏 · 自动适配</div>
+        <!-- 修改栏：陌生元素自适配（统一高级样式风格） -->
+        <div class="modbox">
+          <div class="modbox-h">修改栏 · 自动适配</div>
           <div class="autonote">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
             未匹配到固定类型（section），已按当前 CSS 自动列出最相关的可调项。
           </div>
-          <div class="mrow">
-            <label class="pd-label">背景色<span class="auto">自动</span></label>
-            <div class="colorctl"><span class="pd-swatch" style="background:#f4efe2"></span><span class="hex">#f4efe2</span></div>
-          </div>
-          <div class="grid2">
-            <div>
-              <label class="pd-label">内边距<span class="auto">自动</span></label>
-              <div class="pd-num"><input value="24"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
-            </div>
-            <div>
-              <label class="pd-label">圆角<span class="auto">自动</span></label>
-              <div class="pd-num"><input value="0"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+          <div class="prop">
+            <div class="prop-h"><span class="t">背景色<span class="auto">自动</span></span></div>
+            <div class="pd-color">
+              <button class="sw" style="background:#f4efe2"></button>
+              <input class="val" value="#f4efe2">
+              <button class="eye" title="取色"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg></button>
             </div>
           </div>
-          <div class="mrow">
-            <label class="pd-label">显示<span class="auto">自动</span></label>
-            <div class="pd-seg accent" style="flex:1"><button class="on">块级</button><button>弹性</button><button>网格</button></div>
+          <div class="prop">
+            <div class="grid2">
+              <div>
+                <div class="prop-h"><span class="t">内边距<span class="auto">自动</span></span></div>
+                <div class="pd-num"><input value="24"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+              </div>
+              <div>
+                <div class="prop-h"><span class="t">圆角<span class="auto">自动</span></span></div>
+                <div class="pd-num"><input value="0"><span class="step"><button>+</button><button>−</button></span><span class="unit">px</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="prop">
+            <div class="prop-h"><span class="t">显示<span class="auto">自动</span></span></div>
+            <div class="pd-seg accent icons">
+              <button class="on" title="块级 block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="3" x2="21" y1="15" y2="15"/></svg></button>
+              <button title="弹性 flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" x2="9" y1="3" y2="21"/><line x1="15" x2="15" y1="3" y2="21"/></svg></button>
+              <button title="网格 grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="3" x2="21" y1="15" y2="15"/><line x1="9" x2="9" y1="3" y2="21"/><line x1="15" x2="15" y1="3" y2="21"/></svg></button>
+              <button title="行内 inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="6" y2="6"/><path d="M3 12h15a3 3 0 1 1 0 6h-4"/><polyline points="16 16 14 18 16 20"/><line x1="3" x2="11" y1="18" y2="18"/></svg></button>
+            </div>
           </div>
         </div>
 

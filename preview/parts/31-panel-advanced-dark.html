@@ -17,15 +17,6 @@
   .prop + .prop{margin-top:12px}
   .prop-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
   .prop-h .t{font:600 12px var(--font-ui);color:var(--ctx)}
-  .picker-top{display:flex;align-items:center;gap:9px}
-  .picker-top .big{width:32px;height:32px;border-radius:8px;border:1px solid rgba(0,0,0,.25);flex:none;background:#ce9d4a}
-  .sug{margin-top:10px}
-  .sug-h{font:600 10px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;color:var(--ctx2);margin-bottom:7px}
-  .sug-row{display:flex;gap:6px}
-  .sug-row .s{width:21px;height:21px;border-radius:6px;border:1px solid rgba(0,0,0,.3);cursor:pointer}
-  .sug-row .s.on{box-shadow:0 0 0 2px var(--cbg),0 0 0 3.5px var(--c1)}
-  .opa{margin-top:11px}
-  .opa-h{display:flex;justify-content:space-between;font-size:11px;color:var(--ctx2);margin-bottom:7px}
   .num-sm{width:108px}
   .pfoot{display:flex;align-items:center;justify-content:space-between;
     padding:8px 9px 8px 13px;border-top:1px solid var(--cbd);background:var(--cbg)}
@@ -56,26 +47,10 @@
           <div class="scon">
             <div class="prop">
               <div class="prop-h"><span class="t">背景色</span><span class="pd-diff">#2a2a32<i>→</i><b>#ce9d4a</b></span></div>
-              <div class="picker-top">
-                <span class="big"></span>
-                <input class="pd-input" value="#ce9d4a">
-                <button class="pd-iconbtn" title="取色"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg></button>
-              </div>
-              <div class="sug">
-                <div class="sug-h">局部取色推荐</div>
-                <div class="sug-row">
-                  <span class="s on" style="background:#ce9d4a"></span>
-                  <span class="s" style="background:#e0ddd4"></span>
-                  <span class="s" style="background:#2a2a32"></span>
-                  <span class="s" style="background:#9a9790"></span>
-                  <span class="s" style="background:#3e3e48"></span>
-                  <span class="s" style="background:#c75b4e"></span>
-                  <span class="s" style="background:#7aad5f"></span>
-                </div>
-              </div>
-              <div class="opa">
-                <div class="opa-h"><span>透明度</span><span>92%</span></div>
-                <div class="pd-range"><span class="knob" style="left:92%"></span></div>
+              <div class="pd-color">
+                <button class="sw" style="background:#ce9d4a"></button>
+                <input class="val" value="#ce9d4a">
+                <button class="eye" title="取色"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg></button>
               </div>
             </div>
 
