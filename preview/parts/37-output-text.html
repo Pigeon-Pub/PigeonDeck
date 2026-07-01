@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  .opanel{width:452px;display:flex;flex-direction:column;overflow:hidden}
+  .ohead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 11px 10px 14px;border-bottom:1px solid var(--cbd)}
+  .ohead .lhs{display:flex;align-items:center;gap:9px;min-width:0}
+  .ohead .t{font-family:var(--font-serif);font-weight:600;font-size:14px;color:var(--ctx)}
+  .ohead .lang{font:600 10px var(--font-ui);color:var(--c1);background:var(--c1-soft);
+    border:1px solid var(--c1-edge);border-radius:999px;padding:2px 8px}
+  .ohead .pd-btn{min-height:28px}
+  .obody{padding:11px 14px 13px;max-height:420px;overflow:auto;
+    font:11.5px/1.7 ui-monospace,Consolas,'Microsoft YaHei',monospace;color:var(--ctx);
+    white-space:pre-wrap;word-break:break-word}
+  .sec{color:var(--c1);font-weight:700}
+  .cmt{color:var(--ctx2)}
+  .ok{color:var(--cs)}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface opanel">
+      <div class="ohead">
+        <span class="lhs">
+          <span class="t">复制文本 · 任务清单</span>
+          <span class="lang">English</span>
+        </span>
+        <button class="pd-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制</button>
+      </div>
+      <div class="obody pd-scroll"><span class="sec">[Page Context]</span>
+- URL: https://example.com/pricing
+- Title: Pricing — Acme
+- Viewport: 1440 × 900 (px)
+- Timestamp: 2026-06-27 16:40
+
+<span class="sec">[Global Editing Rules]</span>
+<span class="cmt">- Do NOT hardcode top/left absolute positions.
+- Prefer existing layout: flex, grid, gap, margin, order.
+- Visual coordinates are location hints, not implementation.</span>
+
+<span class="sec">[Operations]</span>
+<span class="sec">--- #1 Annotation ---</span>
+Target: section.hero > h2
+Location: hero title, top center
+Instruction: 标题改得更有紧迫感，字号加大、整体居中
+
+<span class="sec">--- #2 Style Modification + Move ---</span>
+Target: button.cta
+Instruction: 主按钮换品牌金、圆角更柔、加阴影；移到侧栏下方
+Changes:
+  <span class="ok">| background-color | #2563eb | #b8842c |
+  | border-radius    | 6px     | 12px    |
+  | box-shadow       | none    | 0 1px 3px … |</span>
+Move:
+  Source: button.cta
+  Target: aside .actions（下方）
+  Snap: snapped (X center, Y 8px gap)
+
+<span class="sec">--- #4 Region ---</span>
+Scope: [div.card, img.thumb, span.price]
+Coordinates: (320,180)–(720,520)
+Instruction: 这一块整体留白太挤，希望更舒展</div>
+    </div>
+  </div>
+</body>
+</html>

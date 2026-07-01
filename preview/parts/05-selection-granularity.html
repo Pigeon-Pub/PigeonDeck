@@ -9,9 +9,9 @@
 </head>
 <body>
   <div class="wp">
-    <h1 class="wp-h">移动模式</h1>
-    <p class="wp-sub">单击选中组件，再选择粒度</p>
-    <div style="position:relative;display:inline-block;margin-top:6px">
+    <h1 class="wp-h">移动模式 · 选中</h1>
+    <p class="wp-sub">单击选中组件 · 拖八向句柄改尺寸（选择粒度在设置中调）</p>
+    <div style="position:relative;display:inline-block;margin-top:16px">
       <div class="wp-card" style="width:228px">
         <div class="wp-row" style="margin-bottom:10px">
           <div class="wp-img" style="width:38px;height:38px"></div>
@@ -22,13 +22,10 @@
         </div>
         <p class="wp-p" style="margin:0">这是一个可被选中并移动的视觉组件块。</p>
       </div>
-      <!-- 选中框 + 句柄 -->
+      <!-- 选中框 + 八向缩放句柄（四角 + 四边中点） -->
       <div class="pd-selbox" style="inset:-2px">
         <span class="h tl"></span><span class="h tr"></span><span class="h bl"></span><span class="h br"></span>
-      </div>
-      <!-- 粒度切换：元素 / 容器 -->
-      <div class="pd-gran" style="right:-2px;top:-32px">
-        <button>元素</button><button class="on">容器</button>
+        <span class="h tm"></span><span class="h bm"></span><span class="h ml"></span><span class="h mr"></span>
       </div>
     </div>
   </div>

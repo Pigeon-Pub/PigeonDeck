@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  .opanel{width:360px;display:flex;flex-direction:column;overflow:hidden}
+  .ohead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 11px 10px 14px;border-bottom:1px solid var(--cbd)}
+  .ohead .t{font-family:var(--font-serif);font-weight:600;font-size:14px;color:var(--ctx)}
+  .ohead .tag{font:600 10px var(--font-ui);color:var(--ctx2);background:var(--cbg);
+    border:1px solid var(--cbd);border-radius:999px;padding:2px 8px}
+  .shot-wrap{padding:12px}
+  /* 单页长图缩略：中性网页 + 叠加批注 */
+  .shot{position:relative;border-radius:8px;border:1px solid var(--cbd);overflow:hidden;
+    background:#fbfbfc;height:316px}
+  .shot .blk{position:absolute;background:#e9ecf2;border-radius:4px}
+  .shot .blk.soft{background:#f1f3f7}
+  .shot .blk.gold{background:linear-gradient(135deg,#e7d4ad,#dcc18a)}
+  .pd-pin{width:18px;height:18px;font-size:10px}
+  .pd-markbox,.pd-region{border-width:1.5px}
+  .ofoot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 11px 9px 13px;border-top:1px solid var(--cbd);background:var(--cbg)}
+  .ofoot .wm{font:10.5px var(--font-ui);color:var(--ctx2)}
+  .ofoot .pd-seg button{padding:4px 10px;font-size:11px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface opanel">
+      <div class="ohead">
+        <span class="t">复制图片 · 单页长图</span>
+        <span class="tag">V1 · 仅图片</span>
+      </div>
+
+      <div class="shot-wrap">
+        <div class="shot">
+          <!-- 中性网页内容块 -->
+          <div class="blk" style="left:14px;top:12px;width:120px;height:12px"></div>
+          <div class="blk soft" style="left:14px;top:34px;width:300px;height:10px"></div>
+          <!-- hero 标题（标注①） -->
+          <div class="blk gold" style="left:14px;top:60px;width:210px;height:26px"></div>
+          <div class="pd-markbox" style="left:10px;top:56px;width:218px;height:34px"></div>
+          <div class="pd-pin" style="left:0px;top:48px">1</div>
+          <!-- 主按钮（标注②）+ 移动幽灵 -->
+          <div class="blk gold" style="left:14px;top:104px;width:96px;height:26px"></div>
+          <div class="pd-markbox" style="left:10px;top:100px;width:104px;height:34px"></div>
+          <div class="pd-pin" style="left:0px;top:92px">2</div>
+          <div class="pd-moving" style="position:absolute;left:150px;top:150px;width:96px;height:26px;border-radius:6px;background:#dcc18a"></div>
+          <svg class="pd-connector" style="left:110px;top:117px;width:60px;height:46px"><line x1="0" y1="0" x2="50" y2="40"/></svg>
+          <!-- 区域批注（标注③） -->
+          <div class="blk soft" style="left:14px;top:200px;width:140px;height:96px"></div>
+          <div class="blk soft" style="left:170px;top:200px;width:140px;height:96px"></div>
+          <div class="pd-region" style="left:10px;top:196px;width:304px;height:104px"></div>
+          <div class="pd-pin" style="left:0px;top:188px">3</div>
+        </div>
+      </div>
+
+      <div class="ofoot">
+        <span class="wm">水印：URL · 时间（设置可关）</span>
+        <div class="pd-seg accent"><button class="on">复制到剪贴板</button><button>下载</button></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

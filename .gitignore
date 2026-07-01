@@ -1,13 +1,4 @@
-# 参考项目 —— 仅作行为参考，永不提交
-reference-projects/
-
-# 用户输入的提示词
-context/
-
-# UI 提取工作区 —— 一次性设计准备（捕获脚本 + 产物），永不提交
-ui-extract/
-
-# Node / 构建产物（供后续实现阶段使用）
+# Node / 构建产物
 node_modules/
 dist/
 build/

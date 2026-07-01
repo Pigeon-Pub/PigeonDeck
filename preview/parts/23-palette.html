@@ -22,7 +22,7 @@
     background:#fff;border:1.5px solid var(--ctx);transform:translate(-50%,-50%)}
   /* HEX 行（去掉冗余的透明度数值，透明度交给下方滑杆） */
   .hexrow{display:flex;align-items:center;gap:8px;margin-top:11px}
-  .hexrow .chip{width:28px;height:28px;border-radius:8px;border:1px solid rgba(0,0,0,.12);
+  .hexrow .chip{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,.12);
     flex:none;background:#b8842c}
   .hexrow .pd-input{flex:1}
   /* RGB 三通道微调 */
@@ -38,7 +38,7 @@
     margin-bottom:7px;display:flex;align-items:center;gap:6px}
   .sug-h small{font-weight:500;letter-spacing:0;text-transform:none;color:var(--ctx2);opacity:.85}
   .sug-row{display:flex;gap:6px}
-  .sug-row .s{flex:1;aspect-ratio:1;border-radius:6px;border:1px solid rgba(0,0,0,.1);cursor:pointer}
+  .sug-row .s{flex:1;aspect-ratio:1;border-radius:50%;border:1px solid rgba(0,0,0,.1);cursor:pointer}
   .sug-row .s.on{box-shadow:0 0 0 2px var(--csf),0 0 0 3.5px var(--c1)}
   /* 透明度 */
   .opa{margin-top:12px}

@@ -32,6 +32,7 @@
   .card .grp.dk{color:#6b6f86;background:rgba(60,62,72,.10);border-color:rgba(60,62,72,.22)}
   .frame{overflow:hidden}
   .frame iframe{border:0;display:block;background:transparent}
+  /* 各 part 用 <pd-…> 自定义元素，iframe 需 allow-scripts 才能渲染 */
   footer{padding:22px 34px 46px;color:var(--sub);font-size:12px;max-width:84ch}
 </style>
 </head>
@@ -39,90 +40,98 @@
   <header>
     <h1>PigeonDeck UI 预览 · 组件画廊</h1>
     <p>每个组件单独渲染在一张卡片里，叠在中性网页背景上，检验 pigeonlib（暖纸白 + 邮政金 + 宋体标题 + Lucide 线性图标）在真实控件上的气质与层级。多状态表面（设置 / 高级样式）每个分类页独立成卡。</p>
-    <span class="tag">双主题 · 右键菜单 · 设置/高级各子页独立成卡</span>
+    <span class="tag">调用式组件 · 双入口单源 · 输出预览 · 透明棋盘格 · 双主题</span>
   </header>
 
   <section>
     <h2>入口<span class="count">3 个</span></h2>
     <div class="grid">
-      <figure class="card"><figcaption><span class="lbl">Logo 悬浮球 · 收起态</span><span class="grp">入口</span></figcaption><div class="frame" style="width:130px;height:130px"><iframe src="parts/01-logo-ball.html" width="130" height="130" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">单列工具盘 · 默认批注态</span><span class="grp">入口</span></figcaption><div class="frame" style="width:200px;height:330px"><iframe src="parts/02-toolbar-default.html" width="200" height="330" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">单列工具盘 · 移动激活态</span><span class="grp">入口</span></figcaption><div class="frame" style="width:200px;height:330px"><iframe src="parts/03-toolbar-move.html" width="200" height="330" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">Logo 悬浮球 · 收起态</span><span class="grp">入口</span></figcaption><div class="frame" style="width:130px;height:130px"><iframe src="parts/01-logo-ball.html" width="130" height="130" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">单列工具盘 · 默认批注态</span><span class="grp">入口</span></figcaption><div class="frame" style="width:200px;height:330px"><iframe src="parts/02-toolbar-default.html" width="200" height="330" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">单列工具盘 · 移动激活态</span><span class="grp">入口</span></figcaption><div class="frame" style="width:200px;height:330px"><iframe src="parts/03-toolbar-move.html" width="200" height="330" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
     </div>
   </section>
 
   <section>
     <h2>覆盖层<span class="count">7 个</span></h2>
     <div class="grid">
-      <figure class="card"><figcaption><span class="lbl">元素 hover 高亮 + 标签</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:340px;height:210px"><iframe src="parts/04-hover-label.html" width="340" height="210" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">选中框 + 粒度切换</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:340px;height:220px"><iframe src="parts/05-selection-granularity.html" width="340" height="220" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">标注框 + 位号圆 · 收起</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:360px;height:210px"><iframe src="parts/06-mark-pin.html" width="360" height="210" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">批注卡片 · 展开</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:300px;height:280px"><iframe src="parts/07-annotation-card.html" width="300" height="280" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">区域批注</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:380px;height:260px"><iframe src="parts/08-region.html" width="380" height="260" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">移动 · 吸附参考线</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:380px;height:220px"><iframe src="parts/09-move-snap.html" width="380" height="220" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">移动 · Alt 自由移动</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:380px;height:210px"><iframe src="parts/10-move-free.html" width="380" height="210" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">元素 hover 高亮 + 标签</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:340px;height:210px"><iframe src="parts/04-hover-label.html" width="340" height="210" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">选中框 + 粒度切换</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:340px;height:220px"><iframe src="parts/05-selection-granularity.html" width="340" height="220" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">标注框 + 位号圆 · 收起</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:360px;height:210px"><iframe src="parts/06-mark-pin.html" width="360" height="210" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">批注卡片 · 展开</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:300px;height:280px"><iframe src="parts/07-annotation-card.html" width="300" height="280" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">区域批注</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:380px;height:260px"><iframe src="parts/08-region.html" width="380" height="260" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">移动 · 吸附参考线</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:380px;height:220px"><iframe src="parts/09-move-snap.html" width="380" height="220" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">移动 · Alt 自由移动</span><span class="grp">覆盖层</span></figcaption><div class="frame" style="width:380px;height:210px"><iframe src="parts/10-move-free.html" width="380" height="210" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
     </div>
   </section>
 
   <section>
     <h2>批注模式交互<span class="count">3 个</span></h2>
     <div class="grid">
-      <figure class="card"><figcaption><span class="lbl">双击文本 · 逐字符富文本</span><span class="grp">交互</span></figcaption><div class="frame" style="width:400px;height:340px"><iframe src="parts/24-inline-edit.html" width="400" height="340" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">图片/视频 · 替换流程</span><span class="grp">交互</span></figcaption><div class="frame" style="width:460px;height:306px"><iframe src="parts/25-replace-media.html" width="460" height="306" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">调色盘 · 展开</span><span class="grp">交互</span></figcaption><div class="frame" style="width:276px;height:404px"><iframe src="parts/23-palette.html" width="276" height="404" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">双击文本 · 逐字符富文本</span><span class="grp">交互</span></figcaption><div class="frame" style="width:400px;height:340px"><iframe src="parts/24-inline-edit.html" width="400" height="340" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">图片/视频 · 替换流程</span><span class="grp">交互</span></figcaption><div class="frame" style="width:460px;height:306px"><iframe src="parts/25-replace-media.html" width="460" height="306" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">调色盘 · 展开</span><span class="grp">交互</span></figcaption><div class="frame" style="width:276px;height:362px"><iframe src="parts/23-palette.html" width="276" height="362" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
     </div>
   </section>
 
   <section>
     <h2>批注 / 编辑面板<span class="count">10 个</span></h2>
     <div class="grid">
-      <figure class="card"><figcaption><span class="lbl">批注面板 · 主态（文本）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:500px"><iframe src="parts/11-panel-main.html" width="360" height="500" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">批注面板 · 主态（图片）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:430px"><iframe src="parts/33-panel-img.html" width="360" height="430" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">批注面板 · 主态（按钮/容器）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:550px"><iframe src="parts/34-panel-box.html" width="360" height="550" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">批注面板 · 陌生元素自适配</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:480px"><iframe src="parts/35-panel-unknown.html" width="360" height="480" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">高级样式 · 排版</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:590px"><iframe src="parts/20-adv-typography.html" width="360" height="590" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">高级样式 · 尺寸</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:420px"><iframe src="parts/21-adv-size.html" width="360" height="420" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">高级样式 · 外观</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:398px"><iframe src="parts/12-panel-advanced.html" width="360" height="398" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">高级样式 · 调试（默认英文）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:472px"><iframe src="parts/22-adv-debug.html" width="360" height="472" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">高级样式 · 调试（点翻译→中文）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:472px"><iframe src="parts/36-adv-debug-zh.html" width="360" height="472" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">清空确认弹层</span><span class="grp">面板</span></figcaption><div class="frame" style="width:340px;height:320px"><iframe src="parts/14-clear-confirm.html" width="340" height="320" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">批注面板 · 主态（文本）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:500px"><iframe src="parts/11-panel-main.html" width="360" height="500" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">批注面板 · 主态（图片）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:402px"><iframe src="parts/33-panel-img.html" width="360" height="402" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">批注面板 · 主态（按钮/容器）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:518px"><iframe src="parts/34-panel-box.html" width="360" height="518" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">批注面板 · 陌生元素自适配</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:460px"><iframe src="parts/35-panel-unknown.html" width="360" height="460" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">高级样式 · 排版</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:682px"><iframe src="parts/20-adv-typography.html" width="360" height="682" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">高级样式 · 尺寸</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:416px"><iframe src="parts/21-adv-size.html" width="360" height="416" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">高级样式 · 外观</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:666px"><iframe src="parts/12-panel-advanced.html" width="360" height="666" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">高级样式 · 调试（默认英文）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:482px"><iframe src="parts/22-adv-debug.html" width="360" height="482" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">高级样式 · 调试（点翻译→中文）</span><span class="grp">面板</span></figcaption><div class="frame" style="width:360px;height:496px"><iframe src="parts/36-adv-debug-zh.html" width="360" height="496" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">清空确认弹层</span><span class="grp">面板</span></figcaption><div class="frame" style="width:340px;height:320px"><iframe src="parts/14-clear-confirm.html" width="340" height="320" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
     </div>
   </section>
 
   <section>
     <h2>设置面板 · 4 分区<span class="count">4 个</span></h2>
     <div class="grid">
-      <figure class="card"><figcaption><span class="lbl">设置 · 通用</span><span class="grp">设置</span></figcaption><div class="frame" style="width:380px;height:330px"><iframe src="parts/17-settings-general.html" width="380" height="330" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">设置 · 交互</span><span class="grp">设置</span></figcaption><div class="frame" style="width:380px;height:374px"><iframe src="parts/13-settings.html" width="380" height="374" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">设置 · 输出</span><span class="grp">设置</span></figcaption><div class="frame" style="width:380px;height:300px"><iframe src="parts/18-settings-output.html" width="380" height="300" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">设置 · 帮助</span><span class="grp">设置</span></figcaption><div class="frame" style="width:380px;height:372px"><iframe src="parts/19-settings-help.html" width="380" height="372" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">界面语言 · 搜索筛选</span><span class="grp">设置</span></figcaption><div class="frame" style="width:268px;height:190px"><iframe src="parts/29-lang-search.html" width="268" height="190" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">设置 · 通用</span><span class="grp">设置</span></figcaption><div class="frame" style="width:380px;height:304px"><iframe src="parts/17-settings-general.html" width="380" height="304" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">设置 · 交互</span><span class="grp">设置</span></figcaption><div class="frame" style="width:380px;height:352px"><iframe src="parts/13-settings.html" width="380" height="352" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">设置 · 输出</span><span class="grp">设置</span></figcaption><div class="frame" style="width:380px;height:304px"><iframe src="parts/18-settings-output.html" width="380" height="304" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">设置 · 帮助</span><span class="grp">设置</span></figcaption><div class="frame" style="width:380px;height:304px"><iframe src="parts/19-settings-help.html" width="380" height="304" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">界面语言 · 搜索筛选</span><span class="grp">设置</span></figcaption><div class="frame" style="width:268px;height:190px"><iframe src="parts/29-lang-search.html" width="268" height="190" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
     </div>
   </section>
 
   <section>
     <h2>右键菜单<span class="count">2 个</span></h2>
     <div class="grid">
-      <figure class="card"><figcaption><span class="lbl">位号圆右键 · 删除/修改</span><span class="grp">右键</span></figcaption><div class="frame" style="width:360px;height:330px"><iframe src="parts/26-pin-context-menu.html" width="360" height="330" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">浏览器右键 · 快速标注</span><span class="grp">右键</span></figcaption><div class="frame" style="width:360px;height:336px"><iframe src="parts/27-browser-context-menu.html" width="360" height="336" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">位号圆右键 · 删除/修改</span><span class="grp">右键</span></figcaption><div class="frame" style="width:360px;height:330px"><iframe src="parts/26-pin-context-menu.html" width="360" height="330" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">浏览器右键 · 快速标注</span><span class="grp">右键</span></figcaption><div class="frame" style="width:360px;height:336px"><iframe src="parts/27-browser-context-menu.html" width="360" height="336" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
     </div>
   </section>
 
   <section>
     <h2>反馈 + Popup<span class="count">3 个</span></h2>
     <div class="grid">
-      <figure class="card"><figcaption><span class="lbl">按钮内反馈</span><span class="grp">反馈</span></figcaption><div class="frame" style="width:340px;height:200px"><iframe src="parts/15-feedback.html" width="340" height="200" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">页面级轻提示族</span><span class="grp">反馈</span></figcaption><div class="frame" style="width:440px;height:240px"><iframe src="parts/28-toast-states.html" width="440" height="240" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">浏览器 Popup</span><span class="grp">Popup</span></figcaption><div class="frame" style="width:320px;height:420px"><iframe src="parts/16-popup.html" width="320" height="420" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">按钮内反馈</span><span class="grp">反馈</span></figcaption><div class="frame" style="width:340px;height:200px"><iframe src="parts/15-feedback.html" width="340" height="200" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">页面级轻提示族</span><span class="grp">反馈</span></figcaption><div class="frame" style="width:440px;height:240px"><iframe src="parts/28-toast-states.html" width="440" height="240" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">浏览器 Popup</span><span class="grp">Popup</span></figcaption><div class="frame" style="width:320px;height:420px"><iframe src="parts/16-popup.html" width="320" height="420" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>输出 · 核心交付物<span class="count">2 个</span></h2>
+    <div class="grid">
+      <figure class="card"><figcaption><span class="lbl">复制文本 · 任务清单</span><span class="grp">输出</span></figcaption><div class="frame" style="width:492px;height:500px"><iframe src="parts/37-output-text.html" width="492" height="500" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">复制图片 · 单页长图</span><span class="grp">输出</span></figcaption><div class="frame" style="width:400px;height:420px"><iframe src="parts/38-output-image.html" width="400" height="420" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
     </div>
   </section>
 
   <section>
     <h2>暗色主题 · 关键面板<span class="count">3 个</span></h2>
     <div class="grid">
-      <figure class="card"><figcaption><span class="lbl">批注面板 · 暗色</span><span class="grp dk">暗色</span></figcaption><div class="frame" style="width:360px;height:500px"><iframe src="parts/30-panel-main-dark.html" width="360" height="500" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">高级样式 · 暗色</span><span class="grp dk">暗色</span></figcaption><div class="frame" style="width:360px;height:398px"><iframe src="parts/31-panel-advanced-dark.html" width="360" height="398" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
-      <figure class="card"><figcaption><span class="lbl">设置面板 · 暗色</span><span class="grp dk">暗色</span></figcaption><div class="frame" style="width:380px;height:374px"><iframe src="parts/32-settings-dark.html" width="380" height="374" scrolling="no" sandbox="allow-same-origin" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">批注面板 · 暗色</span><span class="grp dk">暗色</span></figcaption><div class="frame" style="width:360px;height:500px"><iframe src="parts/30-panel-main-dark.html" width="360" height="500" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">高级样式 · 暗色</span><span class="grp dk">暗色</span></figcaption><div class="frame" style="width:360px;height:666px"><iframe src="parts/31-panel-advanced-dark.html" width="360" height="666" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
+      <figure class="card"><figcaption><span class="lbl">设置面板 · 暗色</span><span class="grp dk">暗色</span></figcaption><div class="frame" style="width:380px;height:352px"><iframe src="parts/32-settings-dark.html" width="380" height="352" scrolling="no" sandbox="allow-same-origin allow-scripts" loading="lazy"></iframe></div></figure>
     </div>
   </section>
 

@@ -6,17 +6,18 @@
 <style>
   html,body{margin:0;height:100%}
   .wp{padding:22px}
-  .stage{position:relative;display:inline-block;margin-top:6px}
-  /* 右键菜单：从位号圆向下弹出，不遮挡被标注卡片（演示完整） */
-  .menu{position:absolute;left:-6px;top:96px;z-index:5}
-  .menu::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;
-    background:var(--csf);border-left:1px solid var(--cbd);border-top:1px solid var(--cbd);transform:rotate(45deg)}
+  .stage{position:relative;display:inline-block;margin-top:96px}
+  /* 右键菜单从位号圆上弹，箭头指回位号圆，不遮卡片 */
+  .menu{position:absolute;left:-10px;bottom:calc(100% + 14px);z-index:5}
+  .menu .arrow{position:absolute;left:22px;bottom:-6px;width:12px;height:12px;
+    background:var(--csf);border-right:1px solid var(--cbd);border-bottom:1px solid var(--cbd);
+    transform:rotate(45deg)}
 </style>
 </head>
 <body>
   <div class="wp">
     <h1 class="wp-h">右键位号圆</h1>
-    <p class="wp-sub">删除 / 修改 双通道入口之一</p>
+    <p class="wp-sub">菜单从位号圆上弹 · 箭头指回 · 不遮卡片</p>
 
     <div class="stage">
       <div class="wp-card" style="width:236px">
@@ -27,7 +28,7 @@
       <div class="pd-markbox" style="inset:-3px"></div>
       <div class="pd-pin" style="left:-11px;top:-11px">1</div>
 
-      <!-- 右键上下文菜单 -->
+      <!-- 上弹的上下文菜单 -->
       <div class="pd-menu menu">
         <button class="pd-menu-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
@@ -38,6 +39,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           删除批注
         </button>
+        <span class="arrow"></span>
       </div>
     </div>
   </div>

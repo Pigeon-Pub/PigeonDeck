@@ -80,7 +80,7 @@
    PigeonDeck 通用基元（PD 自身的 UI，全部走 pigeonlib 令牌）
    ============================================================ */
 
-/* 悬浮球（与 MarkIt 触发球同尺寸 42px） */
+/* 悬浮球（收起态/展开态 Logo 同一尺寸 42px） */
 .pd-ball {
   width:42px; height:42px; border-radius:50%;
   background:var(--c1);
@@ -156,6 +156,7 @@
   transition:background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
 .pd-btn:hover { background:var(--chv); }
+.pd-btn svg { width:15px; height:15px; flex:none; }
 .pd-btn.primary { background:var(--c1); border-color:var(--c1); color:#fdf6e6; }
 .pd-btn.primary:hover { filter:brightness(1.04); }
 .pd-btn.danger { background:var(--cd); border-color:var(--cd); color:#fdf1ef; }
@@ -178,30 +179,43 @@
 .pd-label { font-size:11px; color:var(--ctx2); margin-bottom:5px; display:block; letter-spacing:.2px; }
 .pd-input, .pd-textarea, .pd-select {
   width:100%; box-sizing:border-box; font:13px var(--font-ui);
-  color:var(--ctx); background:var(--cbg); border:1px solid var(--cbd);
-  padding:9px 13px; outline:none;
+  color:var(--ctx2); background:var(--cbg); border:1px solid var(--cbd);
+  padding:6px 13px; outline:none;
   transition:border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
 .pd-input, .pd-select { border-radius:999px; }
-.pd-textarea { border-radius:var(--r-ctl); resize:none; line-height:1.5; padding:9px 12px; }
+/* 多行文本框：圆角矩形，换行自适应高度（field-sizing），不参与单行胶囊压缩。文本保持深色可读 */
+.pd-textarea { border-radius:var(--r-ctl); resize:none; line-height:1.5; padding:9px 12px;
+               field-sizing:content; min-height:38px; color:var(--ctx); }
 .pd-input:focus, .pd-textarea:focus, .pd-select:focus {
   border-color:var(--c1-edge); box-shadow:0 0 0 3px var(--c1-soft);
 }
 .pd-input.focused { border-color:var(--c1-edge); box-shadow:0 0 0 3px var(--c1-soft); }
 
-/* 数值控件（药丸）：输入 → 步进(+/−) → 单位 */
-.pd-num { display:flex; align-items:stretch; border:1px solid var(--cbd);
-          border-radius:999px; overflow:hidden; background:var(--cbg); }
-.pd-num input { flex:1; min-width:34px; border:0; background:transparent; outline:none;
-                font:13px var(--font-ui); color:var(--ctx); padding:8px 12px; }
-.pd-num .unit { display:flex; align-items:center; padding:0 11px 0 8px; color:var(--ctx2);
-                font-size:11px; }
-.pd-num .step { display:flex; flex-direction:column; border-left:1px solid var(--cbd);
-                border-right:1px solid var(--cbd); }
-.pd-num .step button { flex:1; width:22px; border:0; background:transparent; color:var(--ctx2);
-                       cursor:pointer; font-size:10px; line-height:1; }
-.pd-num .step button:hover { background:var(--chv); color:var(--ctx); }
-.pd-num .step button:first-child { border-bottom:1px solid var(--cbd); }
+/* 下拉：去原生箭头，右侧用与小胶囊同样式的小圆球包住 chevron */
+.pd-sel { position:relative; display:inline-block; width:100%; vertical-align:middle; }
+.pd-sel .pd-select { appearance:none; -webkit-appearance:none; width:100%; padding-right:34px; }
+.pd-sel-arrow { position:absolute; right:4px; top:50%; transform:translateY(-50%);
+                width:22px; height:22px; border-radius:50%; background:var(--chv);
+                display:flex; align-items:center; justify-content:center;
+                color:var(--ctx2); pointer-events:none; }
+.pd-sel-arrow svg { width:13px; height:13px; }
+
+/* 数值控件：单个大胶囊，内含 值 + 单位 px + 右侧嵌套小圆胶囊(横向 +/− 图标，纯色底无阴影) */
+.pd-num { display:flex; align-items:center; min-width:0; padding-right:3px;
+          border:1px solid var(--cbd); border-radius:999px; background:var(--cbg); overflow:hidden; }
+.pd-num input { flex:1; min-width:0; border:0; background:transparent; outline:none;
+                font:13px var(--font-ui); color:var(--ctx2); padding:6px 2px 6px 11px; }
+.pd-num .unit { flex:none; display:flex; align-items:center; padding:0 4px 0 1px;
+                color:var(--ctx2); font-size:12px; }
+.pd-num .step { flex:none; display:flex; gap:0; padding:2px; border-radius:999px; background:var(--chv); }
+.pd-num .step button { border:0; background:transparent; color:var(--ctx2); cursor:pointer;
+                       padding:0; line-height:1; min-width:20px; height:19px; border-radius:999px;
+                       display:flex; align-items:center; justify-content:center;
+                       transition:background var(--t-fast) var(--ease); }
+.pd-num .step button:first-child { margin-right:-1px; }
+.pd-num .step button svg { width:13px; height:13px; }
+.pd-num .step button:hover { background:var(--csf); }
 
 /* 分段控件（药丸）；有图标的分段用图标 */
 .pd-seg { display:inline-flex; gap:2px; padding:2px; border-radius:999px;
@@ -235,17 +249,24 @@
             color:var(--ctx2); margin:2px 0 6px; }
 
 /* 色块 */
-.pd-swatch { width:18px; height:18px; border-radius:6px; border:1px solid rgba(0,0,0,.12); flex:none; }
+.pd-swatch { width:18px; height:18px; border-radius:50%; border:1px solid rgba(0,0,0,.12); flex:none; }
 
 /* 统一颜色控件（一行三件）：色块方 → 色值药丸 → 取色器。点色块展开调色盘 */
 .pd-color { display:flex; align-items:center; gap:9px; min-width:0; }
-.pd-color .sw { width:32px; height:32px; flex:none; border-radius:8px; border:1px solid var(--cbd);
-                padding:0; cursor:pointer; position:relative; }
-.pd-color .sw::after { content:""; position:absolute; inset:0; border-radius:7px;
-                       box-shadow:inset 0 0 0 1px rgba(0,0,0,.14); }
+.pd-color .sw { width:30px; height:30px; flex:none; border-radius:50%; border:1px solid var(--cbd);
+                padding:0; cursor:pointer; position:relative; overflow:hidden;
+                /* 透明棋盘格底，alpha 颜色透出 */
+                background-color:#fff;
+                background-image:
+                  linear-gradient(45deg,#c8c8c8 25%,transparent 25%,transparent 75%,#c8c8c8 75%),
+                  linear-gradient(45deg,#c8c8c8 25%,transparent 25%,transparent 75%,#c8c8c8 75%);
+                background-size:10px 10px; background-position:0 0,5px 5px; }
+.pd-color .sw .fill { position:absolute; inset:0; }
+.pd-color .sw::after { content:""; position:absolute; inset:0; border-radius:inherit;
+                       box-shadow:inset 0 0 0 1px rgba(0,0,0,.14); pointer-events:none; }
 .pd-color .val { flex:1; min-width:0; border:1px solid var(--cbd); border-radius:999px;
-                 background:var(--cbg); outline:none; font:13px var(--font-ui); color:var(--ctx);
-                 padding:9px 14px; font-variant-numeric:tabular-nums; }
+                 background:var(--cbg); outline:none; font:13px var(--font-ui); color:var(--ctx2);
+                 padding:6px 14px; font-variant-numeric:tabular-nums; }
 .pd-color .eye { flex:none; width:30px; height:30px; border:0; background:transparent;
                  color:var(--ctx2); cursor:pointer; display:flex; align-items:center; justify-content:center;
                  transition:color var(--t-fast) var(--ease); }
@@ -292,6 +313,8 @@
                 border:1.5px solid var(--c1); border-radius:2px; }
 .pd-selbox .h.tl{left:-4px;top:-4px} .pd-selbox .h.tr{right:-4px;top:-4px}
 .pd-selbox .h.bl{left:-4px;bottom:-4px} .pd-selbox .h.br{right:-4px;bottom:-4px}
+.pd-selbox .h.tm{left:50%;top:-4px;margin-left:-3.5px} .pd-selbox .h.bm{left:50%;bottom:-4px;margin-left:-3.5px}
+.pd-selbox .h.ml{left:-4px;top:50%;margin-top:-3.5px} .pd-selbox .h.mr{right:-4px;top:50%;margin-top:-3.5px}
 
 /* 粒度切换（药丸） */
 .pd-gran { position:absolute; display:inline-flex; gap:2px; padding:2px;
@@ -359,3 +382,92 @@
 /* 通用滚动条（面板内） */
 .pd-scroll::-webkit-scrollbar { width:6px; }
 .pd-scroll::-webkit-scrollbar-thumb { background:var(--cbd); border-radius:999px; }
+
+/* ============================================================
+   面板外壳（单一真相源）——各 part 用 <pd-…> 组件 + 这些类组合，
+   不再在每个文件内联复制。改这里 = 所有面板同步。
+   ============================================================ */
+
+/* 面板：宽度由各卡通过 <pd-panel width> 传入 */
+.panel { display:flex; flex-direction:column; overflow:hidden; }
+.pbody { padding:12px 12px 11px; }
+
+/* 底栏（信息 + 删除/保存；无关闭） */
+.pfoot { display:flex; align-items:center; justify-content:space-between;
+         padding:8px 9px 8px 13px; border-top:1px solid var(--cbd); background:var(--cbg); }
+.pfoot .meta { font:11px var(--font-ui); color:var(--ctx2); font-variant-numeric:tabular-nums; }
+.pfoot .acts { display:flex; align-items:center; gap:6px; }
+.pfoot .pd-btn { min-height:28px; padding:0 13px; }
+
+/* 修改栏 / 属性块（修改栏与高级样式共用，双入口单源） */
+.modbox { border:1px solid var(--cbd); border-radius:var(--r-card); background:var(--cbg); padding:11px; }
+.modbox-h { font:600 10.5px var(--font-ui); letter-spacing:.5px; text-transform:uppercase;
+            color:var(--ctx2); margin-bottom:9px; display:flex; align-items:center; gap:6px; }
+.modbox-h::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--c1); }
+.prop + .prop { margin-top:11px; }
+.prop-h { display:flex; align-items:center; justify-content:flex-start; gap:8px; margin-bottom:7px; }
+.prop-h .t { font:600 12px var(--font-ui); color:var(--ctx); display:flex; align-items:center; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.grid2 > * { min-width:0; }
+
+/* 高级样式底框（导航 + 控件） */
+.advbox { border:1px solid var(--cbd); border-radius:var(--r-card); background:var(--cbg);
+          padding:10px; display:flex; gap:10px; }
+.adv-head { display:flex; align-items:center; justify-content:space-between;
+            font:500 12px var(--font-ui); color:var(--ctx); padding:0 1px 8px; }
+.adv { display:flex; align-items:center; justify-content:space-between; width:100%; box-sizing:border-box;
+       margin-top:11px; padding:10px 11px; border:1px solid var(--cbd); border-radius:var(--r-ctl);
+       background:var(--cbg); cursor:pointer; font:500 12px var(--font-ui); color:var(--ctx); }
+.adv .meta { font-size:11px; color:var(--ctx2); }
+.adv .r { display:flex; align-items:center; gap:8px; }
+
+/* 内容列（高级样式右侧 / 设置右侧共用） */
+.scon { flex:1; min-width:0; }
+
+/* 自动适配说明条（陌生元素） */
+.autonote { display:flex; gap:7px; align-items:flex-start; padding:7px 9px; margin-bottom:11px;
+            border-radius:var(--r-ctl); background:var(--c1-soft); border:1px solid var(--c1-edge);
+            font:11.5px/1.45 var(--font-ui); color:var(--ctx); }
+.autonote svg { width:14px; height:14px; color:var(--c1); flex:none; margin-top:1px; }
+.auto { font:600 9px var(--font-ui); color:var(--c1); background:var(--c1-soft);
+        border:1px solid var(--c1-edge); border-radius:999px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+
+/* 设置面板外壳 */
+.spanel { display:flex; flex-direction:column; overflow:hidden; }
+.shead { display:flex; align-items:center; justify-content:space-between;
+         padding:10px 9px 10px 14px; border-bottom:1px solid var(--cbd); }
+.shead .t { font-family:var(--font-serif); font-weight:600; font-size:15px; color:var(--ctx); }
+.sbody { display:flex; gap:12px; padding:10px 14px 12px 8px; }
+.sbody .pd-nav { width:42px; }
+.sbody .scon { max-height:300px; overflow:auto; }
+.scat { font:600 11px var(--font-ui); letter-spacing:.6px; text-transform:uppercase;
+        color:var(--ctx2); margin:1px 0 4px; }
+/* 设置行内数值控件统一宽度（防文本截断） */
+.pd-srow .pd-num { width:118px; flex:none; }
+.pd-srow .pd-num input { padding-left:13px; padding-right:4px; }
+
+/* ---- 组件配套样式（pigeon-components.js 引用） ---- */
+/* 自定义元素默认 display:inline，需显式块级/弹性，避免 inline 宿主产生空盒 */
+pd-panel, pd-modbox, pd-advbox, pd-prop, pd-foot { display:block; }
+pd-num, pd-color { display:flex; }
+pd-range { display:block; }
+pd-seg-display, pd-seg-align, pd-seg-deco { display:inline-flex; }
+/* 不透明度/模糊：滑杆 + 数值 */
+.opwrap { display:flex; align-items:center; gap:10px; }
+.opwrap .pd-range { flex:1; }
+.opwrap .opval { min-width:38px; text-align:right; font:12px var(--font-ui); color:var(--ctx2);
+                 font-variant-numeric:tabular-nums; }
+/* 属性控件包裹（pd-prop 的 data-slot） */
+.prop .ctl { min-width:0; }
+/* grid2 内的属性原件不叠加竖向间距 */
+.grid2 .prop + .prop { margin-top:0; }
+/* 文字装饰分段（B/I/U/S 字形） */
+.pd-seg.deco button { font:700 12px var(--font-ui); min-width:26px; }
+.pd-seg.deco .d-i { font-style:italic; }
+.pd-seg.deco .d-u { text-decoration:underline; }
+.pd-seg.deco .d-s { text-decoration:line-through; }
+/* 调试导航底部翻译开关 */
+.pd-nav .navsep { height:1px; width:22px; margin:6px auto 5px; background:var(--cbd); }
+.pd-nav .tr svg { width:16px; height:16px; }
+.pd-nav .tr.on { color:var(--c1); }
+.pd-nav .tr.on .ic { background:var(--c1-soft); box-shadow:0 0 0 1px var(--c1-edge) inset; }
