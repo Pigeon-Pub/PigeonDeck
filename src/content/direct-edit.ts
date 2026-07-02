@@ -1,19 +1,24 @@
 /* ============================================================
-   direct-edit.ts — 直接编辑文本（阶段 4a）
+   direct-edit.ts — 直接编辑文本 + 图片/视频替换（阶段 4a/4b）
    双击文本元素 → contentEditable 内联编辑 + 富文本浮条。
-   单击延迟协议：文本类型单击延迟 250ms（PanelManager.cancelPendingOpen 抢占）。
-   触发 dblclick 时抢占待定 open，进入编辑态。
+   双击图片/视频 → 替换弹层（本地文件 / URL）。
+   单击延迟协议：text/image/video 单击延迟 250ms（PanelManager.cancelPendingOpen 抢占）。
+   触发 dblclick 时抢占待定 open，进入编辑/替换。
    编辑结束：blur/点外部/Esc → 提交 richText StyleChange → 撤销历史。
+   替换执行：记 replaceMedia StyleChange（cssProp='src'）→ 撤销历史 → dataURL 上限判定。
    ============================================================ */
 
 import { Controller } from './controller';
-import { AnnotationStore, mergeChanges } from '../state/annotations';
+import { AnnotationStore, mergeChanges, StyleChange } from '../state/annotations';
 import { History } from '../state/history';
 import { Overlay } from './overlay';
 import { Settings } from '../state/settings';
 import { Toast } from './toast';
 import { PanelManager } from './panel';
 import { RichTextBar } from './inline-richtext';
+import { openReplaceMedia } from './replace-media';
+import { MAX_PERSIST_DATAURL } from '../state/session';
+import { t } from './i18n';
 import { buildSelector, classifyElement, getElementSummary } from '../shared/dom-utils';
 
 export class DirectEditManager {
@@ -22,6 +27,7 @@ export class DirectEditManager {
   private history: History;
   private panelLayer: HTMLElement;
   private panel: PanelManager;
+  private toast: Toast;
 
   /** 当前正在编辑的元素（null = 未在编辑） */
   private editEl: HTMLElement | null = null;
@@ -29,6 +35,8 @@ export class DirectEditManager {
   private snapshot: string = '';
   /** 当前富文本浮条实例 */
   private rtBar: RichTextBar | null = null;
+  /** 当前替换弹层句柄 */
+  private replaceHandle: { close: () => void } | null = null;
   /** Shadow 宿主（isOwnUi 判断） */
   private shadowHost: Element;
 
@@ -47,6 +55,7 @@ export class DirectEditManager {
     this.history = opts.history;
     this.panelLayer = opts.panelLayer;
     this.panel = opts.panel;
+    this.toast = opts.toast;
     this.shadowHost = (opts.panelLayer.getRootNode() as ShadowRoot).host;
 
     window.addEventListener('dblclick', this.onDblClick, true);
@@ -56,6 +65,8 @@ export class DirectEditManager {
   destroy(): void {
     window.removeEventListener('dblclick', this.onDblClick, true);
     window.removeEventListener('keydown', this.onKeyDown, true);
+    this.replaceHandle?.close();
+    this.replaceHandle = null;
     this.exitEdit(false);
   }
 
@@ -75,8 +86,21 @@ export class DirectEditManager {
     if (!(target instanceof HTMLElement)) return;
     if (target === document.documentElement || target === document.body) return;
 
+    const type = classifyElement(target);
+
+    // 图片/视频 → 替换弹层（不进 contentEditable）
+    if (type === 'image' || type === 'video') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      this.panel.cancelPendingOpen();
+      // 有内联编辑在进行则先提交
+      if (this.editEl) this.exitEdit(true);
+      this.openReplace(target, type);
+      return;
+    }
+
     // 只处理 text 类型
-    if (classifyElement(target) !== 'text') return;
+    if (type !== 'text') return;
 
     // 阻止默认行为（选词）+ 抢占单击延迟
     ev.preventDefault();
@@ -237,6 +261,104 @@ export class DirectEditManager {
         revert: () => {
           const t = resolveEl();
           if (t) t.innerHTML = oldHtml;
+          this.store.remove(added.id);
+        },
+      });
+    }
+  }
+
+  // ---- 图片/视频替换（阶段 4b） ----
+
+  /** 打开替换弹层，选定新 src 后走 applyReplace */
+  private openReplace(el: HTMLElement, kind: 'image' | 'video'): void {
+    this.replaceHandle?.close();
+    this.replaceHandle = openReplaceMedia({
+      root: this.panelLayer,
+      anchor: el,
+      kind,
+      onReplace: (newSrc) => {
+        this.replaceHandle = null;
+        this.applyReplace(el, newSrc);
+      },
+    });
+  }
+
+  /** 执行替换：即时预览 + 记 replaceMedia StyleChange + 撤销历史 + dataURL 上限提示 */
+  private applyReplace(el: HTMLElement, newSrc: string): void {
+    const oldSrc = el.getAttribute('src') ?? '';
+    if (newSrc === oldSrc) return;
+
+    // 即时预览
+    el.setAttribute('src', newSrc);
+
+    // 超大 dataURL：刷新不可恢复，提示
+    if (newSrc.startsWith('data:') && newSrc.length > MAX_PERSIST_DATAURL) {
+      this.toast.show(t('toast_media_unpersisted'));
+    }
+
+    const selector = buildSelector(el);
+    const existing = this.store.getBySelector(selector);
+    const change: StyleChange = {
+      prop: 'replaceMedia',
+      cssProp: 'src',
+      oldValue: oldSrc,
+      newValue: newSrc,
+    };
+
+    const resolveEl = (): HTMLElement | null => {
+      try {
+        const matches = document.querySelectorAll(selector);
+        return matches.length === 1 && matches[0] instanceof HTMLElement ? matches[0] : null;
+      } catch {
+        return null;
+      }
+    };
+
+    if (existing) {
+      const merged = mergeChanges(existing.changes, [change]);
+      const savedAnnotation = this.store.update(existing.id, { changes: merged });
+      if (savedAnnotation) {
+        const after = savedAnnotation;
+        const before = existing;
+        this.history.push({
+          label: 'replace:update',
+          apply: () => {
+            const node = resolveEl();
+            if (node) node.setAttribute('src', after.changes.find((c) => c.prop === 'replaceMedia')?.newValue ?? newSrc);
+            this.store.update(after.id, { changes: after.changes });
+          },
+          revert: () => {
+            const node = resolveEl();
+            if (node) node.setAttribute('src', before.changes.find((c) => c.prop === 'replaceMedia')?.oldValue ?? oldSrc);
+            this.store.update(before.id, { changes: before.changes });
+          },
+        });
+      }
+    } else {
+      const rect = el.getBoundingClientRect();
+      const added = this.store.add({
+        selector,
+        elementType: classifyElement(el),
+        summary: getElementSummary(el),
+        note: '',
+        changes: [change],
+        viewportPos: {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          w: Math.round(rect.width),
+          h: Math.round(rect.height),
+        },
+      });
+      this.history.push({
+        label: 'replace:add',
+        apply: () => {
+          const node = resolveEl();
+          if (node) node.setAttribute('src', newSrc);
+          this.store.restore(added);
+        },
+        revert: () => {
+          const node = resolveEl();
+          if (node) node.setAttribute('src', oldSrc);
           this.store.remove(added.id);
         },
       });

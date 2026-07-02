@@ -50,6 +50,8 @@ const PLACE_GAP = 10;
 const EDGE_MARGIN = 8;
 /** 文本元素单击延迟（ms）：给 dblclick 让出时间窗口 */
 const SINGLE_CLICK_DELAY = 250;
+/** 需要给 dblclick 让窗口的元素类型（text=内联编辑，image/video=替换） */
+const DELAYED_TYPES: ReadonlySet<ElementType> = new Set<ElementType>(['text', 'image', 'video']);
 
 /** 四向放置结果 */
 interface Placement {
@@ -108,6 +110,8 @@ function applyChangesTo(target: Element | null, changes: StyleChange[], dir: 'ol
       target.textContent = value;
     } else if (c.cssProp === 'html') {
       target.innerHTML = value;
+    } else if (c.cssProp === 'src') {
+      target.setAttribute('src', value);
     } else {
       target.style.setProperty(c.cssProp, value);
     }
@@ -124,6 +128,22 @@ function htmlToText(html: string): string {
   const div = document.createElement('div');
   div.innerHTML = html;
   return (div.textContent ?? '').replace(/\s+/g, ' ').trim();
+}
+
+/** 媒体 src 精简展示：dataURL 显示 MIME 摘要，普通 URL 显示文件名/尾段 */
+function srcSummary(src: string): string {
+  if (!src) return '—';
+  if (src.startsWith('data:')) {
+    const mime = src.slice(5, src.indexOf(';') >= 0 ? src.indexOf(';') : src.indexOf(','));
+    return `data:${mime || 'media'}`;
+  }
+  try {
+    const u = new URL(src, location.href);
+    const last = u.pathname.split('/').filter(Boolean).pop();
+    return last || u.hostname;
+  } catch {
+    return src;
+  }
 }
 
 /** 打开的卡片记录 */
@@ -284,8 +304,8 @@ export class PanelManager {
     const selector = buildSelector(target);
     const existing = this.store.getBySelector(selector);
 
-    // 文本元素：延迟打开，给 dblclick 让出 250ms 时间窗口
-    if (classifyElement(target) === 'text') {
+    // text/image/video：延迟打开，给 dblclick 让出 250ms 时间窗口
+    if (DELAYED_TYPES.has(classifyElement(target))) {
       this.pendingOpenTarget = target;
       this.pendingOpenTimer = setTimeout(() => {
         this.pendingOpenTimer = null;
@@ -698,24 +718,27 @@ export class PanelManager {
         const k = document.createElement('span');
         k.className = 'k';
         const def = FIELD_DEFS[change.prop];
-        // 富文本内容修改（cssProp='html'）：友好标签 + 纯文本值
+        // 富文本内容修改（cssProp='html'）/ 媒体替换（cssProp='src'）：友好标签 + 精简值
         const isHtml = change.cssProp === 'html';
+        const isSrc = change.cssProp === 'src';
         if (isHtml) {
           k.textContent = t('rt_content_change');
+        } else if (isSrc) {
+          k.textContent = t('replace_media_change');
         } else {
           k.textContent = def ? t(def.labelKey) : change.prop;
         }
         row.appendChild(k);
         const diff = document.createElement('span');
         diff.className = 'pd-diff';
-        const oldDisplay = isHtml ? htmlToText(change.oldValue) : change.oldValue;
-        const newDisplay = isHtml ? htmlToText(change.newValue) : change.newValue;
-        diff.appendChild(document.createTextNode(truncateValue(oldDisplay)));
+        const format = (v: string): string =>
+          isHtml ? htmlToText(v) : isSrc ? srcSummary(v) : v;
+        diff.appendChild(document.createTextNode(truncateValue(format(change.oldValue))));
         const arrow = document.createElement('i');
         arrow.textContent = '→';
         diff.appendChild(arrow);
         const to = document.createElement('b');
-        to.textContent = truncateValue(newDisplay);
+        to.textContent = truncateValue(format(change.newValue));
         diff.appendChild(to);
         row.appendChild(diff);
         mods.appendChild(row);
