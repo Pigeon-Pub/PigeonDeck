@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PigeonDeck 设计系统 · 令牌与配方</title>
+<link rel="stylesheet" href="pigeonlib.css">
+<script src="pigeon-components.js" defer></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cbg);color:var(--ctx);font:14px/1.55 var(--font-ui)}
+  header{padding:30px 34px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  header .lhs{max-width:70ch}
+  h1{margin:0;font-family:var(--font-serif);font-size:24px;font-weight:600;letter-spacing:.2px}
+  header p{margin:8px 0 0;color:var(--ctx2);font-size:13px}
+  header .links{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  header a.link{font-size:12.5px;color:var(--c1);text-decoration:none;background:var(--c1-soft);
+    border:1px solid var(--c1-edge);border-radius:999px;padding:4px 12px}
+  header a.link:hover{filter:brightness(1.03)}
+  .themebtn{display:inline-flex}
+  section{padding:6px 34px 10px;max-width:1120px}
+  h2{font-family:var(--font-serif);font-size:17px;font-weight:600;margin:30px 0 4px;
+    padding-bottom:9px;border-bottom:1px solid var(--cbd)}
+  h3{font:600 12px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;color:var(--ctx2);margin:20px 0 10px}
+  .lead{color:var(--ctx2);font-size:12.5px;margin:4px 0 0;max-width:78ch}
+  .row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+  /* 卡片：一个配方一格 */
+  .spec{background:var(--csf);border:1px solid var(--cbd);border-radius:var(--r-card);
+    box-shadow:var(--sh);padding:14px}
+  .spec .cap{font:600 12px var(--font-ui);color:var(--ctx);margin-bottom:3px}
+  .spec .sub{font-size:11px;color:var(--ctx2);margin-bottom:11px}
+  .spec .demo{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  code{font:12px ui-monospace,Consolas,monospace;color:var(--c1);background:var(--c1-soft);
+    border-radius:6px;padding:1px 6px}
+  /* 令牌色板 */
+  .tok{display:flex;flex-direction:column;gap:6px;width:150px}
+  .tok .sw{height:46px;border-radius:10px;border:1px solid var(--cbd)}
+  .tok .nm{font:600 11.5px var(--font-ui);color:var(--ctx)}
+  .tok .hx{font:11px ui-monospace,Consolas,monospace;color:var(--ctx2)}
+  /* 字阶 */
+  .type-serif{font-family:var(--font-serif)}
+  .type-ui{font-family:var(--font-ui)}
+  /* 半径/动效样例 */
+  .chip{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 16px;
+    background:var(--c1-soft);border:1px solid var(--c1-edge);color:var(--c1);font:600 12px var(--font-ui)}
+  /* 通用弹窗配方演示 */
+  .dlg{width:260px;overflow:hidden}
+  .dlg .body{padding:14px;font-size:13px;color:var(--ctx);line-height:1.5}
+  .dlg .foot{display:flex;justify-content:flex-end;gap:7px;padding:0 14px 13px}
+  .dlg .pd-btn{min-height:28px}
+  /* 底栏演示 */
+  .footdemo{width:300px;overflow:hidden}
+  footer{padding:24px 34px 50px;color:var(--ctx2);font-size:12px;max-width:84ch}
+  .pd-dd.static{position:static;width:210px}
+</style>
+</head>
+<body>
+  <header>
+    <div class="lhs">
+      <h1>PigeonDeck 设计系统</h1>
+      <p>暖纸白 + 邮政金 · 宋体标题 + Lucide 线性图标 · 亮/暗双主题。令牌与控件配方的活文档，均由 <code>pigeonlib.css</code> + <code>pigeon-components.js</code> 实时渲染 —— 改设计系统 = 改这两份单一真相源。</p>
+      <div class="links">
+        <a class="link" href="index.html">← 组件画廊（38 张表面卡）</a>
+        <a class="link" href="../docs/design-system.md">design-system.md（文字规格）</a>
+        <a class="link" href="../docs/ui-preview-rulings.md">裁决记录</a>
+        <button class="pd-btn themebtn" id="theme">切换亮/暗</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ 令牌 ============ -->
+  <section>
+    <h2>1 · 设计令牌</h2>
+
+    <h3>颜色（随主题切换实时更新）</h3>
+    <div class="row">
+      <div class="tok"><div class="sw" style="background:var(--cbg)"></div><span class="nm">--cbg 页面底</span></div>
+      <div class="tok"><div class="sw" style="background:var(--csf)"></div><span class="nm">--csf 面/浮层</span></div>
+      <div class="tok"><div class="sw" style="background:var(--ctx)"></div><span class="nm">--ctx 正文</span></div>
+      <div class="tok"><div class="sw" style="background:var(--ctx2)"></div><span class="nm">--ctx2 次要</span></div>
+      <div class="tok"><div class="sw" style="background:var(--c1)"></div><span class="nm">--c1 邮政金</span></div>
+      <div class="tok"><div class="sw" style="background:var(--cd)"></div><span class="nm">--cd 火漆红</span></div>
+      <div class="tok"><div class="sw" style="background:var(--cs)"></div><span class="nm">--cs 橄榄绿</span></div>
+      <div class="tok"><div class="sw" style="background:var(--cbd)"></div><span class="nm">--cbd 边框</span></div>
+      <div class="tok"><div class="sw" style="background:var(--chv)"></div><span class="nm">--chv hover</span></div>
+    </div>
+
+    <h3>字体与字阶</h3>
+    <div class="row">
+      <div class="spec">
+        <div class="cap">标题 · <code>--font-serif</code></div>
+        <div class="sub">Fraunces / Noto Serif SC</div>
+        <div class="type-serif" style="font-size:26px;font-weight:600">限时优惠 · Pricing</div>
+        <div class="type-serif" style="font-size:18px;font-weight:600;margin-top:6px">设置 · Settings</div>
+      </div>
+      <div class="spec">
+        <div class="cap">正文/UI · <code>--font-ui</code></div>
+        <div class="sub">system-ui / PingFang / YaHei</div>
+        <div class="type-ui" style="font-size:14px">正文 14px · body copy</div>
+        <div class="type-ui" style="font-size:12px;color:var(--ctx2);margin-top:6px">次要 12px · meta / caption</div>
+        <div class="type-ui" style="font-size:11px;color:var(--ctx2);margin-top:6px">标签 11px · label</div>
+      </div>
+    </div>
+
+    <h3>圆角 · 阴影 · 动效</h3>
+    <div class="row">
+      <div class="spec">
+        <div class="cap">圆角</div>
+        <div class="sub"><code>--r-ctl 9px</code> · <code>--r-card 12px</code> · 单行控件 <code>999px</code></div>
+        <div class="demo">
+          <span class="chip" style="border-radius:9px">控件 9</span>
+          <span class="chip" style="border-radius:12px">卡片 12</span>
+          <span class="chip" style="border-radius:999px">药丸 999</span>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap">阴影</div>
+        <div class="sub"><code>--sh</code> · <code>--sh-up</code></div>
+        <div class="demo">
+          <span class="chip" style="border-radius:12px;background:var(--csf);border-color:var(--cbd);color:var(--ctx);box-shadow:var(--sh)">sh</span>
+          <span class="chip" style="border-radius:12px;background:var(--csf);border-color:var(--cbd);color:var(--ctx);box-shadow:var(--sh-up)">sh-up</span>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap">动效</div>
+        <div class="sub">快 130 · 中 190 · 慢 260ms · ease-out</div>
+        <div class="lead" style="margin:0">仅 transform/opacity。<b>例外</b>：面板长度用 <code>interpolate-size</code> 过渡 <code>height</code>（px→auto），切分区/展开高级样式时生效。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 控件配方 ============ -->
+  <section>
+    <h2>2 · 控件配方</h2>
+
+    <div class="row">
+      <div class="spec">
+        <div class="cap">文本按钮 <code>.pd-btn</code></div>
+        <div class="sub">药丸形 · 默认/主/危险/幽灵</div>
+        <div class="demo">
+          <button class="pd-btn">默认</button>
+          <button class="pd-btn primary">主要</button>
+          <button class="pd-btn danger">危险</button>
+          <button class="pd-btn ghost">幽灵</button>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap">输入 / 多行 <code>.pd-input</code> <code>.pd-textarea</code></div>
+        <div class="sub">单行药丸 · 多行圆角矩形（field-sizing）</div>
+        <div class="demo" style="display:block">
+          <input class="pd-input" value="单行输入" style="margin-bottom:8px">
+          <textarea class="pd-textarea">多行文本框，随内容增高。</textarea>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap">数值 <code>.pd-num</code></div>
+        <div class="sub">大胶囊套小圆胶囊 +/−</div>
+        <div class="demo"><pd-num value="24" unit="px"></pd-num></div>
+      </div>
+      <div class="spec">
+        <div class="cap">下拉触发钮 <code>.pd-select</code></div>
+        <div class="sub">去原生 · 小圆球 chevron · 点开走 .pd-dd</div>
+        <div class="demo" style="width:180px"><pd-select value="系统默认"></pd-select></div>
+      </div>
+      <div class="spec">
+        <div class="cap">分段 <code>.pd-seg</code></div>
+        <div class="sub">对齐 / 显示（图标段）</div>
+        <div class="demo">
+          <pd-seg-align active="center"></pd-seg-align>
+          <pd-seg-display active="flex"></pd-seg-display>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap">开关 · 滑杆</div>
+        <div class="sub"><code>.pd-switch</code> · <code>.pd-range</code></div>
+        <div class="demo">
+          <button class="pd-switch on"></button>
+          <button class="pd-switch"></button>
+          <div style="width:120px"><pd-range value="70"></pd-range></div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap">颜色 <code>.pd-color</code></div>
+        <div class="sub">色块 → 色值药丸 → 取色器</div>
+        <div class="demo" style="width:200px"><pd-color value="#b8842c"></pd-color></div>
+      </div>
+      <div class="spec">
+        <div class="cap">文字装饰 <code>.pd-seg-deco</code></div>
+        <div class="sub">B / I / U / S</div>
+        <div class="demo"><pd-seg-deco active="b"></pd-seg-deco></div>
+      </div>
+    </div>
+
+    <h3>统一自制下拉 + 智能识别栏 <code>.pd-dd</code>（裁决12 #8）</h3>
+    <p class="lead">非语言枚举下拉不复用系统原生。字体/字重/边框顶部加「智能识别栏」——采样该字段在选中元素祖先链上的实际值，去重按频次取前 5；分隔线后接系统列表；列表区至少露出 7 行。</p>
+    <div class="row" style="margin-top:10px">
+      <div class="pd-dd static">
+        <div class="pd-dd-h">页面常用 · 智能识别</div>
+        <div class="pd-dd-list">
+          <div class="pd-dd-item on"><span class="smart">识别</span><span class="nm" style="font-family:Inter,var(--font-ui)">Inter</span><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+          <div class="pd-dd-item"><span class="smart">识别</span><span class="nm" style="font-family:Georgia,serif">Georgia</span></div>
+          <div class="pd-dd-item"><span class="smart">识别</span><span class="nm" style="font-family:system-ui">system-ui</span></div>
+        </div>
+        <div class="pd-dd-sep"></div>
+        <div class="pd-dd-h">全部字体</div>
+        <div class="pd-dd-list">
+          <div class="pd-dd-item"><span class="nm">系统默认</span></div>
+          <div class="pd-dd-item"><span class="nm" style="font-family:Roboto,sans-serif">Roboto</span></div>
+          <div class="pd-dd-item"><span class="nm" style="font-family:'Times New Roman',serif">Times New Roman</span></div>
+          <div class="pd-dd-item"><span class="nm" style="font-family:ui-monospace,Menlo,monospace">Menlo</span></div>
+        </div>
+      </div>
+      <div class="spec" style="max-width:340px">
+        <div class="cap">规格要点</div>
+        <div class="lead" style="margin-top:6px">
+          · 选项行胶囊化，hover <code>--chv</code>、选中 <code>--c1-soft</code>+勾<br>
+          · 智能项带 <code>识别</code> 角标（<code>--c1</code>）<br>
+          · 采不到样本 → 智能栏自隐（“没有就适当减少”）<br>
+          · 列表样式/大小写等无从采样 → 只用统一浮层、不加智能栏<br>
+          · 语言选择器是另一族：搜索框 + 全量列表（见画廊 29 / 39）
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 结构配方 ============ -->
+  <section>
+    <h2>3 · 结构配方</h2>
+
+    <h3>面板底栏 <code>.pfoot</code> + 粒度 +/- 胶囊（裁决12 #3）</h3>
+    <div class="row">
+      <div class="pd-surface footdemo">
+        <div style="padding:14px 14px 4px;font-size:13px;color:var(--ctx2)">（面板正文…）</div>
+        <pd-foot gran meta="② · h2 · 220×34px"></pd-foot>
+      </div>
+      <div class="spec" style="max-width:360px">
+        <div class="cap">粒度 +/-</div>
+        <div class="lead" style="margin-top:6px">底栏最左（文字左侧）小圆胶囊，视觉复用 <code>.pd-num</code> 步进：<code>+</code> 取更大祖先容器、<code>−</code> 取更具体子元素，沿 DOM 链多级；相对偏移记忆并应用后续选择。仅智能组件块模式的编辑面板出现；只读调试面板不加。</div>
+      </div>
+    </div>
+
+    <h3>通用弹窗版式（裁决12 #10）</h3>
+    <p class="lead">无顶栏、无标题、无多余说明；正文承载内容，功能键在底部靠右。清空确认、复制文本/图片弹窗统一此式。</p>
+    <div class="row" style="margin-top:10px">
+      <div class="pd-surface dlg">
+        <div class="body">清除当前页全部批注？此操作不可撤销。</div>
+        <div class="foot">
+          <button class="pd-btn ghost">取消</button>
+          <button class="pd-btn danger">确认清空</button>
+        </div>
+      </div>
+      <div class="spec" style="max-width:360px">
+        <div class="cap">要点</div>
+        <div class="lead" style="margin-top:6px">
+          · 底栏 <code>justify-content:flex-end</code>，主操作最右<br>
+          · 复制文本卡：底栏左=导出语言快切、右=下载(.md)+复制<br>
+          · 复制图片卡：底栏右=下载图标 + 复制按钮（无左控件）<br>
+          · 完整长图/任务清单示例见画廊 37 / 38
+        </div>
+      </div>
+    </div>
+
+    <h3>更多整表面</h3>
+    <p class="lead">工具盘、覆盖层、批注/编辑面板、设置 4 分区、右键菜单、双主题、输出两卡等 38 张真实表面卡，见 <a href="index.html" style="color:var(--c1)">组件画廊 →</a></p>
+  </section>
+
+  <footer>
+    单一真相源：令牌与控件配方在 <code>pigeonlib.css</code>，结构/图标在 <code>pigeon-components.js</code>。本页与组件画廊共用这两份文件，任何改动两处同步生效。行为规格见 <a href="../context/构想蓝图2.md" style="color:var(--c1)">构想蓝图2</a> 与 <a href="../docs/v1-plan.md" style="color:var(--c1)">v1-plan</a>。
+  </footer>
+
+  <script>
+    document.getElementById('theme').addEventListener('click', () => {
+      const h = document.documentElement;
+      h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    });
+  </script>
+</body>
+</html>

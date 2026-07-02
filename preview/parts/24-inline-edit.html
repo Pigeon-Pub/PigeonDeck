@@ -10,10 +10,10 @@
   .rtbar{display:inline-flex;flex-direction:column;gap:5px;margin:24px 0 16px;padding:6px}
   .rtrow{display:flex;align-items:center;gap:5px}
   .rtbar .sep{width:1px;height:18px;background:var(--cbd);margin:0 1px}
-  .rtbar .pd-select{width:auto;padding:5px 26px 5px 11px;min-height:0;font-size:12px;
-    background-position:right 9px center}
-  .selfont{width:96px}
-  .selsz{width:58px}
+  .rtbar .pd-select{padding:5px 24px 5px 11px;min-height:0;font-size:12px}
+  .rtbar .pd-sel-arrow{width:18px;height:18px}
+  .selfont{width:104px}
+  .selsz{width:64px}
   /* B I U S 切换组 */
   .fmt{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:var(--cbg);border:1px solid var(--cbd)}
   .fmt button{width:26px;height:24px;border:0;background:transparent;color:var(--ctx2);cursor:pointer;
@@ -50,8 +50,8 @@
     <!-- 双行全功能富文本浮条 -->
     <div class="pd-surface rtbar">
       <div class="rtrow">
-        <select class="pd-select selfont"><option>思源宋体</option></select>
-        <select class="pd-select selsz"><option>28</option></select>
+        <span class="pd-sel selfont"><button class="pd-select" type="button"><span class="v">思源宋体</span></button><span class="pd-sel-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
+        <span class="pd-sel selsz"><button class="pd-select" type="button"><span class="v">28</span></button><span class="pd-sel-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
         <span class="sep"></span>
         <button class="tb col" title="字体颜色">
           <span style="font-weight:700;line-height:1">A</span><span class="abar" style="background:var(--c1)"></span>

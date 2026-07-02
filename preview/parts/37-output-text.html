@@ -7,31 +7,29 @@
   html,body{margin:0;height:100%}
   .wp{display:flex;align-items:center;justify-content:center;padding:0}
   .opanel{width:452px;display:flex;flex-direction:column;overflow:hidden}
-  .ohead{display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:10px 11px 10px 14px;border-bottom:1px solid var(--cbd)}
-  .ohead .lhs{display:flex;align-items:center;gap:9px;min-width:0}
-  .ohead .t{font-family:var(--font-serif);font-weight:600;font-size:14px;color:var(--ctx)}
-  .ohead .lang{font:600 10px var(--font-ui);color:var(--c1);background:var(--c1-soft);
-    border:1px solid var(--c1-edge);border-radius:999px;padding:2px 8px}
-  .ohead .pd-btn{min-height:28px}
-  .obody{padding:11px 14px 13px;max-height:420px;overflow:auto;
+  /* 无顶栏、无标题：正文=任务清单预览，底栏=语言快切(左)+复制(右)（裁决12 #10） */
+  .obody{padding:13px 15px;max-height:430px;overflow:auto;
     font:11.5px/1.7 ui-monospace,Consolas,'Microsoft YaHei',monospace;color:var(--ctx);
     white-space:pre-wrap;word-break:break-word}
   .sec{color:var(--c1);font-weight:700}
   .cmt{color:var(--ctx2)}
   .ok{color:var(--cs)}
+  .ofoot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 11px 9px 13px;border-top:1px solid var(--cbd);background:var(--cbg)}
+  /* 导出语言快切：点开 = 同界面语言的搜索选择器（钉 英文/跟随） */
+  .langpick{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 6px 0 11px;
+    border-radius:999px;border:1px solid var(--cbd);background:var(--csf);color:var(--ctx);
+    font:500 12px var(--font-ui);cursor:pointer}
+  .langpick svg{width:14px;height:14px;color:var(--ctx2)}
+  .langpick .cur{color:var(--c1);font-weight:600}
+  .langpick .cd{margin-left:1px}
+  .ofoot .acts{display:inline-flex;align-items:center;gap:8px}
+  .ofoot .pd-btn{min-height:30px}
 </style>
 </head>
 <body>
   <div class="wp">
     <div class="pd-surface opanel">
-      <div class="ohead">
-        <span class="lhs">
-          <span class="t">复制文本 · 任务清单</span>
-          <span class="lang">English</span>
-        </span>
-        <button class="pd-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制</button>
-      </div>
       <div class="obody pd-scroll"><span class="sec">[Page Context]</span>
 - URL: https://example.com/pricing
 - Title: Pricing — Acme
@@ -65,6 +63,18 @@ Move:
 Scope: [div.card, img.thumb, span.price]
 Coordinates: (320,180)–(720,520)
 Instruction: 这一块整体留白太挤，希望更舒展</div>
+
+      <div class="ofoot">
+        <button class="langpick" title="导出语言（点开选择）">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+          <span class="cur">English</span>
+          <svg class="cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <span class="acts">
+          <button class="pd-iconbtn" title="下载为 .md 文件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>
+          <button class="pd-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制</button>
+        </span>
+      </div>
     </div>
   </div>
 </body>

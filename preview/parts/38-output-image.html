@@ -7,13 +7,8 @@
   html,body{margin:0;height:100%}
   .wp{display:flex;align-items:center;justify-content:center;padding:0}
   .opanel{width:360px;display:flex;flex-direction:column;overflow:hidden}
-  .ohead{display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:10px 11px 10px 14px;border-bottom:1px solid var(--cbd)}
-  .ohead .t{font-family:var(--font-serif);font-weight:600;font-size:14px;color:var(--ctx)}
-  .ohead .tag{font:600 10px var(--font-ui);color:var(--ctx2);background:var(--cbg);
-    border:1px solid var(--cbd);border-radius:999px;padding:2px 8px}
+  /* 无顶栏、无水印说明：正文=长图预览，底栏仅右侧 下载图标 + 复制按钮（裁决12 #10） */
   .shot-wrap{padding:12px}
-  /* 单页长图缩略：中性网页 + 叠加批注 */
   .shot{position:relative;border-radius:8px;border:1px solid var(--cbd);overflow:hidden;
     background:#fbfbfc;height:316px}
   .shot .blk{position:absolute;background:#e9ecf2;border-radius:4px}
@@ -21,20 +16,14 @@
   .shot .blk.gold{background:linear-gradient(135deg,#e7d4ad,#dcc18a)}
   .pd-pin{width:18px;height:18px;font-size:10px}
   .pd-markbox,.pd-region{border-width:1.5px}
-  .ofoot{display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:9px 11px 9px 13px;border-top:1px solid var(--cbd);background:var(--cbg)}
-  .ofoot .wm{font:10.5px var(--font-ui);color:var(--ctx2)}
-  .ofoot .pd-seg button{padding:4px 10px;font-size:11px}
+  .ofoot{display:flex;align-items:center;justify-content:flex-end;gap:8px;
+    padding:9px 11px;border-top:1px solid var(--cbd);background:var(--cbg)}
+  .ofoot .pd-btn{min-height:30px}
 </style>
 </head>
 <body>
   <div class="wp">
     <div class="pd-surface opanel">
-      <div class="ohead">
-        <span class="t">复制图片 · 单页长图</span>
-        <span class="tag">V1 · 仅图片</span>
-      </div>
-
       <div class="shot-wrap">
         <div class="shot">
           <!-- 中性网页内容块 -->
@@ -59,8 +48,8 @@
       </div>
 
       <div class="ofoot">
-        <span class="wm">水印：URL · 时间（设置可关）</span>
-        <div class="pd-seg accent"><button class="on">复制到剪贴板</button><button>下载</button></div>
+        <button class="pd-iconbtn" title="下载为文件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>
+        <button class="pd-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制</button>
       </div>
     </div>
   </div>

@@ -13,8 +13,9 @@
   .kv .k{color:var(--ctx2)}
   .kv .v code{font:11px ui-monospace,Consolas,monospace;color:var(--c1)}
   .csgrp{margin-top:11px}
-  .cslist{max-height:188px;overflow:auto;border-top:1px solid var(--cbd);padding-top:6px}
-  .csrow{display:flex;justify-content:space-between;gap:10px;font:11px var(--font-ui);padding:2.5px 0}
+  /* 与英文态逐行对齐：同 11 行 + 同 max-height，翻译只换标签、不改高度（裁决12 #6） */
+  .cslist{max-height:150px;overflow:auto;border-top:1px solid var(--cbd);padding-top:6px}
+  .csrow{display:flex;justify-content:space-between;gap:10px;font:11px var(--font-ui);padding:3px 0}
   .csrow .p{color:var(--ctx2)}
   .csrow .val{color:var(--ctx);font-family:ui-monospace,Consolas,monospace;font-size:11px}
 </style>
@@ -44,18 +45,13 @@
               <div class="csrow"><span class="p">宽度</span><span class="val">240px</span></div>
               <div class="csrow"><span class="p">高度</span><span class="val">128px</span></div>
               <div class="csrow"><span class="p">内边距</span><span class="val">16px</span></div>
-              <div class="csrow"><span class="p">外边距</span><span class="val">0px 0px 12px</span></div>
-              <div class="csrow"><span class="p">背景</span><span class="val">#ffffff</span></div>
+              <div class="csrow"><span class="p">外边距</span><span class="val">0 0 12px</span></div>
               <div class="csrow"><span class="p">边框</span><span class="val">1px solid #e7e9ee</span></div>
               <div class="csrow"><span class="p">圆角</span><span class="val">10px</span></div>
               <div class="csrow"><span class="p">阴影</span><span class="val">0 1px 2px …</span></div>
               <div class="csrow"><span class="p">字号</span><span class="val">13px</span></div>
               <div class="csrow"><span class="p">颜色</span><span class="val">#3a4250</span></div>
               <div class="csrow"><span class="p">定位</span><span class="val">static</span></div>
-              <div class="csrow"><span class="p">主轴方向</span><span class="val">row</span></div>
-              <div class="csrow"><span class="p">间距</span><span class="val">12px</span></div>
-              <div class="csrow"><span class="p">不透明度</span><span class="val">1</span></div>
-              <div class="csrow"><span class="p">层级</span><span class="val">auto</span></div>
             </div>
           </div>
         </pd-advbox>

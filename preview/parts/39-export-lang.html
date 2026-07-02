@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;align-items:center;justify-content:center;padding:0}
+  .dd{width:238px;padding:8px;overflow:hidden}
+  /* 与界面语言同款搜索选择器；顶部钉「英文 / 跟随界面」，胶囊形选项（裁决12 #7 #4） */
+  .srch{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;
+    border:1px solid var(--cbd);background:var(--cbg);margin-bottom:8px}
+  .srch svg{width:15px;height:15px;color:var(--ctx2);flex:none}
+  .srch input{flex:1;border:0;background:transparent;outline:none;font:13px var(--font-ui);color:var(--ctx)}
+  .srch input::placeholder{color:var(--ctx2)}
+  .grp-h{font:600 10px var(--font-ui);letter-spacing:.5px;text-transform:uppercase;color:var(--ctx2);
+    margin:2px 4px 5px}
+  .list{display:flex;flex-direction:column;gap:1px}
+  .opt{display:flex;align-items:center;gap:10px;padding:8px 13px;border-radius:999px;cursor:pointer}
+  .opt:hover{background:var(--chv)}
+  .opt.on{background:var(--c1-soft)}
+  .opt .iso{width:30px;flex:none;font:600 10px var(--font-ui);letter-spacing:.5px;color:var(--ctx2);text-transform:uppercase}
+  .opt .iso.f{display:flex;align-items:center;color:var(--c1)}
+  .opt .iso.f svg{width:16px;height:16px}
+  .opt .nm{font:13px var(--font-ui);color:var(--ctx)}
+  .opt .sub{font-size:11px;color:var(--ctx2);margin-left:auto}
+  .opt.on .chk{margin-left:auto;color:var(--c1)}
+  .opt.on .chk svg{width:15px;height:15px}
+  .opt.on .sub{display:none}
+  .sep{height:1px;margin:8px 6px;background:var(--cbd)}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <div class="pd-surface dd">
+      <div class="srch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input placeholder="搜索语言…">
+      </div>
+
+      <!-- 钉住组：英文（默认·选中）+ 跟随界面 -->
+      <div class="grp-h">常用</div>
+      <div class="list">
+        <div class="opt on"><span class="iso">en</span><span class="nm">English</span>
+          <span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+        <div class="opt"><span class="iso f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg></span><span class="nm">跟随界面</span><span class="sub">= 简体中文</span></div>
+      </div>
+
+      <div class="sep"></div>
+
+      <!-- 全部语言（BCP 47，全量可搜） -->
+      <div class="grp-h">全部语言</div>
+      <div class="list">
+        <div class="opt"><span class="iso">zh</span><span class="nm">简体中文</span><span class="sub">简体中文</span></div>
+        <div class="opt"><span class="iso">zh</span><span class="nm">繁體中文</span><span class="sub">繁體中文</span></div>
+        <div class="opt"><span class="iso">ja</span><span class="nm">日本語</span><span class="sub">日本語</span></div>
+        <div class="opt"><span class="iso">ko</span><span class="nm">한국어</span><span class="sub">한국어</span></div>
+        <div class="opt"><span class="iso">fr</span><span class="nm">Français</span><span class="sub">Français</span></div>
+        <div class="opt"><span class="iso">de</span><span class="nm">Deutsch</span><span class="sub">Deutsch</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

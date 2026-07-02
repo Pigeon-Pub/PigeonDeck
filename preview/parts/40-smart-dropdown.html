@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../pigeonlib.css">
+<script src="../pigeon-components.js" defer></script>
+<style>
+  html,body{margin:0;height:100%}
+  .wp{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px 0 0 18px}
+  .trig{width:200px}
+  .pd-dd{width:200px}
+</style>
+</head>
+<body>
+  <div class="wp">
+    <!-- 触发钮（统一样式，非原生 select） -->
+    <div class="trig"><pd-select value="Inter"></pd-select></div>
+
+    <!-- 展开：字体下拉。顶部智能识别栏（祖先链常用前 5，采不到自隐）→ 分隔 → 全部字体（≥7 行可见） -->
+    <div class="pd-dd">
+      <div class="pd-dd-h">页面常用 · 智能识别</div>
+      <div class="pd-dd-list">
+        <div class="pd-dd-item on"><span class="smart">识别</span><span class="nm" style="font-family:Inter,var(--font-ui)">Inter</span><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+        <div class="pd-dd-item"><span class="smart">识别</span><span class="nm" style="font-family:Georgia,serif">Georgia</span></div>
+        <div class="pd-dd-item"><span class="smart">识别</span><span class="nm" style="font-family:system-ui">system-ui</span></div>
+        <div class="pd-dd-item"><span class="smart">识别</span><span class="nm" style="font-family:'PingFang SC','Microsoft YaHei',sans-serif">PingFang SC</span></div>
+        <div class="pd-dd-item"><span class="smart">识别</span><span class="nm" style="font-family:ui-monospace,Menlo,Consolas,monospace">Menlo</span></div>
+      </div>
+
+      <div class="pd-dd-sep"></div>
+
+      <div class="pd-dd-h">全部字体</div>
+      <div class="pd-dd-list pd-dd-scroll pd-scroll">
+        <div class="pd-dd-item"><span class="nm">系统默认</span></div>
+        <div class="pd-dd-item"><span class="nm" style="font-family:Inter,sans-serif">Inter</span></div>
+        <div class="pd-dd-item"><span class="nm" style="font-family:Roboto,sans-serif">Roboto</span></div>
+        <div class="pd-dd-item"><span class="nm" style="font-family:'Helvetica Neue',sans-serif">Helvetica Neue</span></div>
+        <div class="pd-dd-item"><span class="nm" style="font-family:Arial,sans-serif">Arial</span></div>
+        <div class="pd-dd-item"><span class="nm" style="font-family:Georgia,serif">Georgia</span></div>
+        <div class="pd-dd-item"><span class="nm" style="font-family:'Times New Roman',serif">Times New Roman</span></div>
+        <div class="pd-dd-item"><span class="nm" style="font-family:ui-monospace,Menlo,monospace">Menlo</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

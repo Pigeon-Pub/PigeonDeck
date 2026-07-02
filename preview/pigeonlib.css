@@ -48,9 +48,11 @@
   --r-ctl:9px;             /* 控件圆角 */
   --r-card:12px;           /* 卡片/浮层圆角 */
   --t-fast:130ms;          /* hover / tooltip / 按钮反馈 */
-  --t-mid:190ms;           /* 浮层展开收起 / 面板弹出 */
+  --t-mid:190ms;           /* 浮层展开收起 / 面板弹出 / 面板长度变化 */
   --t-slow:260ms;          /* 拖拽归位 / 参考线消失 */
   --ease:ease-out;
+  /* 面板长度柔和动画：允许 height 在 px 与 auto/关键字之间过渡（Chrome/Edge 原生） */
+  interpolate-size: allow-keywords;
 }
 
 /* ============================================================
@@ -194,12 +196,35 @@
 
 /* 下拉：去原生箭头，右侧用与小胶囊同样式的小圆球包住 chevron */
 .pd-sel { position:relative; display:inline-block; width:100%; vertical-align:middle; }
-.pd-sel .pd-select { appearance:none; -webkit-appearance:none; width:100%; padding-right:34px; }
+.pd-sel .pd-select { appearance:none; -webkit-appearance:none; width:100%; padding-right:34px;
+                     display:flex; align-items:center; text-align:left; cursor:pointer; }
+.pd-sel .pd-select .v { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pd-sel-arrow { position:absolute; right:4px; top:50%; transform:translateY(-50%);
                 width:22px; height:22px; border-radius:50%; background:var(--chv);
                 display:flex; align-items:center; justify-content:center;
                 color:var(--ctx2); pointer-events:none; }
 .pd-sel-arrow svg { width:13px; height:13px; }
+
+/* 统一自制下拉浮层（所有非语言 select 共用；字体/字重/边框顶部带「智能识别栏」）
+   智能栏 = 采样该字段在选中元素祖先链上的实际值、去重按频次取前 5，采不到则自隐/缩短；
+   列表区至少露出 7 行，超出滚动。 */
+.pd-dd { min-width:190px; padding:6px; border-radius:var(--r-card);
+         background:var(--csf); border:1px solid var(--cbd); box-shadow:var(--sh-up); }
+.pd-dd-h { font:600 10px var(--font-ui); letter-spacing:.5px; text-transform:uppercase;
+           color:var(--ctx2); margin:3px 7px 4px; }
+.pd-dd-list { display:flex; flex-direction:column; gap:1px; }
+.pd-dd-item { display:flex; align-items:center; gap:9px; padding:7px 12px; border-radius:999px;
+              cursor:pointer; font:13px var(--font-ui); color:var(--ctx); }
+.pd-dd-item:hover { background:var(--chv); }
+.pd-dd-item.on { background:var(--c1-soft); }
+.pd-dd-item .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pd-dd-item .smart { flex:none; font:600 8px var(--font-ui); color:var(--c1); background:var(--c1-soft);
+                     border:1px solid var(--c1-edge); border-radius:999px; padding:1px 6px; letter-spacing:.3px; }
+.pd-dd-item .chk { flex:none; color:var(--c1); display:none; }
+.pd-dd-item.on .chk { display:flex; }
+.pd-dd-item.on .chk svg { width:15px; height:15px; }
+.pd-dd-sep { height:1px; margin:7px 6px; background:var(--cbd); }
+.pd-dd-scroll { max-height:250px; overflow:auto; }   /* ≈7 行可见后滚动 */
 
 /* 数值控件：单个大胶囊，内含 值 + 单位 px + 右侧嵌套小圆胶囊(横向 +/− 图标，纯色底无阴影) */
 .pd-num { display:flex; align-items:center; min-width:0; padding-right:3px;
@@ -388,16 +413,27 @@
    不再在每个文件内联复制。改这里 = 所有面板同步。
    ============================================================ */
 
-/* 面板：宽度由各卡通过 <pd-panel width> 传入 */
-.panel { display:flex; flex-direction:column; overflow:hidden; }
+/* 面板：宽度由各卡通过 <pd-panel width> 传入；长度变化走 height 柔和过渡（切分区/展开高级样式时） */
+.panel { display:flex; flex-direction:column; overflow:hidden;
+         transition:height var(--t-mid) var(--ease); }
 .pbody { padding:12px 12px 11px; }
 
 /* 底栏（信息 + 删除/保存；无关闭） */
 .pfoot { display:flex; align-items:center; justify-content:space-between;
-         padding:8px 9px 8px 13px; border-top:1px solid var(--cbd); background:var(--cbg); }
+         padding:8px 9px 8px 11px; border-top:1px solid var(--cbd); background:var(--cbg); }
+.pfoot .lead { display:flex; align-items:center; gap:9px; min-width:0; }
 .pfoot .meta { font:11px var(--font-ui); color:var(--ctx2); font-variant-numeric:tabular-nums; }
 .pfoot .acts { display:flex; align-items:center; gap:6px; }
 .pfoot .pd-btn { min-height:28px; padding:0 13px; }
+/* 选择粒度 +/-（仅智能组件块模式编辑面板；样式复用 pd-num 的小圆胶囊） */
+.pfoot .gran { flex:none; display:flex; gap:0; padding:2px; border-radius:999px; background:var(--chv); }
+.pfoot .gran button { border:0; background:transparent; color:var(--ctx2); cursor:pointer; padding:0;
+                      line-height:1; min-width:20px; height:19px; border-radius:999px;
+                      display:flex; align-items:center; justify-content:center;
+                      transition:background var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.pfoot .gran button:first-child { margin-right:-1px; }
+.pfoot .gran button svg { width:13px; height:13px; }
+.pfoot .gran button:hover { background:var(--csf); color:var(--c1); }
 
 /* 修改栏 / 属性块（修改栏与高级样式共用，双入口单源） */
 .modbox { border:1px solid var(--cbd); border-radius:var(--r-card); background:var(--cbg); padding:11px; }
@@ -433,7 +469,8 @@
         border:1px solid var(--c1-edge); border-radius:999px; padding:1px 6px; margin-left:6px; vertical-align:middle; }
 
 /* 设置面板外壳 */
-.spanel { display:flex; flex-direction:column; overflow:hidden; }
+.spanel { display:flex; flex-direction:column; overflow:hidden;
+          transition:height var(--t-mid) var(--ease); }
 .shead { display:flex; align-items:center; justify-content:space-between;
          padding:10px 9px 10px 14px; border-bottom:1px solid var(--cbd); }
 .shead .t { font-family:var(--font-serif); font-weight:600; font-size:15px; color:var(--ctx); }

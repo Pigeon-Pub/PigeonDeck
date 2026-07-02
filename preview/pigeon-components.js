@@ -129,9 +129,9 @@
 
   comp('pd-select', el => {
     el.classList.add('pd-sel');
-    const v = el.getAttribute('value');
-    const inner = v != null ? `<option>${v}</option>` : '';
-    return `<select class="pd-select" data-slot>${inner}</select><span class="pd-sel-arrow">${svg(I.chevD, 2)}</span>`;
+    // 去原生 select：自制触发钮（值 + 右侧小圆球 chevron）。点开走统一自制下拉浮层（见 pd-dd / 40 卡）
+    const v = attr(el, 'value', '');
+    return `<button class="pd-select" type="button"><span class="v">${v}</span></button><span class="pd-sel-arrow">${svg(I.chevD, 2)}</span>`;
   });
 
   comp('pd-range', el => {
@@ -165,7 +165,11 @@
      ============================================================ */
   comp('pd-foot', el => {
     el.classList.add('pfoot');
-    return `<span class="meta">${attr(el, 'meta', '')}</span>`
+    // gran：仅「智能组件块」模式的编辑面板传入；+ 放大取更大容器，− 缩小取更具体元素（样式同 pd-num 小胶囊）
+    const gran = el.hasAttribute('gran')
+      ? `<span class="gran" title="选择粒度"><button title="放大粒度 · 选更大的块">${svg(I.plus, 2.1)}</button><button title="缩小粒度 · 选更具体的元素">${svg(I.minus, 2.1)}</button></span>`
+      : '';
+    return `<span class="lead">${gran}<span class="meta">${attr(el, 'meta', '')}</span></span>`
       + `<span class="acts"><button class="pd-iconbtn danger" title="删除批注">${svg(I.trash)}</button><button class="pd-btn primary">保存</button></span>`;
   });
 
