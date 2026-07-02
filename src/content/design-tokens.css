@@ -1,0 +1,69 @@
+/* ============================================================
+   design-tokens.css — PigeonDeck 设计令牌（Shadow DOM 内部使用）
+   单一真相源：context/构想蓝图2.md §2 / preview/pigeonlib.css
+   视觉值禁止修改——画廊样式是本项目唯一硬约束。
+   ============================================================
+
+   字体说明：Fraunces 和思源宋体（Noto Serif SC）作为品牌/标题字体，
+   理想情况应从 Google Fonts 加载。但扩展的 content script 运行在
+   任意宿主页面的 Shadow DOM 内，宿主页面的 CSP（Content-Security-Policy）
+   可能限制 connect-src / font-src，阻止加载外部字体。V1 骨架阶段先声明
+   字体栈 + 系统 fallback，不做网络字体加载。后续阶段可考虑：
+   1. 将字体文件打包进扩展 web_accessible_resources
+   2. 通过 service worker 代理字体请求
+   ============================================================ */
+
+/* ---- 亮色令牌（默认） ---- */
+:host,
+:host([data-theme="light"]) {
+  --cbg: #f4efe2;             /* 页面底色 · 暖纸白 */
+  --csf: #faf7f0;             /* 卡片/浮层面 */
+  --ctx: #23262e;             /* 正文 · 墨黑 */
+  --ctx2: #6b6b6b;            /* 次要文字 */
+  --c1: #b8842c;              /* 主强调 · 邮政金 */
+  --c1-soft: rgba(184,132,44,0.12);
+  --c1-edge: rgba(184,132,44,0.30);
+  --cd: #b23a2e;              /* 危险 · 火漆红 */
+  --cs: #5c8a4a;              /* 成功 · 橄榄绿 */
+  --cbd: #d9d3c4;             /* 边框 */
+  --chv: #efe8d5;             /* hover 高亮 */
+  --sh: 0 1px 3px rgba(0,0,0,0.08);
+  --sh-up: 0 6px 18px -8px rgba(60,46,18,0.22), 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ---- 暗色令牌 ---- */
+:host([data-theme="dark"]) {
+  --cbg: #1e1e24;
+  --csf: #2a2a32;
+  --ctx: #e0ddd4;
+  --ctx2: #9a9790;
+  --c1: #ce9d4a;
+  --c1-soft: rgba(206,157,74,0.16);
+  --c1-edge: rgba(206,157,74,0.40);
+  --cd: #c75b4e;
+  --cs: #7aad5f;
+  --cbd: #3e3e48;
+  --chv: #363640;
+  --sh: 0 1px 3px rgba(0,0,0,0.3);
+  --sh-up: 0 8px 22px -8px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* ---- 主题无关令牌 ---- */
+:host {
+  /* 字体栈：品牌/标题字体 + 系统 fallback */
+  --font-serif: 'Fraunces', 'Source Han Serif SC', 'Noto Serif SC', Georgia, serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* 圆角 */
+  --r-ctl: 9px;               /* 控件圆角 */
+  --r-card: 12px;             /* 卡片/浮层圆角 */
+
+  /* 动效三档时序（覆盖蓝图1 §6 的 150/250/400ms） */
+  --t-fast: 130ms;            /* hover / tooltip / 按钮反馈 */
+  --t-mid: 190ms;             /* 浮层展开收起 / 面板弹出 / 面板长度变化 */
+  --t-slow: 260ms;            /* 拖拽归位 / 参考线消失 */
+  --ease: ease-out;
+
+  /* 面板长度柔和动画：允许 height 在 px 与 auto/关键字之间过渡（Chrome/Edge 原生） */
+  interpolate-size: allow-keywords;
+}
