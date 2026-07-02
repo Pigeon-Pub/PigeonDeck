@@ -1,0 +1,44 @@
+/* ============================================================
+   settings.ts — 极简设置存取（chrome.storage.local）
+   本阶段仅 hoverLabel / cardDefaultExpanded 两项，结构留好扩展。
+   ============================================================ */
+
+export interface Settings {
+  /** 元素 hover 标签（默认开启） */
+  hoverLabel: boolean;
+  /** 标注卡片默认展开（默认关闭） */
+  cardDefaultExpanded: boolean;
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  hoverLabel: true,
+  cardDefaultExpanded: false,
+};
+
+const STORAGE_KEY = 'settings';
+
+/** 读取设置：storage 值与默认值合并，storage 不可用时返回默认值 */
+export async function loadSettings(): Promise<Settings> {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    const stored = result[STORAGE_KEY];
+    if (stored && typeof stored === 'object') {
+      return { ...DEFAULT_SETTINGS, ...(stored as Partial<Settings>) };
+    }
+  } catch {
+    // storage 不可用时静默使用默认值
+  }
+  return { ...DEFAULT_SETTINGS };
+}
+
+/** 局部更新设置并持久化 */
+export async function saveSettings(patch: Partial<Settings>): Promise<Settings> {
+  const current = await loadSettings();
+  const next = { ...current, ...patch };
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEY]: next });
+  } catch {
+    // 静默失败，返回内存中的合并结果
+  }
+  return next;
+}
