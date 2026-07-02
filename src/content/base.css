@@ -1,0 +1,26 @@
+/* ============================================================
+   base.css — Shadow DOM 基元重置（骨架阶段最小集）
+   控件配方（.pd-* 类）后续阶段从 preview/pigeonlib.css 逐步搬入。
+   ============================================================ */
+
+/* :host 重置：清空 Shadow DOM 宿主默认样式 */
+:host {
+  all: initial;
+  display: block;
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+  color: var(--ctx);
+}
+
+/* 四层容器：pointer-events:none 默认，子层按需恢复 */
+[data-layer] {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-layer="control"]  { z-index: 4; }
+[data-layer="panel"]    { z-index: 3; }
+[data-layer="overlay"]  { z-index: 2; }
+[data-layer="feedback"] { z-index: 5; }
