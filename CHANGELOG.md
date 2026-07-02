@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 4：直接编辑与内联富文本（2026-07-03）
+
+- 双击文本内联编辑（`src/content/direct-edit.ts`）：双击文本元素 → 目标临时 `contentEditable` 进入页内编辑（进入前快照 `innerHTML`）；blur/点外部提交、Esc 取消（恢复快照）；内容变化记为 `StyleChange{cssProp:'html'}` 并入该元素标注（无则新建 note 空标注）→ push 撤销历史（revert 恢复快照）
+- 单击/双击区分：文本/图片/视频元素单击延迟 250ms 让出双击时间窗口，双击触发时抢占取消待定单击；内联编辑期间落在编辑元素上的事件豁免批注模式拦截（光标/选区可用）
+- Word 式双行富文本浮条（`src/content/inline-richtext.ts`，视觉照搬 preview part 24）：选中字符即贴选区上方弹出，翻转避让；第一行字体/字号/字色/高亮、第二行 B/I/U/S/上标/下标/对齐/列表，`document.execCommand`（`styleWithCSS`）逐字符生效；**弹层类命令（字体/字号/字色/高亮/对齐）保存并恢复选区 Range**（否则弹层交互塌陷选区致命令失效）；字号经 `<font size=7>` → `<span style="font-size:Npx">` 改写实现任意 px（纯函数 + 单测）
+- 图片/视频替换（`src/content/replace-media.ts`，视觉照搬 preview part 25）：双击图片/视频 → 替换弹层（本地文件 `FileReader`→dataURL 或粘贴 URL）→ 即时预览 + 记 `StyleChange{cssProp:'src'}` + 撤销历史
+- dataURL 持久化上限（`src/state/session.ts`）：`sanitizeForPersist` 纯函数在序列化前剔除 `src` 且 dataURL 超 ~1MB 的修改（只活内存、刷新不恢复，避免撑爆 sessionStorage 致整页丢失），替换命中上限时 toast 提示「刷新不可恢复」；6 条单测
+- 撤销/重做回放扩展（`applyChangesTo`）：新增 `html`（`innerHTML`）与 `src`（`setAttribute`）两分支，使富文本编辑与媒体替换的撤销/重做/删除回退都能正确复原
+- 卡片调整项：富文本内容变更用「文本内容」标签 + 纯文本 old→new 呈现（不露原始 HTML）；媒体替换 src 用精简摘要（dataURL 显 `data:<mime>`、URL 显文件名）避免撑爆卡片
+- i18n：新增富文本浮条 + 替换弹层 + toast 文案 key，中英双语同步
+- 单测：字号改写纯函数 11 条 + `sanitizeForPersist` 6 条
+- E2E：`tests/e2e/direct-edit.spec.ts` 8 用例（双击进编辑/选区弹浮条/加粗只影响选区/**字号弹层命令只作用于选区**/点外部提交出位号/单击仍弹面板/双击图片出替换弹层/URL 替换即时预览/本地文件 `setInputFiles` 替换），时序断言全部轮询；夹具新增 `<img>`
+
 ### Coding — 阶段 3b：修改栏与高级样式（2026-07-02）
 
 - 属性控件注册表（`src/content/fields.ts`）：`FIELD_DEFS` 全集单一真相源（文字/字号/字重/颜色/对齐/装饰/行高/字距/列表/大小写/宽高/显示/溢出/背景/边框/圆角/阴影/透明度/模糊/内外边距…）；`FieldsSession` **双入口单源**——修改栏（按元素类型的高频子集）与高级样式（全集）实例化同一 field 时共享当前值与监听，改一处两处同步；控件改动即时 inline 预览 + 基线快照，`getChanges` 同属性合并为一条（最初 oldValue、最新 newValue，改回原值自动剔除）
@@ -141,7 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | ~~1~~ | ~~工程骨架：Vite + TS + MV3 + Shadow DOM 宿主 + 设计令牌移植~~ ✅ |
 | ~~2~~ | ~~工具盘与悬浮球：Logo 球 + 展开/收起 + 拖拽移位 + 位置持久化~~ ✅ |
 | ~~3~~ | ~~批注模式：单击标注 + 修改栏 + 高级样式 + 调色盘 + 批注卡片/位号~~ ✅ |
-| 4 | 直接编辑：双击文本编辑 + 内联富文本浮条 + 图片/视频替换 |
+| ~~4~~ | ~~直接编辑：双击文本编辑 + 内联富文本浮条 + 图片/视频替换~~ ✅ |
 | 5 | 区域框选：长按 ≥300ms 拖拽 + 区域批注面板 |
 | 6 | 移动模式：选中 + 拖拽 + 吸附/参考线 + 八向缩放句柄 |
 | 7 | 撤销/重做：合并按钮 + 全操作覆盖 + Ctrl+Z / Ctrl+Shift+Z |
