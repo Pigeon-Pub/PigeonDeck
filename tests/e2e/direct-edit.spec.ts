@@ -78,15 +78,17 @@ async function clickShadowSel(page: Page, selector: string): Promise<void> {
   await page.mouse.click(rect.x, rect.y);
 }
 
-/** 在页面元素中心执行鼠标双击 */
+/** 在页面元素中心执行鼠标双击（先滚入视口，取滚后坐标） */
 async function dblClickPageEl(page: Page, cssSelector: string): Promise<void> {
+  await page.locator(cssSelector).first().scrollIntoViewIfNeeded();
   const box = await page.locator(cssSelector).first().boundingBox();
   if (!box) throw new Error(`Page element not found: ${cssSelector}`);
   await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
 }
 
-/** 在页面元素中心执行鼠标单击 */
+/** 在页面元素中心执行鼠标单击（先滚入视口，取滚后坐标） */
 async function clickPageEl(page: Page, cssSelector: string): Promise<void> {
+  await page.locator(cssSelector).first().scrollIntoViewIfNeeded();
   const box = await page.locator(cssSelector).first().boundingBox();
   if (!box) throw new Error(`Page element not found: ${cssSelector}`);
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
@@ -365,3 +367,99 @@ test('⑤ 单击（非双击）#btn-primary 仍正常弹面板', async () => {
 
   await page.close();
 });
+
+test('⑥ 双击 #pic → 替换弹层出现（含 drop 区 + URL 行）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await dblClickPageEl(page, '#pic');
+
+  // 替换弹层出现
+  await waitShadowVisible(page, '[data-testid="pd-replace"]');
+  // 含本地文件 drop 区 + URL 行 + 确认钮
+  await waitShadowVisible(page, '[data-testid="pd-replace-drop"]');
+  await waitShadowVisible(page, '[data-testid="pd-replace-url"]');
+  await waitShadowVisible(page, '[data-testid="pd-replace-confirm"]');
+
+  await page.close();
+});
+
+test('⑦ URL 行填新 dataURL → 替换 → #pic src 变新值、位号出现', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  const oldSrc = await page.evaluate(() =>
+    document.querySelector<HTMLImageElement>('#pic')!.getAttribute('src')
+  );
+
+  await dblClickPageEl(page, '#pic');
+  await waitShadowVisible(page, '[data-testid="pd-replace"]');
+
+  // 一个不同的小 dataURL（红色矩形）
+  const newSrc =
+    "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='80'%3E%3Crect%20width='120'%20height='80'%20fill='%23ff0000'/%3E%3C/svg%3E";
+
+  // 填 URL 输入框
+  await page.evaluate((src: string) => {
+    const host = document.getElementById('pd-host');
+    const input = host!.shadowRoot!.querySelector<HTMLInputElement>('[data-testid="pd-replace-url"]')!;
+    input.value = src;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }, newSrc);
+
+  // 点替换钮
+  await clickShadowSel(page, '[data-testid="pd-replace-confirm"]');
+
+  // #pic src 变为新值（即时预览）
+  await expect.poll(async () => {
+    return page.evaluate(() =>
+      document.querySelector<HTMLImageElement>('#pic')!.getAttribute('src')
+    );
+  }, { timeout: 3000 }).toBe(newSrc);
+
+  // 确认确实变了
+  expect(newSrc).not.toBe(oldSrc);
+
+  // 位号出现（替换即记录标注、无需额外保存）
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const host = document.getElementById('pd-host');
+      return !!host?.shadowRoot?.querySelector('[data-testid="pd-pin"]');
+    });
+  }, { timeout: 3000 }).toBe(true);
+
+  await page.close();
+});
+
+test('⑧ 本地文件（setInputFiles 小 PNG buffer）→ #pic src 变 data: 开头', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await dblClickPageEl(page, '#pic');
+  await waitShadowVisible(page, '[data-testid="pd-replace"]');
+
+  // 用 setInputFiles 塞一个 1x1 PNG 小 buffer 到隐藏 file input（shadow DOM 内）
+  const pngBase64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  const fileHandle = await page.evaluateHandle(() => {
+    const host = document.getElementById('pd-host');
+    return host!.shadowRoot!.querySelector('[data-testid="pd-replace-file"]') as HTMLInputElement;
+  });
+  const fileInput = fileHandle.asElement()!;
+  await fileInput.setInputFiles({
+    name: 'tiny.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(pngBase64, 'base64'),
+  });
+
+  // #pic src 变为 data: 开头（FileReader 产出 dataURL）
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const src = document.querySelector<HTMLImageElement>('#pic')!.getAttribute('src') ?? '';
+      return src.startsWith('data:image/png');
+    });
+  }, { timeout: 3000 }).toBe(true);
+
+  await page.close();
+});
+

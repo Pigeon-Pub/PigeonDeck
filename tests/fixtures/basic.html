@@ -83,6 +83,13 @@
     <div id="deco-strip" style="height:40px;background:#e0d8c8;border-radius:8px;"></div>
   </div>
 
+  <!-- Image with small inline SVG dataURL src → replace-media flow (phase 4b) -->
+  <div class="card" id="card-media">
+    <img id="pic" width="120" height="80"
+      src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='80'%3E%3Crect%20width='120'%20height='80'%20fill='%23e0d8c8'/%3E%3C/svg%3E"
+      alt="placeholder">
+  </div>
+
   <!-- Extra space to test scroll + toolbar boundary behavior -->
   <div class="spacer"></div>
 </body>
