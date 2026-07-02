@@ -1,19 +1,17 @@
 /**
- * extension.ts — E2E 测试帮助函数
- * 加载 dist/ 目录下的 Chrome 扩展，提供 Shadow DOM 穿透工具。
+ * extension.ts - E2E test helper functions
+ * Loads the dist/ Chrome extension, provides Shadow DOM utilities.
  */
 
 import { chromium, BrowserContext, Page } from '@playwright/test';
-import * as http from 'node:http';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import * as http from 'http';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.resolve(__dirname, '..', '..', '..', 'dist');
 const FIXTURES_DIR = path.resolve(__dirname, '..', '..', 'fixtures');
 
-/** 启动带扩展的 Chromium（持久化上下文） */
+/** Launch Chromium with the extension loaded (persistent context) */
 export async function launchExtensionBrowser(): Promise<{
   context: BrowserContext;
   extensionId: string;
@@ -22,7 +20,7 @@ export async function launchExtensionBrowser(): Promise<{
   fs.mkdirSync(userDataDir, { recursive: true });
 
   const context = await chromium.launchPersistentContext(userDataDir, {
-    headless: false, // Chrome 扩展要求非 headless（或使用新 headless 模式）
+    headless: false,
     args: [
       `--disable-extensions-except=${DIST_DIR}`,
       `--load-extension=${DIST_DIR}`,
@@ -32,7 +30,7 @@ export async function launchExtensionBrowser(): Promise<{
     viewport: { width: 1280, height: 720 },
   });
 
-  // 获取扩展 ID（等待 service worker 启动）
+  // Get extension ID from service worker URL
   let extensionId = '';
   const timeout = Date.now() + 10000;
   while (!extensionId && Date.now() < timeout) {
@@ -49,8 +47,8 @@ export async function launchExtensionBrowser(): Promise<{
     }
   }
 
+  // Fallback: try existing pages
   if (!extensionId) {
-    // 尝试从打开的背景页获取
     for (const page of context.pages()) {
       const match = page.url().match(/chrome-extension:\/\/([^/]+)/);
       if (match) {
@@ -63,7 +61,7 @@ export async function launchExtensionBrowser(): Promise<{
   return { context, extensionId };
 }
 
-/** 静态文件 HTTP 服务器（随机端口） */
+/** Local static file server for fixtures */
 export interface TestServer {
   port: number;
   baseUrl: string;
@@ -108,34 +106,63 @@ export async function startFixtureServer(): Promise<TestServer> {
   return {
     port,
     baseUrl: `http://127.0.0.1:${port}`,
-    close: () => new Promise((resolve, reject) => {
-      server.close((err) => (err ? reject(err) : resolve()));
-    }),
+    close: () =>
+      new Promise((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      }),
   };
 }
 
-/**
- * 获取 Shadow DOM 内的元素（Playwright 原生支持穿透 open shadow DOM）。
- * 直接使用 page.locator() 即可穿透 open shadow，无需特殊工具。
- *
- * Shadow DOM 宿主选择器示例：'#pd-host'
- * Shadow root 内部：page.locator('#pd-host >> css=.pd-ball')
- */
-export function getShadowLocator(page: Page, selector: string) {
-  // Playwright 自动穿透 open shadow DOM
-  return page.locator(selector);
-}
-
-/** 等待 Shadow DOM 宿主注入完成 */
+/** Wait for the extension's Shadow DOM host to be injected */
 export async function waitForExtensionInjected(page: Page): Promise<void> {
-  await page.waitForFunction(
-    () => !!document.getElementById('pd-host'),
-    { timeout: 10000 }
-  );
+  await page.waitForFunction(() => !!document.getElementById('pd-host'), {
+    timeout: 10000,
+  });
 }
 
-/** 在 shadow root 内查询元素（返回 page.locator） */
-export function shadowLocator(page: Page, cssSelector: string) {
-  // Playwright 穿透 open shadow DOM：使用 >> 语法
-  return page.locator(`#pd-host >> css=${cssSelector}`);
+/** Get bounding rect of an element inside the Shadow DOM */
+export async function getShadowElementRect(
+  page: Page,
+  testId: string
+): Promise<{ x: number; y: number; width: number; height: number; top: number; right: number; bottom: number; left: number } | null> {
+  return page.evaluate((id: string) => {
+    const host = document.getElementById('pd-host');
+    if (!host?.shadowRoot) return null;
+    const el = host.shadowRoot.querySelector(`[data-testid="${id}"]`);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return {
+      x: r.x,
+      y: r.y,
+      width: r.width,
+      height: r.height,
+      top: r.top,
+      right: r.right,
+      bottom: r.bottom,
+      left: r.left,
+    };
+  }, testId);
+}
+
+/** Click an element inside the Shadow DOM by data-testid */
+export async function clickShadowEl(page: Page, testId: string): Promise<void> {
+  const rect = await getShadowElementRect(page, testId);
+  if (!rect) throw new Error(`Shadow element not found: ${testId}`);
+  await page.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
+}
+
+/** Check if an element inside Shadow DOM is visible */
+export async function isShadowElVisible(page: Page, testId: string): Promise<boolean> {
+  return page.evaluate((id: string) => {
+    const host = document.getElementById('pd-host');
+    if (!host?.shadowRoot) return false;
+    const el = host.shadowRoot.querySelector<HTMLElement>(`[data-testid="${id}"]`);
+    if (!el) return false;
+    const style = getComputedStyle(el);
+    return (
+      style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      style.opacity !== '0'
+    );
+  }, testId);
 }

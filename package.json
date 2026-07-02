@@ -11,7 +11,7 @@
     "i18n:check": "node scripts/i18n-check.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "^1.45.0",
+    "@playwright/test": "^1.60.0",
     "@types/chrome": "^0.0.268",
     "concurrently": "^8.2.2",
     "sharp": "^0.33.4",
