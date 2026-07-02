@@ -177,5 +177,6 @@
   "rt_superscript": { "message": "上标", "description": "富文本浮条上标按钮提示" },
   "rt_subscript": { "message": "下标", "description": "富文本浮条下标按钮提示" },
   "rt_align": { "message": "对齐", "description": "富文本浮条对齐下拉提示" },
-  "rt_list": { "message": "无序列表", "description": "富文本浮条列表按钮提示" }
+  "rt_list": { "message": "无序列表", "description": "富文本浮条列表按钮提示" },
+  "rt_content_change": { "message": "文本内容", "description": "卡片内联富文本内容修改调整项标签" }
 }

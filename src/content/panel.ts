@@ -119,6 +119,13 @@ function truncateValue(value: string, max = 24): string {
   return value.length > max ? value.slice(0, max) + '…' : value;
 }
 
+/** HTML 片段 → 纯文本（富文本内容修改的卡片展示用，剥离标签只留可读文字） */
+function htmlToText(html: string): string {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return (div.textContent ?? '').replace(/\s+/g, ' ').trim();
+}
+
 /** 打开的卡片记录 */
 interface OpenCard {
   annotation: Annotation;
@@ -691,16 +698,24 @@ export class PanelManager {
         const k = document.createElement('span');
         k.className = 'k';
         const def = FIELD_DEFS[change.prop];
-        k.textContent = def ? t(def.labelKey) : change.prop;
+        // 富文本内容修改（cssProp='html'）：友好标签 + 纯文本值
+        const isHtml = change.cssProp === 'html';
+        if (isHtml) {
+          k.textContent = t('rt_content_change');
+        } else {
+          k.textContent = def ? t(def.labelKey) : change.prop;
+        }
         row.appendChild(k);
         const diff = document.createElement('span');
         diff.className = 'pd-diff';
-        diff.appendChild(document.createTextNode(truncateValue(change.oldValue)));
+        const oldDisplay = isHtml ? htmlToText(change.oldValue) : change.oldValue;
+        const newDisplay = isHtml ? htmlToText(change.newValue) : change.newValue;
+        diff.appendChild(document.createTextNode(truncateValue(oldDisplay)));
         const arrow = document.createElement('i');
         arrow.textContent = '→';
         diff.appendChild(arrow);
         const to = document.createElement('b');
-        to.textContent = truncateValue(change.newValue);
+        to.textContent = truncateValue(newDisplay);
         diff.appendChild(to);
         row.appendChild(diff);
         mods.appendChild(row);

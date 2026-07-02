@@ -177,5 +177,6 @@
   "rt_superscript": { "message": "Superscript", "description": "Richtext bar superscript button tooltip" },
   "rt_subscript": { "message": "Subscript", "description": "Richtext bar subscript button tooltip" },
   "rt_align": { "message": "Align", "description": "Richtext bar align dropdown tooltip" },
-  "rt_list": { "message": "Bullet list", "description": "Richtext bar list button tooltip" }
+  "rt_list": { "message": "Bullet list", "description": "Richtext bar list button tooltip" },
+  "rt_content_change": { "message": "Text content", "description": "Card change-row label for inline rich-text content edits" }
 }
