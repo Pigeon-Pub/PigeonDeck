@@ -10,6 +10,13 @@ import type { AnnotationStore, PageState } from './annotations';
 const KEY_PREFIX = 'pigeondeck:';
 const SAVE_DEBOUNCE_MS = 300;
 
+/**
+ * dataURL 持久化字符长度上限（~1MB）。
+ * sessionStorage 约 5MB，单个超大 dataURL 会让整页 setItem 失败、整页状态丢失。
+ * 超上限的媒体替换 change 序列化时剔除 → 只活在内存，刷新不恢复（符合规格）。
+ */
+export const MAX_PERSIST_DATAURL = 1_000_000;
+
 /** 顶层按 pageKey 组织（V2 多页扩展点） */
 interface SessionPayload {
   version: 1;
@@ -25,11 +32,32 @@ function storageKey(pageKey: string): string {
   return KEY_PREFIX + pageKey;
 }
 
-/** 序列化单页状态为存储载荷 */
+/**
+ * 序列化前净化：深拷贝副本，剔除超上限的 dataURL 媒体替换 change（不改内存态）。
+ * 仅剔除 cssProp==='src' 且 newValue 以 'data:' 开头且长度超 MAX_PERSIST_DATAURL 的 change。
+ */
+export function sanitizeForPersist(state: PageState): PageState {
+  return {
+    nextNumber: state.nextNumber,
+    annotations: state.annotations.map((a) => ({
+      ...a,
+      changes: a.changes.filter(
+        (c) =>
+          !(
+            c.cssProp === 'src' &&
+            c.newValue.startsWith('data:') &&
+            c.newValue.length > MAX_PERSIST_DATAURL
+          )
+      ),
+    })),
+  };
+}
+
+/** 序列化单页状态为存储载荷（先净化超大 dataURL） */
 export function serializeSession(pageKey: string, state: PageState): string {
   const payload: SessionPayload = {
     version: 1,
-    pages: { [pageKey]: state },
+    pages: { [pageKey]: sanitizeForPersist(state) },
   };
   return JSON.stringify(payload);
 }

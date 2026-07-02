@@ -48,6 +48,10 @@ const ICONS = {
 const PANEL_WIDTH = 330; // preview part 11
 const PLACE_GAP = 10;
 const EDGE_MARGIN = 8;
+/** 文本元素单击延迟（ms）：给 dblclick 让出时间窗口 */
+const SINGLE_CLICK_DELAY = 250;
+/** 需要给 dblclick 让窗口的元素类型（text=内联编辑，image/video=替换） */
+const DELAYED_TYPES: ReadonlySet<ElementType> = new Set<ElementType>(['text', 'image', 'video']);
 
 /** 四向放置结果 */
 interface Placement {
@@ -104,6 +108,10 @@ function applyChangesTo(target: Element | null, changes: StyleChange[], dir: 'ol
     const value = dir === 'old' ? c.oldValue : c.newValue;
     if (c.cssProp === 'text') {
       target.textContent = value;
+    } else if (c.cssProp === 'html') {
+      target.innerHTML = value;
+    } else if (c.cssProp === 'src') {
+      target.setAttribute('src', value);
     } else {
       target.style.setProperty(c.cssProp, value);
     }
@@ -113,6 +121,29 @@ function applyChangesTo(target: Element | null, changes: StyleChange[], dir: 'ol
 /** 卡片调整项展示值截断（文字内容修改可能很长） */
 function truncateValue(value: string, max = 24): string {
   return value.length > max ? value.slice(0, max) + '…' : value;
+}
+
+/** HTML 片段 → 纯文本（富文本内容修改的卡片展示用，剥离标签只留可读文字） */
+function htmlToText(html: string): string {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return (div.textContent ?? '').replace(/\s+/g, ' ').trim();
+}
+
+/** 媒体 src 精简展示：dataURL 显示 MIME 摘要，普通 URL 显示文件名/尾段 */
+function srcSummary(src: string): string {
+  if (!src) return '—';
+  if (src.startsWith('data:')) {
+    const mime = src.slice(5, src.indexOf(';') >= 0 ? src.indexOf(';') : src.indexOf(','));
+    return `data:${mime || 'media'}`;
+  }
+  try {
+    const u = new URL(src, location.href);
+    const last = u.pathname.split('/').filter(Boolean).pop();
+    return last || u.hostname;
+  } catch {
+    return src;
+  }
 }
 
 /** 打开的卡片记录 */
@@ -147,6 +178,13 @@ export class PanelManager {
 
   // 跟随刷新
   private rafId: number | null = null;
+
+  // 单击延迟：文本元素单击等待 dblclick 抢占
+  private pendingOpenTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingOpenTarget: Element | null = null;
+
+  // 内联编辑拦截豁免：当前编辑元素（DirectEditManager 设置）
+  private inlineEditEl: HTMLElement | null = null;
 
   private active = false;
   private unsubscribeStore: () => void;
@@ -190,6 +228,7 @@ export class PanelManager {
     window.removeEventListener('scroll', this.scheduleReposition, true);
     window.removeEventListener('resize', this.scheduleReposition);
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
+    this.cancelPendingOpen();
     this.closePanel();
     this.closeMenu();
     for (const id of [...this.cards.keys()]) this.closeCard(id);
@@ -202,6 +241,7 @@ export class PanelManager {
     const next = expanded && mode === 'annotate';
     if (this.active && !next) {
       // 退出批注交互：关面板/菜单（卡片是已保存内容的 UI，保留）
+      this.cancelPendingOpen();
       this.closePanel();
       this.closeMenu();
     }
@@ -233,6 +273,9 @@ export class PanelManager {
 
     if (!this.active || this.isOwnUi(ev)) return;
 
+    // 内联编辑豁免：落在正在编辑元素上的事件直接放行
+    if (this.inlineEditEl && path.includes(this.inlineEditEl)) return;
+
     // 批注模式：阻止页面自身的 mousedown 行为（焦点/选区/页面脚本）
     ev.preventDefault();
     ev.stopPropagation();
@@ -240,6 +283,9 @@ export class PanelManager {
 
   private onClick = (ev: MouseEvent): void => {
     if (!this.active || this.isOwnUi(ev)) return;
+
+    // 内联编辑豁免：落在正在编辑元素上的点击直接放行
+    if (this.inlineEditEl && ev.composedPath().includes(this.inlineEditEl)) return;
 
     // 批注模式：拦截页面默认行为（链接跳转/按钮提交）
     ev.preventDefault();
@@ -257,10 +303,41 @@ export class PanelManager {
     // 已有标注的元素 → 预填面板
     const selector = buildSelector(target);
     const existing = this.store.getBySelector(selector);
+
+    // text/image/video：延迟打开，给 dblclick 让出 250ms 时间窗口
+    if (DELAYED_TYPES.has(classifyElement(target))) {
+      this.pendingOpenTarget = target;
+      this.pendingOpenTimer = setTimeout(() => {
+        this.pendingOpenTimer = null;
+        // 重新校验：仍 active、target 仍 isConnected
+        if (!this.active) return;
+        if (!this.pendingOpenTarget?.isConnected) return;
+        const t = this.pendingOpenTarget;
+        this.pendingOpenTarget = null;
+        const ex = this.store.getBySelector(buildSelector(t));
+        this.openPanel(t, ex ?? null);
+      }, SINGLE_CLICK_DELAY);
+      return;
+    }
+
     this.openPanel(target, existing ?? null);
   };
 
   // ---- 批注面板 ----
+
+  /** 取消待定的单击延迟（dblclick 触发直接编辑时调用） */
+  cancelPendingOpen(): void {
+    if (this.pendingOpenTimer !== null) {
+      clearTimeout(this.pendingOpenTimer);
+      this.pendingOpenTimer = null;
+    }
+    this.pendingOpenTarget = null;
+  }
+
+  /** 内联编辑豁免：DirectEditManager 进入/退出编辑时设置 */
+  setInlineEditActive(el: HTMLElement | null): void {
+    this.inlineEditEl = el;
+  }
 
   /** 打开批注面板（existing 非空 = 修改已有批注，预填内容） */
   openPanel(target: Element, existing: Annotation | null): void {
@@ -641,16 +718,27 @@ export class PanelManager {
         const k = document.createElement('span');
         k.className = 'k';
         const def = FIELD_DEFS[change.prop];
-        k.textContent = def ? t(def.labelKey) : change.prop;
+        // 富文本内容修改（cssProp='html'）/ 媒体替换（cssProp='src'）：友好标签 + 精简值
+        const isHtml = change.cssProp === 'html';
+        const isSrc = change.cssProp === 'src';
+        if (isHtml) {
+          k.textContent = t('rt_content_change');
+        } else if (isSrc) {
+          k.textContent = t('replace_media_change');
+        } else {
+          k.textContent = def ? t(def.labelKey) : change.prop;
+        }
         row.appendChild(k);
         const diff = document.createElement('span');
         diff.className = 'pd-diff';
-        diff.appendChild(document.createTextNode(truncateValue(change.oldValue)));
+        const format = (v: string): string =>
+          isHtml ? htmlToText(v) : isSrc ? srcSummary(v) : v;
+        diff.appendChild(document.createTextNode(truncateValue(format(change.oldValue))));
         const arrow = document.createElement('i');
         arrow.textContent = '→';
         diff.appendChild(arrow);
         const to = document.createElement('b');
-        to.textContent = truncateValue(change.newValue);
+        to.textContent = truncateValue(format(change.newValue));
         diff.appendChild(to);
         row.appendChild(diff);
         mods.appendChild(row);

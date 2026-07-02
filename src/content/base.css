@@ -1107,3 +1107,132 @@
 .acard .mod .k { color: var(--ctx2); flex: none; }
 .acard .mod .pd-diff { overflow: hidden; text-overflow: ellipsis; }
 
+/* ============================================================
+   阶段 4a：双行富文本浮条（Word 式选区浮条）
+   视觉来源：preview/parts/24-inline-edit.html 逐值照搬
+   ============================================================ */
+
+/* 浮条外壳（双行纵向）*/
+.rtbar {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  position: absolute;
+  z-index: 10;
+}
+
+/* 每行横排 */
+.rtrow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 竖分隔线 */
+.rtbar .sep {
+  width: 1px;
+  height: 18px;
+  background: var(--cbd);
+  margin: 0 1px;
+}
+
+/* 浮条内 .pd-select 特殊覆写（更小字/更紧凑） */
+.rtbar .pd-select {
+  padding: 5px 24px 5px 11px;
+  min-height: 0;
+  font-size: 12px;
+}
+.rtbar .pd-sel-arrow {
+  width: 18px;
+  height: 18px;
+}
+.rtbar .selfont { width: 104px; }
+.rtbar .selsz { width: 64px; }
+
+/* B/I/U/S 切换组（药丸容器）*/
+.fmt {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--cbg);
+  border: 1px solid var(--cbd);
+}
+.fmt button {
+  width: 26px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--ctx2);
+  cursor: pointer;
+  border-radius: 999px;
+  font: 13px/1 var(--font-ui);
+}
+.fmt button.on {
+  background: var(--csf);
+  color: var(--c1);
+  box-shadow: var(--sh);
+}
+.fmt button.b { font-weight: 800; }
+.fmt button.i { font-style: italic; }
+.fmt button.u { text-decoration: underline; }
+.fmt button.s { text-decoration: line-through; }
+
+/* 小工具钮（字色/高亮/上下标/对齐/列表）*/
+.tb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 26px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ctx);
+  cursor: pointer;
+  font: 13px var(--font-ui);
+}
+.tb:hover { background: var(--chv); }
+.tb svg { width: 15px; height: 15px; }
+.tb .car { width: 10px; height: 10px; color: var(--ctx2); }
+.tb .abar { display: block; height: 3px; width: 14px; border-radius: 2px; margin-top: -2px; }
+.tb.col { flex-direction: column; }
+
+/* 上下标按钮字形 */
+.sup { font-size: 12px; }
+.sup sup, .sup sub { font-size: 9px; }
+
+/* 正在编辑的文本元素：金边轮廓 */
+[data-pd-editing] {
+  outline: 1.5px solid var(--c1-edge) !important;
+  outline-offset: 5px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   阶段 4b：图片/视频替换弹层
+   视觉来源：preview/parts/25-replace-media.html 逐值照搬
+   ============================================================ */
+.rep { width: 226px; padding: 13px; position: absolute; }
+.rep-h { font: 600 12px var(--font-ui); color: var(--ctx); margin-bottom: 3px; }
+.rep-sub { font-size: 11px; color: var(--ctx2); margin-bottom: 11px; }
+.rep .drop {
+  border: 1.5px dashed var(--cbd);
+  border-radius: var(--r-ctl);
+  background: var(--cbg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  text-align: center;
+}
+.rep .drop svg { width: 22px; height: 22px; color: var(--c1); }
+.rep .drop .d1 { font-size: 12px; color: var(--ctx); }
+.rep .or { display: flex; align-items: center; gap: 8px; margin: 11px 0; color: var(--ctx2); font-size: 11px; }
+.rep .or::before, .rep .or::after { content: ""; flex: 1; height: 1px; background: var(--cbd); }
+.rep .urlrow { display: flex; gap: 6px; }
+.rep .urlrow .pd-input { flex: 1; }
+
+

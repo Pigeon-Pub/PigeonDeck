@@ -10,8 +10,10 @@ import {
   saveSession,
   restoreSession,
   bindSessionPersistence,
+  sanitizeForPersist,
+  MAX_PERSIST_DATAURL,
 } from './session';
-import { AnnotationStore, PageState } from './annotations';
+import { AnnotationStore, PageState, StyleChange } from './annotations';
 
 const PAGE_KEY = 'https://example.com/page?a=1';
 
@@ -78,11 +80,82 @@ describe('session — sessionStorage 存取', () => {
   });
 });
 
+describe('session — sanitizeForPersist（dataURL 上限）', () => {
+  function stateWithChanges(changes: StyleChange[]): PageState {
+    return {
+      nextNumber: 2,
+      annotations: [
+        {
+          id: 'a1',
+          number: 1,
+          selector: '#pic',
+          elementType: 'image',
+          summary: 'img',
+          note: '',
+          changes,
+          createdAt: 1720000000000,
+          viewportPos: { x: 0, y: 0, w: 100, h: 60 },
+        },
+      ],
+    };
+  }
+
+  const bigDataUrl = 'data:image/png;base64,' + 'A'.repeat(MAX_PERSIST_DATAURL);
+  const smallDataUrl = 'data:image/svg+xml,<svg/>';
+
+  it('超大 data:url src change 被剔除', () => {
+    const out = sanitizeForPersist(
+      stateWithChanges([{ prop: 'replaceMedia', cssProp: 'src', oldValue: '', newValue: bigDataUrl }])
+    );
+    expect(out.annotations[0].changes).toHaveLength(0);
+  });
+
+  it('普通 URL src change 保留', () => {
+    const out = sanitizeForPersist(
+      stateWithChanges([{ prop: 'replaceMedia', cssProp: 'src', oldValue: '', newValue: 'https://x.com/a.png' }])
+    );
+    expect(out.annotations[0].changes).toHaveLength(1);
+  });
+
+  it('小 dataURL src change 保留（未超上限）', () => {
+    const out = sanitizeForPersist(
+      stateWithChanges([{ prop: 'replaceMedia', cssProp: 'src', oldValue: '', newValue: smallDataUrl }])
+    );
+    expect(out.annotations[0].changes).toHaveLength(1);
+  });
+
+  it('其他类型 change 全部保留（只针对 src，即使超大）', () => {
+    const out = sanitizeForPersist(
+      stateWithChanges([
+        { prop: 'richText', cssProp: 'html', oldValue: 'a', newValue: 'b'.repeat(MAX_PERSIST_DATAURL + 1) },
+        { prop: 'fontSize', cssProp: 'font-size', oldValue: '14px', newValue: '20px' },
+      ])
+    );
+    expect(out.annotations[0].changes).toHaveLength(2);
+  });
+
+  it('不改原 state（返回新副本）', () => {
+    const state = stateWithChanges([
+      { prop: 'replaceMedia', cssProp: 'src', oldValue: '', newValue: bigDataUrl },
+    ]);
+    sanitizeForPersist(state);
+    expect(state.annotations[0].changes).toHaveLength(1); // 原 state 未变
+  });
+
+  it('serializeSession 产物不含超大 dataURL、反序列化后该 change 缺失', () => {
+    const raw = serializeSession(
+      PAGE_KEY,
+      stateWithChanges([{ prop: 'replaceMedia', cssProp: 'src', oldValue: '', newValue: bigDataUrl }])
+    );
+    expect(raw).not.toContain('AAAA');
+    expect(deserializeSession(raw, PAGE_KEY)?.annotations[0].changes).toHaveLength(0);
+  });
+});
+
 describe('session — 防抖持久化', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-  });
-  afterEach(() => {
+  });  afterEach(() => {
     vi.useRealTimers();
   });
 

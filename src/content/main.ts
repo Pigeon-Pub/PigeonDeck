@@ -16,6 +16,7 @@ import { AnnotationStore, Annotation } from '../state/annotations';
 import { History } from '../state/history';
 import { restoreSession, bindSessionPersistence } from '../state/session';
 import { loadSettings, Settings } from '../state/settings';
+import { DirectEditManager } from './direct-edit';
 
 // 防重复注入标记
 const HOST_ID = 'pd-host';
@@ -104,6 +105,18 @@ function inject(settings: Settings): void {
   const panelManager = new PanelManager(controller, store, overlay, panelLayer, settings, history);
   hooks.onPinClick = panelManager.togglePinCard;
   hooks.onPinContextMenu = panelManager.openPinMenu;
+
+  // 阶段 4a：直接编辑（双击文本元素 → 内联编辑 + 富文本浮条）
+  new DirectEditManager({
+    controller,
+    store,
+    history,
+    overlay,
+    panelLayer,
+    settings,
+    toast,
+    panel: panelManager,
+  });
 
   // 恢复后：未能定位的标注数据保留、UI 跳过，轻提示
   if (restored && restored.annotations.length > 0) {
