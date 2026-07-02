@@ -283,3 +283,256 @@
 .pd-ball:hover .pd-tip {
   opacity: 1;
 }
+
+/* ============================================================
+   面板/浮层基元配方
+   来源：preview/pigeonlib.css + docs/design-system.md §5.5-5.10
+   ============================================================ */
+
+/* 浮层/面板通用面 */
+.pd-surface {
+  background: var(--csf);
+  border: 1px solid var(--cbd);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-up);
+  color: var(--ctx);
+  font-family: var(--font-ui);
+}
+
+/* 文本按钮（药丸形） */
+.pd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 15px;
+  border-radius: 999px;
+  font: 500 12px var(--font-ui);
+  cursor: pointer;
+  border: 1px solid var(--cbd);
+  background: var(--csf);
+  color: var(--ctx);
+  transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.pd-btn:hover { background: var(--chv); }
+.pd-btn svg { width: 15px; height: 15px; flex: none; }
+.pd-btn.primary { background: var(--c1); border-color: var(--c1); color: #fdf6e6; }
+.pd-btn.primary:hover { filter: brightness(1.04); }
+.pd-btn.danger { background: var(--cd); border-color: var(--cd); color: #fdf1ef; }
+.pd-btn.ghost { background: transparent; border-color: transparent; }
+.pd-btn.ghost:hover { background: var(--chv); }
+
+/* 小图标按钮（圆形） */
+.pd-iconbtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ctx2);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.pd-iconbtn svg { width: 16px; height: 16px; }
+.pd-iconbtn:hover { background: var(--chv); color: var(--ctx); }
+.pd-iconbtn.danger:hover { color: var(--cd); background: rgba(178,58,46,0.10); }
+
+/* 多行文本框：圆角矩形，field-sizing 自适应高度 */
+.pd-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: 13px var(--font-ui);
+  background: var(--cbg);
+  border: 1px solid var(--cbd);
+  outline: none;
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+  border-radius: var(--r-ctl);
+  resize: none;
+  line-height: 1.5;
+  padding: 9px 12px;
+  field-sizing: content;
+  min-height: 38px;
+  color: var(--ctx);
+}
+.pd-textarea:focus {
+  border-color: var(--c1-edge);
+  box-shadow: 0 0 0 3px var(--c1-soft);
+}
+
+/* 面板外壳 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: height var(--t-mid) var(--ease);
+}
+.pbody { padding: 12px 12px 11px; }
+
+/* 底栏（信息 + 删除/保存） */
+.pfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 9px 8px 11px;
+  border-top: 1px solid var(--cbd);
+  background: var(--cbg);
+  border-radius: 0 0 var(--r-card) var(--r-card);
+}
+.pfoot .lead { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.pfoot .meta { font: 11px var(--font-ui); color: var(--ctx2); font-variant-numeric: tabular-nums; }
+.pfoot .acts { display: flex; align-items: center; gap: 6px; }
+.pfoot .pd-btn { min-height: 28px; padding: 0 13px; }
+
+/* ============================================================
+   页面覆盖层基元（overlay 层）
+   来源：preview/pigeonlib.css + docs/design-system.md §5.22
+   ============================================================ */
+
+/* hover 高亮 */
+.pd-hover {
+  position: absolute;
+  border: 1.5px solid var(--c1-edge);
+  border-radius: 6px;
+  background: var(--c1-soft);
+  pointer-events: none;
+}
+
+/* 元素 hover 标签（9px） */
+.pd-hlabel {
+  position: absolute;
+  font: 600 9px var(--font-ui);
+  color: #fdf6e6;
+  background: rgba(35,38,46,0.86);
+  border: 1px solid var(--c1);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: .3px;
+}
+
+/* 标注框 + 位号圆 */
+.pd-markbox {
+  position: absolute;
+  border: 1.5px solid var(--c1);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.pd-pin {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--c1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 12px var(--font-ui);
+  box-shadow: 0 1px 4px rgba(120,84,20,0.5);
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 连线（卡片放不下时连回位号圆） */
+.pd-connector { position: absolute; pointer-events: none; }
+.pd-connector line { stroke: var(--c1); stroke-width: 1.2; stroke-dasharray: 3 3; }
+
+/* ============================================================
+   上下文菜单（位号圆右键）
+   来源：preview/pigeonlib.css + docs/design-system.md §5.21
+   ============================================================ */
+.pd-menu {
+  min-width: 148px;
+  padding: 5px;
+  border-radius: var(--r-card);
+  background: var(--csf);
+  border: 1px solid var(--cbd);
+  box-shadow: var(--sh-up);
+}
+.pd-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--r-ctl);
+  background: transparent;
+  color: var(--ctx);
+  font: 500 12.5px var(--font-ui);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.pd-menu-item svg { width: 15px; height: 15px; color: var(--ctx2); flex: none; }
+.pd-menu-item:hover { background: var(--chv); }
+.pd-menu-item.danger { color: var(--cd); }
+.pd-menu-item.danger svg { color: var(--cd); }
+.pd-menu-item.danger:hover { background: rgba(178,58,46,0.10); }
+.pd-menu-sep { height: 1px; margin: 4px 6px; background: var(--cbd); }
+
+/* ============================================================
+   批注卡片（来源：preview/parts/07-annotation-card.html）
+   ============================================================ */
+.acard { position: absolute; width: 252px; }
+.acard .note { padding: 13px 14px 10px; font-size: 13px; line-height: 1.55; color: var(--ctx); }
+.acard .hr { height: 1px; background: var(--cbd); margin: 0 14px; }
+.acard .mods { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+.acard .foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 9px 8px 14px;
+  border-top: 1px solid var(--cbd);
+  background: var(--cbg);
+  border-radius: 0 0 var(--r-card) var(--r-card);
+}
+.acard .meta { font-size: 11px; color: var(--ctx2); font-variant-numeric: tabular-nums; }
+.acard .acts { display: flex; gap: 2px; }
+
+/* ============================================================
+   轻提示 toast（feedback 层，190ms 进出）
+   来源：preview/pigeonlib.css + docs/design-system.md §5.23
+   ============================================================ */
+.pd-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: var(--ctx);
+  color: var(--csf);
+  border-radius: var(--r-ctl);
+  font: 500 12px var(--font-ui);
+  box-shadow: var(--sh-up);
+}
+.pd-toast svg { width: 15px; height: 15px; }
+.pd-toast .ico-info { color: var(--c1); }
+.pd-toast .ico-ok { color: #9bd07f; }
+
+[data-layer="feedback"] .pd-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(6px);
+  opacity: 0;
+  transition: opacity var(--t-mid) var(--ease), transform var(--t-mid) var(--ease);
+}
+[data-layer="feedback"] .pd-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================================
+   层内 pointer-events 恢复
+   ============================================================ */
+/* panel 层的浮层可交互 */
+[data-layer="panel"] > * { pointer-events: auto; }
+/* overlay 层默认穿透，仅位号圆可交互（.pd-pin 单独恢复） */
