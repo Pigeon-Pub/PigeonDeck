@@ -6,5 +6,37 @@
   "ext_desc": {
     "message": "Annotate, edit and export web page feedback for AI-assisted development.",
     "description": "Extension description shown in Chrome Web Store and extensions page"
+  },
+  "tb_logo": {
+    "message": "PigeonDeck (collapse)",
+    "description": "Toolbar logo button tooltip"
+  },
+  "tb_move": {
+    "message": "Move",
+    "description": "Toolbar move mode button tooltip"
+  },
+  "tb_copy_text": {
+    "message": "Copy as Text",
+    "description": "Toolbar copy text button tooltip"
+  },
+  "tb_copy_image": {
+    "message": "Copy as Image",
+    "description": "Toolbar copy image button tooltip"
+  },
+  "tb_undo": {
+    "message": "Undo",
+    "description": "Toolbar undo button tooltip"
+  },
+  "tb_redo": {
+    "message": "Redo",
+    "description": "Toolbar redo button tooltip"
+  },
+  "tb_clear": {
+    "message": "Clear",
+    "description": "Toolbar clear button tooltip"
+  },
+  "tb_settings": {
+    "message": "Settings",
+    "description": "Toolbar settings button tooltip"
   }
 }

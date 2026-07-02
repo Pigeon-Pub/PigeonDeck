@@ -6,5 +6,37 @@
   "ext_desc": {
     "message": "在任意网页上标注、编辑并导出反馈，生成 AI 可执行的任务清单。",
     "description": "显示在 Chrome 网上应用店和扩展管理页面的描述"
+  },
+  "tb_logo": {
+    "message": "PigeonDeck（收起）",
+    "description": "工具盘 Logo 按钮提示"
+  },
+  "tb_move": {
+    "message": "移动组件",
+    "description": "工具盘移动模式按钮提示"
+  },
+  "tb_copy_text": {
+    "message": "复制文本",
+    "description": "工具盘复制文本按钮提示"
+  },
+  "tb_copy_image": {
+    "message": "复制图片",
+    "description": "工具盘复制图片按钮提示"
+  },
+  "tb_undo": {
+    "message": "撤销",
+    "description": "工具盘撤销按钮提示"
+  },
+  "tb_redo": {
+    "message": "重做",
+    "description": "工具盘重做按钮提示"
+  },
+  "tb_clear": {
+    "message": "清空",
+    "description": "工具盘清空按钮提示"
+  },
+  "tb_settings": {
+    "message": "设置",
+    "description": "工具盘设置按钮提示"
   }
 }
