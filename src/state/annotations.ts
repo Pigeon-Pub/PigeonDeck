@@ -106,6 +106,11 @@ export class AnnotationStore {
     return [...this.annotations];
   }
 
+  /** 下一个将被分配的编号（面板未保存时预显示用） */
+  peekNextNumber(): number {
+    return this.nextNumber;
+  }
+
   getById(id: string): Annotation | undefined {
     return this.annotations.find((a) => a.id === id);
   }

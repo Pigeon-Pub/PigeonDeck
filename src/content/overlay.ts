@@ -146,11 +146,16 @@ export class Overlay {
     return entry.target.getBoundingClientRect();
   }
 
-  /** 某标注位号圆的当前视口矩形（卡片/菜单锚点用） */
+  /** 某标注位号圆的当前视口矩形（卡片/菜单锚点用，由目标矩形推算，不依赖渲染时序） */
   getPinRect(annotationId: string): DOMRect | null {
-    const entry = this.entries.get(annotationId);
-    if (!entry || entry.pin.style.display === 'none') return null;
-    return entry.pin.getBoundingClientRect();
+    const rect = this.getTargetRect(annotationId);
+    if (!rect) return null;
+    return new DOMRect(
+      rect.left - MARK_INSET - PIN_OFFSET,
+      rect.top - MARK_INSET - PIN_OFFSET,
+      22,
+      22
+    );
   }
 
   // ---- hover ----
