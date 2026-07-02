@@ -220,3 +220,4 @@
 ## 8. 交接进度追加区（每阶段合并后加一行）
 
 - 2026-07-02（Fable）：阶段 1、2 合并已推送；阶段 3a+3b 在 feat/p3-annotation 待验收合并（style-edit.spec.ts 未跑过）。交接给 Opus 4.8。
+- 2026-07-03（Opus）：**阶段 3 验收完成并合并 main**（merge 7c4dd92）。style-edit.spec.ts 6 用例首跑即全绿，全量 E2E 18 用例连跑 2 遍稳定；五门禁全过（vitest 143）。CHANGELOG 补 3b 小节 + Future 表第 3 行打钩。审查确认三处关键路径无误：FieldsSession 双入口单源（`subscribe(key)` 共享值+监听）、未保存 `closePanel→session.rollback()`（原本无内联样式的属性回滚为移除）、卡片 `.pd-diff` 调整项渲染。分支已删。**⚠️ push 因本机网络重置失败，main 7c4dd92 仅在本地，待下次网络恢复推送**（`git push origin main`）。下一步：阶段 4。

@@ -4,7 +4,12 @@
 
 ## 仓库当前阶段
 
-**编码阶段进行中**。设计系统已就绪（[preview/](preview/) 画廊 + [docs/design-system.md](docs/design-system.md)），按 [docs/v1-plan.md](docs/v1-plan.md) 的 15 个阶段逐阶段实施。**阶段 1（工程骨架）已完成**：Vite 双配置构建（content IIFE + background ES）、Shadow DOM 四层宿主、pigeonlib 设计令牌、i18n 框架、logger 均已落地。
+**编码阶段进行中**。设计系统已就绪（[preview/](preview/) 画廊 + [docs/design-system.md](docs/design-system.md)），按 [docs/v1-plan.md](docs/v1-plan.md) 的 15 个阶段逐阶段实施。**阶段 1–3 已完成并合并 main**：
+- **阶段 1 工程骨架**：Vite 双配置构建（content IIFE + background ES）、Shadow DOM 四层宿主、pigeonlib 设计令牌、i18n 框架、logger。
+- **阶段 2 工具盘与悬浮球**：模式控制器状态机、42px 悬浮球、7 按钮工具盘、tooltip、长按拖拽持久化、E2E 测试基建。
+- **阶段 3 批注模式**：3a 批注核心（选择器/元素分类、编号规则、sessionStorage 持久化、overlay 跟随、面板/卡片/右键菜单）+ 3b 修改栏与高级样式（fields.ts 双入口单源、修改栏智能切换、高级样式 4 分类、自制下拉/调色盘、样式修改管线→撤销历史、未保存回滚、卡片调整项）。
+
+门禁基线：build ✓ / typecheck ✓ / vitest 143 ✓ / e2e 18 ✓ / i18n ✓。**下一阶段：阶段 4 直接编辑与内联富文本**。
 
 当前根目录有：
 - `src/` + `public/` + `scripts/` — 扩展源码、静态资源（manifest/_locales/icons/brand）、构建脚本
