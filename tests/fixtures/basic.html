@@ -90,6 +90,17 @@
       alt="placeholder">
   </div>
 
+  <!-- Deeply nested structure for granularity +/- multi-level tests (phase 6a).
+       resolveComponentBlock(#deep-btn) = #deep-btn (button has border);
+       ascend +1 = #deep-inner, +2 = #deep-mid, +3 = #deep-outer. -->
+  <section id="deep-outer" style="background:#eef;border:1px solid #99c;padding:16px;">
+    <div id="deep-mid" style="background:#ddf;border:1px solid #88c;padding:16px;">
+      <div id="deep-inner" style="padding:12px;">
+        <button id="deep-btn" style="border:1px solid #77b;padding:6px 12px;">Nested Button</button>
+      </div>
+    </div>
+  </section>
+
   <!-- Extra space to test scroll + toolbar boundary behavior -->
   <div class="spacer"></div>
 </body>

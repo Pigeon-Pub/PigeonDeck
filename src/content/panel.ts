@@ -169,6 +169,12 @@ export class PanelManager {
   private panelEl: HTMLElement | null = null;
   private panelTarget: Element | null = null;
   private panelExisting: Annotation | null = null;
+  /**
+   * 粒度会话的稳定原始命中元素：+/- 粒度胶囊始终以它 + 累加 offset 解析目标，
+   * 避免用"已被上次 +/- 移动过的 panelTarget"复合叠加导致过冲。
+   * 仅在新鲜单击/编辑打开时更新；re-point 打开保持不变。
+   */
+  private granHitEl: HTMLElement | null = null;
   // 本次面板会话的字段状态（双入口单源）；保存后置空，未保存关面板回滚
   private session: FieldsSession | null = null;
   private panelCommitted = false;
@@ -314,10 +320,6 @@ export class PanelManager {
       return;
     }
 
-    // 已有标注的元素 → 预填面板
-    const selector = buildSelector(target);
-    const existing = this.store.getBySelector(selector);
-
     // text/image/video：延迟打开，给 dblclick 让出 250ms 时间窗口
     if (DELAYED_TYPES.has(classifyElement(target))) {
       this.pendingOpenTarget = target;
@@ -326,16 +328,51 @@ export class PanelManager {
         // 重新校验：仍 active、target 仍 isConnected
         if (!this.active) return;
         if (!this.pendingOpenTarget?.isConnected) return;
-        const t = this.pendingOpenTarget;
+        const hit = this.pendingOpenTarget;
         this.pendingOpenTarget = null;
-        const ex = this.store.getBySelector(buildSelector(t));
-        this.openPanel(t, ex ?? null);
+        this.openFromHit(hit);
       }, SINGLE_CLICK_DELAY);
       return;
     }
 
-    this.openPanel(target, existing ?? null);
+    this.openFromHit(target);
   };
+
+  /**
+   * 新鲜单击打开面板：记录稳定原始命中元素（granHitEl，供 +/- 复用）。
+   * 若已有记忆偏移（用户此前用 +/- 调过粒度，offset≠0），按 §4.3 相对偏移记忆
+   * 从原始命中元素解析目标；offset==0 时保持点中元素本身（不改默认批注粒度）。
+   */
+  private openFromHit(hit: Element): void {
+    let panelTarget: Element = hit;
+    let granHit: HTMLElement | null = null;
+    if (this.resolver && hit instanceof HTMLElement) {
+      granHit = hit;
+      // 仅当有记忆偏移时才经解析器改变粒度，避免改动默认批注行为
+      if (this.resolver.getOffset() !== 0) {
+        panelTarget = this.resolver.resolve(hit);
+      }
+    }
+    const existing = this.store.getBySelector(buildSelector(panelTarget));
+    this.openPanel(panelTarget, existing ?? null, granHit);
+  }
+
+  /**
+   * 粒度 +/- 调整并重指向：offset 累加后，始终从「稳定原始命中元素」granHitEl
+   * （非已被上次 +/- 移动过的 panelTarget）+ 累加 offset 解析新目标，避免复合过冲。
+   * re-point 打开时不覆盖 granHitEl（openPanel 第三参传 null）。
+   */
+  private adjustGranularity(delta: 1 | -1): void {
+    if (!this.resolver) return;
+    const hitEl = this.granHitEl ?? (this.panelTarget instanceof HTMLElement ? this.panelTarget : null);
+    if (!hitEl) return;
+    this.resolver.adjustOffset(delta);
+    const newTarget = this.resolver.resolve(hitEl);
+    this.panelCommitted = true; // 阻止 closePanel 回滚已存内容
+    this.closePanel();
+    const newExisting = this.store.getBySelector(buildSelector(newTarget));
+    this.openPanel(newTarget, newExisting ?? null, null); // 不覆盖 granHitEl
+  }
 
   // ---- 批注面板 ----
 
@@ -363,10 +400,19 @@ export class PanelManager {
     this.inlineEditEl = el;
   }
 
-  /** 打开批注面板（existing 非空 = 修改已有批注，预填内容） */
-  openPanel(target: Element, existing: Annotation | null): void {
+  /**
+   * 打开批注面板（existing 非空 = 修改已有批注，预填内容）。
+   * granHit：本次是否作为新的粒度会话原始命中元素记录（新鲜单击/编辑=true；
+   * +/- 重指向打开=false，保持既有 granHitEl 不被覆盖）。
+   */
+  openPanel(target: Element, existing: Annotation | null, granHit: HTMLElement | null = null): void {
     this.closePanel();
     this.closeMenu();
+
+    // 新鲜单击/编辑打开：记录稳定原始命中元素（re-point 传 null 不覆盖）
+    if (granHit) {
+      this.granHitEl = granHit;
+    }
 
     const rect = target.getBoundingClientRect();
     const number = existing ? existing.number : this.store.peekNextNumber();
@@ -417,16 +463,7 @@ export class PanelManager {
       btnMinus.setAttribute('aria-label', t('gran_narrow'));
       btnMinus.textContent = '−';
       btnMinus.addEventListener('click', () => {
-        this.resolver!.adjustOffset(-1);
-        // 重指向新目标：关当前面板、以新目标重开
-        if (this.panelTarget instanceof HTMLElement) {
-          const hitEl = this.panelTarget;
-          const newTarget = this.resolver!.resolve(hitEl);
-          this.panelCommitted = true; // 阻止 closePanel 回滚已存内容
-          this.closePanel();
-          const newExisting = this.store.getBySelector(buildSelector(newTarget));
-          this.openPanel(newTarget, newExisting ?? null);
-        }
+        this.adjustGranularity(-1);
       });
 
       const btnPlus = document.createElement('button');
@@ -435,15 +472,7 @@ export class PanelManager {
       btnPlus.setAttribute('aria-label', t('gran_widen'));
       btnPlus.textContent = '+';
       btnPlus.addEventListener('click', () => {
-        this.resolver!.adjustOffset(1);
-        if (this.panelTarget instanceof HTMLElement) {
-          const hitEl = this.panelTarget;
-          const newTarget = this.resolver!.resolve(hitEl);
-          this.panelCommitted = true;
-          this.closePanel();
-          const newExisting = this.store.getBySelector(buildSelector(newTarget));
-          this.openPanel(newTarget, newExisting ?? null);
-        }
+        this.adjustGranularity(1);
       });
 
       capsule.appendChild(btnMinus);
@@ -1004,7 +1033,8 @@ export class PanelManager {
   private editAnnotation(annotation: Annotation): void {
     const target = this.resolveBySelector(annotation.selector);
     if (!target) return;
-    this.openPanel(target, annotation);
+    // 编辑打开：以该标注目标作为粒度会话原始命中元素（+/- 从它起算）
+    this.openPanel(target, annotation, target instanceof HTMLElement ? target : null);
   }
 
   // ---- 跟随刷新 ----

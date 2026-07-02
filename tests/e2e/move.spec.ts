@@ -233,3 +233,69 @@ test('④  切回批注 / 收起 → selbox 消失', async () => {
 
   await page.close();
 });
+
+test('⑤  多级 +/- 粒度不过冲：连点 + 两次落在正确的 2 级祖先', async () => {
+  const page = await openFixturePage();
+
+  await expandToolbar(page); // annotate 模式
+
+  // 单击最内层 #deep-btn 开面板（button 有边框 → smart 基准=自身；offset=0 用原始命中）
+  // 滚到视口上部，给面板（随粒度放大而增高/重定位）留出下方空间
+  await page.evaluate(() => {
+    const el = document.getElementById('deep-btn')!;
+    const r = el.getBoundingClientRect();
+    window.scrollBy(0, r.top - 120);
+  });
+  const btnCenter = await page.evaluate(() => {
+    const el = document.getElementById('deep-btn')!;
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.mouse.click(btnCenter.x, btnCenter.y);
+  await waitShadowTestId(page, 'pd-panel');
+  // 粒度胶囊应出现（smart 基准）
+  await waitShadowTestId(page, 'pd-gran-capsule');
+
+  // 连点 + 两次：offset 0 → +1（#deep-inner）→ +2（#deep-mid）
+  // 关键：每次都从稳定的原始命中 #deep-btn + 累加 offset 解析，不从上次目标叠加
+  await clickShadowEl(page, 'pd-gran-plus');
+  await waitShadowTestId(page, 'pd-panel'); // 面板重开
+  await waitShadowTestId(page, 'pd-gran-plus'); // 胶囊仍在
+  await clickShadowEl(page, 'pd-gran-plus');
+  await waitShadowTestId(page, 'pd-panel');
+
+  // 保存
+  await clickShadowEl(page, 'pd-panel-save');
+  await waitShadowTestId(page, 'pd-pin');
+
+  // 断言标注框覆盖 #deep-mid（正确的 2 级祖先），而非过冲到 #deep-outer
+  const midRect = await page.evaluate(() => {
+    const el = document.getElementById('deep-mid')!;
+    const r = el.getBoundingClientRect();
+    return { top: r.top, left: r.left, width: r.width, height: r.height };
+  });
+  const outerRect = await page.evaluate(() => {
+    const el = document.getElementById('deep-outer')!;
+    const r = el.getBoundingClientRect();
+    return { top: r.top, left: r.left, width: r.width, height: r.height };
+  });
+
+  // markbox 相对目标外扩 3px（MARK_INSET），用宽度区分 mid vs outer
+  const markRect = await page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    const el = host?.shadowRoot?.querySelector<HTMLElement>('[data-testid="pd-markbox"]');
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { top: r.top, left: r.left, width: r.width, height: r.height };
+  });
+  expect(markRect).not.toBeNull();
+
+  // markbox 宽度应接近 #deep-mid（±10px 容差含 inset），明显小于 #deep-outer
+  const diffMid = Math.abs(markRect!.width - midRect.width);
+  const diffOuter = Math.abs(markRect!.width - outerRect.width);
+  expect(diffMid, `markbox width ${markRect!.width} should match #deep-mid ${midRect.width}, not #deep-outer ${outerRect.width}`).toBeLessThan(diffOuter);
+  expect(diffMid).toBeLessThan(12);
+
+  await page.close();
+});
+

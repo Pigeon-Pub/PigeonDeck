@@ -39,16 +39,16 @@ function hasVisualBoundary(el: HTMLElement): boolean {
 }
 
 /**
- * 视口上限：若元素宽且高都超过视口 95%，认为已是"整页容器"，停止爬升。
- * 目的：避免把 body/main 等整页块选中。
- * 注意：不能过于严格（≤90% 会漏掉合法的全宽卡片），95% 是经验值。
- * 改为"宽 AND 高都超 95%"，避免把普通全宽卡片当页面容器排除。
+ * 视口上限：宽超过视口 98% AND 高超过视口 50% 才认为是"整页容器"，停止爬升。
+ * 目的：避免把 body/main 等整页块选中，同时不误伤合法的全宽卡片
+ * （全宽卡片宽接近满屏但高度有限，不会同时满足高 > 50%）。
+ * 用 AND 双维而非单维阈值：早期单维 90% 会把普通全宽卡片当页面容器误排除。
  */
 function exceedsViewportThreshold(el: HTMLElement): boolean {
   const rect = el.getBoundingClientRect();
   const vw = el.ownerDocument.defaultView?.innerWidth ?? 0;
   const vh = el.ownerDocument.defaultView?.innerHeight ?? 0;
-  // 必须宽 AND 高都超过阈值（只有宽很大的全宽卡片不排除）
+  // 必须宽 > 98% AND 高 > 50%（只有宽很大的全宽卡片不排除）
   return rect.width > vw * 0.98 && rect.height > vh * 0.5;
 }
 
