@@ -1,0 +1,10 @@
+{
+  "ext_name": {
+    "message": "PigeonDeck",
+    "description": "扩展名称"
+  },
+  "ext_desc": {
+    "message": "在任意网页上标注、编辑并导出反馈，生成 AI 可执行的任务清单。",
+    "description": "显示在 Chrome 网上应用店和扩展管理页面的描述"
+  }
+}

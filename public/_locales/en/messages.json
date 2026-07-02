@@ -1,0 +1,10 @@
+{
+  "ext_name": {
+    "message": "PigeonDeck",
+    "description": "Extension name"
+  },
+  "ext_desc": {
+    "message": "Annotate, edit and export web page feedback for AI-assisted development.",
+    "description": "Extension description shown in Chrome Web Store and extensions page"
+  }
+}
