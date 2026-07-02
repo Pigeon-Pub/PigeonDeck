@@ -81,6 +81,8 @@ export class RichTextBar {
   private visible = false;
   /** 当前颜色状态（字色 abar） */
   private currentFgColor = 'var(--c1)';
+  /** 打开弹层前存下的选区（弹层交互会塌陷页面选区，回调时恢复） */
+  private savedRange: Range | null = null;
 
   constructor(opts: RichTextBarOptions) {
     this.panelLayer = opts.panelLayer;
@@ -152,14 +154,14 @@ export class RichTextBar {
     // 字体下拉触发钮
     const fontSel = this.makeDropdownTrigger('selfont', t('rt_font'), 'System UI');
     fontSel.querySelector('button')!.addEventListener('click', () => {
-      this.execStyle();
+      this.saveSelection();
       openDropdown({
         root: this.panelLayer,
         anchor: fontSel.querySelector('button') as HTMLElement,
         items: FONT_LIST.map((f) => ({ value: f, label: f, fontFamily: f === 'System UI' ? undefined : f })),
         current: this.getComputedProp('fontFamily'),
         onPick: (v) => {
-          this.restoreFocus();
+          this.restoreSelection();
           this.execStyle();
           document.execCommand('fontName', false, v === 'System UI' ? 'system-ui' : v);
         },
@@ -170,16 +172,18 @@ export class RichTextBar {
     // 字号下拉触发钮
     const sizeSel = this.makeDropdownTrigger('selsz', t('rt_size'), '16', 'pd-rt-size');
     sizeSel.querySelector('button')!.addEventListener('click', () => {
-      this.execStyle();
+      this.saveSelection();
       openDropdown({
         root: this.panelLayer,
         anchor: sizeSel.querySelector('button') as HTMLElement,
         items: SIZE_LIST.map((s) => ({ value: s, label: s + 'px' })),
         current: Math.round(parseFloat(this.getComputedProp('fontSize'))).toString(),
         onPick: (v) => {
-          this.restoreFocus();
-          this.execStyle();
-          // execCommand fontSize 只支持 1-7，然后改写为 span
+          this.restoreSelection();
+          // 字号必须用 legacy 模式：styleWithCSS=false 才会生成 <font size="7">，
+          // 再由 replaceLegacyFontSize 改写为 <span style="font-size:Npx">。
+          // （styleWithCSS=true 时 fontSize 会生成 xxx-large 关键字的 span，无法精确设 px）
+          document.execCommand('styleWithCSS', false, 'false');
           document.execCommand('fontSize', false, '7');
           // 改写当前 editEl 内的 <font size=7> → <span style="font-size:Npx">
           this.editEl.innerHTML = replaceLegacyFontSize(this.editEl.innerHTML, parseInt(v, 10));
@@ -205,14 +209,14 @@ export class RichTextBar {
     colorBtn.appendChild(colorBar);
     colorBtn.addEventListener('mousedown', (ev) => ev.preventDefault());
     colorBtn.addEventListener('click', () => {
-      this.execStyle();
+      this.saveSelection();
       openColorPicker({
         root: this.panelLayer,
         anchor: colorBtn,
         target: this.editEl,
         value: this.getComputedProp('color'),
         onChange: (css) => {
-          this.restoreFocus();
+          this.restoreSelection();
           this.execStyle();
           document.execCommand('foreColor', false, css);
           colorBar.style.background = css;
@@ -230,14 +234,14 @@ export class RichTextBar {
     hlBtn.innerHTML = highlightIcon + `<svg class="car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
     hlBtn.addEventListener('mousedown', (ev) => ev.preventDefault());
     hlBtn.addEventListener('click', () => {
-      this.execStyle();
+      this.saveSelection();
       openColorPicker({
         root: this.panelLayer,
         anchor: hlBtn,
         target: this.editEl,
         value: this.getComputedProp('backgroundColor'),
         onChange: (css) => {
-          this.restoreFocus();
+          this.restoreSelection();
           this.execStyle();
           if (!document.execCommand('hiliteColor', false, css)) {
             document.execCommand('backColor', false, css);
@@ -296,7 +300,7 @@ export class RichTextBar {
     alignBtn.innerHTML = alignIcon + `<svg class="car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
     alignBtn.addEventListener('mousedown', (ev) => ev.preventDefault());
     alignBtn.addEventListener('click', () => {
-      this.execStyle();
+      this.saveSelection();
       openDropdown({
         root: this.panelLayer,
         anchor: alignBtn,
@@ -307,7 +311,7 @@ export class RichTextBar {
         ],
         current: '',
         onPick: (v) => {
-          this.restoreFocus();
+          this.restoreSelection();
           this.execStyle();
           document.execCommand(v);
         },
@@ -381,9 +385,29 @@ export class RichTextBar {
     document.execCommand('styleWithCSS', false, 'true');
   }
 
-  /** 将焦点回到编辑元素（下拉选后需恢复） */
-  private restoreFocus(): void {
+  /**
+   * 存下当前选区（触发钮 mousedown 已 preventDefault，此刻选区仍在）。
+   * 只在选区非折叠且落在 editEl 内时记录，否则清空。
+   */
+  private saveSelection(): void {
+    const s = window.getSelection();
+    this.savedRange =
+      s && s.rangeCount && !s.isCollapsed && this.editEl.contains(s.getRangeAt(0).commonAncestorContainer)
+        ? s.getRangeAt(0).cloneRange()
+        : null;
+  }
+
+  /** 恢复之前存下的选区（弹层交互塌陷后）；失败静默兜底 */
+  private restoreSelection(): void {
     this.editEl.focus();
+    const s = window.getSelection();
+    if (!s || !this.savedRange) return;
+    try {
+      s.removeAllRanges();
+      s.addRange(this.savedRange.cloneRange());
+    } catch {
+      // Range 因内容包裹失效（拖动连续触发时可能出现）→ 静默
+    }
   }
 
   /** 读取当前选区内的 computed style（选区无则从 editEl 读） */
