@@ -14,7 +14,39 @@ export interface ViewportPos {
   h: number;
 }
 
-/** 一条标注记录。changes 本阶段恒空数组，3b（修改栏/样式）填充。 */
+/**
+ * 一条样式/内容修改记录（蓝图 §5.1 样式修改输出格式）。
+ * prop = 属性控件 key（fields.ts 注册表）；cssProp = CSS 属性名（text 内容修改为 'text'）；
+ * oldValue = 修改前 computed/inline 值；newValue = 最新值。
+ * 同一属性多次改动合并为一条（保留最初 oldValue、最新 newValue）。
+ */
+export interface StyleChange {
+  prop: string;
+  cssProp: string;
+  oldValue: string;
+  newValue: string;
+}
+
+/**
+ * 合并两批修改记录：按 prop 合并（旧记录的 oldValue + 新记录的 newValue），
+ * 改回原值（oldValue === newValue）的条目剔除。
+ */
+export function mergeChanges(prev: StyleChange[], next: StyleChange[]): StyleChange[] {
+  const map = new Map<string, StyleChange>();
+  for (const c of prev) map.set(c.prop, { ...c });
+  for (const c of next) {
+    const existing = map.get(c.prop);
+    if (existing) {
+      existing.newValue = c.newValue;
+      existing.cssProp = c.cssProp;
+    } else {
+      map.set(c.prop, { ...c });
+    }
+  }
+  return [...map.values()].filter((c) => c.oldValue !== c.newValue);
+}
+
+/** 一条标注记录 */
 export interface Annotation {
   id: string;
   number: number;
@@ -22,7 +54,7 @@ export interface Annotation {
   elementType: ElementType;
   summary: string;
   note: string;
-  changes: unknown[];
+  changes: StyleChange[];
   createdAt: number;
   viewportPos: ViewportPos;
 }
@@ -93,6 +125,20 @@ export class AnnotationStore {
     this.annotations.splice(idx, 1);
     this.notify();
     return true;
+  }
+
+  /**
+   * 原样放回一条标注（撤销删除 / 重做新增用）：
+   * 保留原 id/number/createdAt，按编号排序插入；nextNumber 不回退。
+   */
+  restore(annotation: Annotation): void {
+    if (this.annotations.some((a) => a.id === annotation.id)) return;
+    this.annotations.push(annotation);
+    this.annotations.sort((a, b) => a.number - b.number);
+    if (annotation.number >= this.nextNumber) {
+      this.nextNumber = annotation.number + 1;
+    }
+    this.notify();
   }
 
   /** 清空：全部删除，编号从 1 重置 */

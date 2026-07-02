@@ -3,7 +3,7 @@
    ============================================================ */
 
 import { describe, it, expect, vi } from 'vitest';
-import { AnnotationStore, AnnotationInput } from './annotations';
+import { AnnotationStore, AnnotationInput, StyleChange, mergeChanges } from './annotations';
 
 function input(overrides: Partial<AnnotationInput> = {}): AnnotationInput {
   return {
@@ -172,5 +172,78 @@ describe('AnnotationStore — 序列化恢复', () => {
     s.subscribe(listener);
     s.load({ nextNumber: 5, annotations: [] });
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AnnotationStore — restore（撤销删除/重做新增）', () => {
+  it('restore 原样放回：id/number 保留，按编号排序', () => {
+    const s = new AnnotationStore();
+    const a1 = s.add(input({ selector: '#a' }));
+    const a2 = s.add(input({ selector: '#b' }));
+    s.add(input({ selector: '#c' }));
+    s.remove(a2.id);
+    s.restore(a2);
+    expect(s.getAll().map((a) => a.number)).toEqual([1, 2, 3]);
+    expect(s.getById(a2.id)?.number).toBe(2);
+    expect(s.getById(a1.id)).toBeTruthy();
+  });
+
+  it('restore 不回退 nextNumber，且不重复放回', () => {
+    const s = new AnnotationStore();
+    const a1 = s.add(input());
+    s.remove(a1.id);
+    s.restore(a1);
+    s.restore(a1); // 重复 restore 忽略
+    expect(s.getAll().length).toBe(1);
+    expect(s.add(input()).number).toBe(2);
+  });
+
+  it('清空后 restore 高编号标注 → nextNumber 前进到其后', () => {
+    const s = new AnnotationStore();
+    const a = s.add(input());
+    s.add(input());
+    const a3 = s.add(input());
+    s.clear();
+    void a;
+    s.restore(a3);
+    expect(s.add(input()).number).toBe(4);
+  });
+});
+
+describe('mergeChanges — 同属性合并', () => {
+  const change = (prop: string, oldValue: string, newValue: string): StyleChange => ({
+    prop,
+    cssProp: prop,
+    oldValue,
+    newValue,
+  });
+
+  it('同一属性多次改动合并为一条：最初 oldValue + 最新 newValue', () => {
+    const merged = mergeChanges(
+      [change('fontSize', '24px', '28px')],
+      [change('fontSize', '28px', '32px')]
+    );
+    expect(merged).toEqual([change('fontSize', '24px', '32px')]);
+  });
+
+  it('不同属性各自保留', () => {
+    const merged = mergeChanges(
+      [change('fontSize', '24px', '32px')],
+      [change('color', '#000', '#b8842c')]
+    );
+    expect(merged).toHaveLength(2);
+  });
+
+  it('改回原值的条目剔除', () => {
+    const merged = mergeChanges(
+      [change('fontSize', '24px', '32px')],
+      [change('fontSize', '32px', '24px')]
+    );
+    expect(merged).toEqual([]);
+  });
+
+  it('空旧记录时直接采用新记录', () => {
+    const merged = mergeChanges([], [change('color', '#000', '#fff')]);
+    expect(merged).toEqual([change('color', '#000', '#fff')]);
   });
 });
