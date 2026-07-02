@@ -4,13 +4,14 @@
 
 ## 仓库当前阶段
 
-**编码阶段进行中**。设计系统已就绪（[preview/](preview/) 画廊 + [docs/design-system.md](docs/design-system.md)），按 [docs/v1-plan.md](docs/v1-plan.md) 的 15 个阶段逐阶段实施。**阶段 1–4 已完成并合并 main**：
+**编码阶段进行中**。设计系统已就绪（[preview/](preview/) 画廊 + [docs/design-system.md](docs/design-system.md)），按 [docs/v1-plan.md](docs/v1-plan.md) 的 15 个阶段逐阶段实施。**阶段 1–5 已完成并合并 main（已 push）**：
 - **阶段 1 工程骨架**：Vite 双配置构建（content IIFE + background ES）、Shadow DOM 四层宿主、pigeonlib 设计令牌、i18n 框架、logger。
 - **阶段 2 工具盘与悬浮球**：模式控制器状态机、42px 悬浮球、7 按钮工具盘、tooltip、长按拖拽持久化、E2E 测试基建。
 - **阶段 3 批注模式**：3a 批注核心（选择器/元素分类、编号规则、sessionStorage 持久化、overlay 跟随、面板/卡片/右键菜单）+ 3b 修改栏与高级样式（fields.ts 双入口单源、修改栏智能切换、高级样式 4 分类、自制下拉/调色盘、样式修改管线→撤销历史、未保存回滚、卡片调整项）。
 - **阶段 4 直接编辑与内联富文本**：4a 双击文本 contentEditable 内联编辑 + Word 式富文本浮条（execCommand + 保选区 + 字号 span 改写）+ 单击 250ms 延迟避让双击 + richText 撤销历史；4b 双击图片/视频替换弹层（本地文件/URL）+ src 撤销历史 + dataURL >1MB 只活内存（sanitizeForPersist）。`applyChangesTo` 扩 html/src 分支。
+- **阶段 5 区域框选**：长按 ≥300ms 拖拽实时金框 → 区域批注面板 → 持久区域框+位号；Annotation 加可选 `kind:'region'` + `region{docRect, elements≤30}`（向后兼容、编号与元素共用）；overlay 按 kind 分支（docRect−scroll 跟随）；panel `suppressNextClick` 抑制松手误开面板。
 
-门禁基线：build ✓ / typecheck ✓ / vitest 160 ✓ / e2e 27 ✓ / i18n ✓。**下一阶段：阶段 5 区域框选**。
+门禁基线：build ✓ / typecheck ✓ / vitest 164 ✓ / e2e 30 ✓ / i18n ✓。**下一阶段：阶段 6 移动模式（拆 6a 选中+粒度+句柄缩放、6b 拖拽+吸附+参考线）**。
 
 当前根目录有：
 - `src/` + `public/` + `scripts/` — 扩展源码、静态资源（manifest/_locales/icons/brand）、构建脚本
