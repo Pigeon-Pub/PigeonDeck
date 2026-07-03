@@ -1499,3 +1499,45 @@
   background: rgba(178,58,46,.10);
   border-color: rgba(178,58,46,.30);
 }
+
+/* ============================================================
+   阶段 11：设置面板
+   来源：preview/parts/13/17/18/19 + pigeonlib.css（逐值照搬）
+   ============================================================ */
+
+/* 开关（pigeonlib 258-264） */
+.pd-switch { width: 38px; height: 21px; border-radius: 999px; border: 0; cursor: pointer;
+             background: var(--cbd); position: relative; transition: background var(--t-mid) var(--ease); padding: 0; }
+.pd-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 17px; height: 17px;
+                    border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25);
+                    transition: left var(--t-mid) var(--ease); }
+.pd-switch.on { background: var(--c1); }
+.pd-switch.on::after { left: 19px; }
+
+/* 设置行（pigeonlib 267-270） */
+.pd-srow { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 6px 0; }
+.pd-srow .k { font-size: 13px; color: var(--ctx); }
+.pd-srow .k small { display: block; font-size: 11px; color: var(--ctx2); margin-top: 2px; }
+
+/* 设置面板外壳（pigeonlib 472-484） */
+.spanel { display: flex; flex-direction: column; overflow: hidden;
+          transition: height var(--t-mid) var(--ease); }
+.shead { display: flex; align-items: center; justify-content: space-between;
+         padding: 10px 9px 10px 14px; border-bottom: 1px solid var(--cbd); }
+.shead .t { font-family: var(--font-serif); font-weight: 600; font-size: 15px; color: var(--ctx); }
+.sbody { display: flex; gap: 12px; padding: 10px 14px 12px 8px; }
+.sbody .pd-nav { width: 42px; }
+.sbody .scon { max-height: 300px; overflow: auto; }
+.scat { font: 600 11px var(--font-ui); letter-spacing: .6px; text-transform: uppercase;
+        color: var(--ctx2); margin: 1px 0 4px; }
+/* 设置行内数值控件统一宽度（防文本截断） */
+.pd-srow .pd-num { width: 118px; flex: none; }
+.pd-srow .pd-num input { padding-left: 13px; padding-right: 4px; }
+
+/* 关于区（part19 内联样式移植） */
+.about { display: flex; align-items: center; gap: 10px; padding: 9px 0 2px; }
+.about .ball { width: 30px; height: 30px; border-radius: 50%; background: var(--c1); flex: none;
+               display: flex; align-items: center; justify-content: center; color: #fdf6e6; }
+.about .ball svg { width: 17px; height: 17px; }
+.about .nm { font-family: var(--font-serif); font-weight: 600; font-size: 14px; color: var(--ctx); }
+.about .ver { font-size: 11px; color: var(--ctx2); margin-top: 1px; }

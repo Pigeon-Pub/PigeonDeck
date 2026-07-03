@@ -23,6 +23,7 @@ import { MoveManager } from './move';
 import { CopyTextManager } from './copy-text';
 import { CopyImageManager } from './capture';
 import { ClearManager } from './clear';
+import { SettingsManager } from './settings-panel';
 import { setupShortcuts } from './shortcuts';
 
 // 防重复注入标记
@@ -49,7 +50,7 @@ function inject(settings: Settings): void {
   // 宿主元素
   const host = document.createElement('div');
   host.id = HOST_ID;
-  host.setAttribute('data-theme', 'light');
+  host.setAttribute('data-theme', settings.theme);
   Object.assign(host.style, {
     position: 'fixed',
     zIndex: '2147483647',
@@ -98,7 +99,7 @@ function inject(settings: Settings): void {
   const history = new History(settings.historyLimit);
 
   // Toolbar（接受 history，用于按钮禁用态订阅）
-  new Toolbar(controller, controlLayer, history);
+  const toolbar = new Toolbar(controller, controlLayer, history);
 
   // 接线撤销/重做瞬时动作
   controller.setCallbacks({
@@ -156,6 +157,7 @@ function inject(settings: Settings): void {
     history,
     resolver: selectionResolver,
     overlayLayer,
+    settings,
   });
 
   // 阶段 8b：复制文本（生成任务清单 → 剪贴板 + 结果弹窗 + 语言快切 + 下载）
@@ -184,6 +186,21 @@ function inject(settings: Settings): void {
     toast,
     controlLayer,
     panelLayer,
+  });
+
+  // 阶段 11a：设置面板（4 分区导航 + 非语言控件；共享同一 settings 引用即时生效）
+  new SettingsManager({
+    controller,
+    settings,
+    panelLayer,
+    controlLayer,
+    overlay,
+    history,
+    resolver: selectionResolver,
+    toast,
+    onResetPosition: () => toolbar.resetPosition(),
+    // 阶段 12 接真实安装说明页；本阶段占位轻提示
+    onOpenOnboarding: () => toast.show(t('toast_coming_soon')),
   });
 
   // 恢复后：未能定位的标注数据保留、UI 跳过，轻提示
