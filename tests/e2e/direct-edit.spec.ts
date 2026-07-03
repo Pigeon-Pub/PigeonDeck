@@ -295,6 +295,85 @@ test('③b 字号下拉作用于选区（弹层命令保选区）→ span 只包
   await page.close();
 });
 
+test('③c 字体下拉：智能栏渲染 + 选字体 → span 带 font-family 包住选区（W3b）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await enterEdit(page, '#card-text p');
+
+  // 选中头 6 个字符
+  const selectedText = await page.evaluate(() => {
+    const el = document.querySelector('#card-text p');
+    if (!el?.firstChild) return '';
+    const len = Math.min(6, el.firstChild.textContent?.length ?? 0);
+    const range = document.createRange();
+    range.setStart(el.firstChild, 0);
+    range.setEnd(el.firstChild, len);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    return el.firstChild.textContent?.slice(0, len) ?? '';
+  });
+  expect(selectedText.length).toBeGreaterThan(0);
+
+  await expect.poll(() => rtbarVisible(page), { timeout: 3000 }).toBe(true);
+
+  // 打开字体下拉
+  await clickShadowSel(page, '[data-testid="pd-rtbar"] .selfont .pd-select');
+  await waitShadowVisible(page, '[data-testid="pd-dropdown"]');
+
+  // Bug 2：智能识别栏应渲染（采到锚点祖先的实际字体）
+  const hasSmart = await page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    return !!host?.shadowRoot?.querySelector('[data-testid="pd-dd-smart"]');
+  });
+  expect(hasSmart).toBe(true);
+
+  // 选 Georgia 项（Bug 1：应包成带 font-family 的 span，且赢过宿主 CSS）
+  await clickShadowSel(page, '[data-testid="pd-dropdown"] [data-value="Georgia"]');
+
+  await expect.poll(async () => {
+    return page.evaluate((selText: string) => {
+      const el = document.querySelector('#card-text p') as HTMLElement;
+      const spans = [...el.querySelectorAll<HTMLElement>('*')].filter((n) =>
+        /georgia/i.test(n.style.fontFamily || '')
+      );
+      if (spans.length === 0) return { ok: false, reason: 'no-font-span' };
+      const spanText = spans[0].textContent ?? '';
+      const fullText = el.textContent ?? '';
+      // 带 !important 才能赢过宿主 !important 规则
+      const important = spans[0].style.getPropertyPriority('font-family') === 'important';
+      return { ok: spanText === selText && fullText.length >= selText.length && important, spanText, selText };
+    }, selectedText);
+  }, { timeout: 3000 }).toMatchObject({ ok: true });
+
+  await page.close();
+});
+
+test('③d 列表按钮：项目符号图标（含圆点）+ 明确标签，区别于对齐（W3b）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await enterEdit(page, '#card-text p');
+  await expect.poll(() => rtbarVisible(page), { timeout: 3000 }).toBe(true);
+
+  const info = await page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    const list = host?.shadowRoot?.querySelector('[data-testid="pd-rt-list"]');
+    if (!list) return null;
+    return {
+      title: list.getAttribute('title'),
+      circles: list.querySelectorAll('circle').length,
+    };
+  });
+  expect(info).not.toBeNull();
+  // 项目符号圆点 → 与对齐图标（纯横线）明显不同
+  expect(info!.circles).toBeGreaterThan(0);
+  // 标签明确为「无序列表」（随浏览器语言解析 en/zh_CN，两个都是清晰措辞）
+  expect(info!.title).toMatch(/^(Bullet list|无序列表)$/);
+
+  await page.close();
+});
+
 test('④ 点编辑区外空白 → 编辑结束、内容变化被提交（位号出现）', async () => {
   const page = await openFixturePage();
   await expandToolbar(page);

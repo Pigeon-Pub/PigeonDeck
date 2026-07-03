@@ -5,65 +5,74 @@
    否则锚定 editEl 上边缘，绝不遮挡正在编辑的文字）。
    所有浮条按钮在 mousedown 上 preventDefault（保住选区、避免 contentEditable 失焦）。
    execCommand 在 click 里执行（mousedown 后 click 仍会触发）。
-   字号：execCommand('fontSize','7') 后把生成的 <font size="7"> 改写为 <span style="font-size:Npx">。
+   字体/字号：不走 execCommand（其产出的 font-family/font-size 无 !important，
+   会输给宿主页的 !important 规则），改为把当前选区包进
+   <span style="font-family|font-size: … !important">（wrapSelectionStyle），
+   保住选区、可链式修改，且稳压宿主 CSS。
    ============================================================ */
 
 import { t } from './i18n';
 import { openColorPicker } from './color-picker';
-import { openDropdown } from './dropdown';
-
-/* ---- 纯函数：<font size="7"> → <span style="font-size:Npx"> ---- */
-
-/**
- * 将 HTML 片段里所有 <font size="7"> 改写为 <span style="font-size:{px}px">，
- * 并把原 <font> 上的其余属性（color/face）按需搬到 span 的 style/属性上，
- * 最后还原 </font> → </span>。
- * 此函数只操作字符串，不依赖 DOM，纯函数，便于单测。
- *
- * @param html  含 <font size="7"> 的 HTML 片段
- * @param px    要设置的字号（像素整数）
- */
-export function replaceLegacyFontSize(html: string, px: number): string {
-  // 先统计有多少 <font size="7"> 会被替换
-  const openRe = /<font\s([^>]*)size=["']?7["']?([^>]*)>/gi;
-  let matchCount = 0;
-  const result = html.replace(openRe, (_match, before: string, after: string) => {
-    matchCount++;
-    const attrs = (before + after).trim();
-    const styleparts: string[] = [`font-size:${px}px`];
-    // face → font-family
-    const faceM = attrs.match(/face=["']?([^"'\s>]+)["']?/i);
-    if (faceM) styleparts.push(`font-family:${faceM[1]}`);
-    // color → color
-    const colorM = attrs.match(/color=["']?([^"'\s>]+)["']?/i);
-    if (colorM) styleparts.push(`color:${colorM[1]}`);
-    return `<span style="${styleparts.join(';')}">`;
-  });
-  // 只把前 matchCount 个 </font> 替换为 </span>（其余 <font size!=7> 的关标签保留）
-  if (matchCount === 0) return result;
-  let replaced = 0;
-  return result.replace(/<\/font>/gi, (m) => {
-    if (replaced < matchCount) {
-      replaced++;
-      return '</span>';
-    }
-    return m;
-  });
-}
+import { openDropdown, sampleAncestorValues, primaryFontFamily } from './dropdown';
 
 /* ---- SVG 图标 ---- */
 
 const chevD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
 const highlightIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>`;
 const alignIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></svg>`;
-const listIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>`;
+const listIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="9" x2="21" y1="6" y2="6"/><line x1="9" x2="21" y1="12" y2="12"/><line x1="9" x2="21" y1="18" y2="18"/><circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>`;
 
 /* ---- 字体/字号列表 ---- */
 
-const FONT_LIST = [
-  'System UI', 'Inter', 'Roboto', 'Helvetica Neue', 'Arial',
-  'Georgia', 'Times New Roman', 'Menlo', 'Courier New',
+/**
+ * 字体候选：每项都带可靠的兜底字体栈（结尾必为通用族），保证任意选择都能渲染出
+ * 变化——避免直接给裸 web-font 名（如 Inter/Roboto，目标页多半没装 → 视觉无变化）。
+ * value 用首选族名（与 computed 的 primaryFontFamily 可比，供当前项打勾高亮）。
+ */
+interface FontChoice {
+  /** 显示名 */
+  label: string;
+  /** 当前值匹配用（= 首选族名） */
+  value: string;
+  /** 实际应用的带兜底字体栈 */
+  stack: string;
+}
+
+export const FONT_LIST: FontChoice[] = [
+  { label: 'System UI', value: 'system-ui', stack: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' },
+  { label: 'Arial', value: 'Arial', stack: 'Arial, Helvetica, sans-serif' },
+  { label: 'Helvetica', value: 'Helvetica Neue', stack: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
+  { label: 'Verdana', value: 'Verdana', stack: 'Verdana, Geneva, Tahoma, sans-serif' },
+  { label: 'Tahoma', value: 'Tahoma', stack: 'Tahoma, Verdana, Geneva, sans-serif' },
+  { label: 'Georgia', value: 'Georgia', stack: 'Georgia, "Times New Roman", Times, serif' },
+  { label: 'Times New Roman', value: 'Times New Roman', stack: '"Times New Roman", Times, serif' },
+  { label: 'Courier New', value: 'Courier New', stack: '"Courier New", Consolas, monospace' },
+  { label: 'Consolas', value: 'Consolas', stack: 'Consolas, "Courier New", monospace' },
+  { label: 'Sans-serif', value: 'sans-serif', stack: 'sans-serif' },
+  { label: 'Serif', value: 'serif', stack: 'serif' },
+  { label: 'Monospace', value: 'monospace', stack: 'monospace' },
 ];
+
+const GENERIC_FAMILY_RE =
+  /^(serif|sans-serif|monospace|cursive|fantasy|system-ui|ui-serif|ui-sans-serif|ui-monospace|ui-rounded|math|emoji|fangsong)$/i;
+
+/**
+ * 把下拉选中值（FONT_LIST 首选族名 / 智能识别采到的实际族名 / 通用族关键字）
+ * 解析为一个总能渲染出东西的字体栈：
+ * - FONT_LIST 命中 → 用其带兜底的栈
+ * - 通用族关键字 → 原样返回
+ * - 其余具体族名 → 加引号并补 sans-serif 兜底
+ * 纯函数，便于单测。
+ */
+export function resolveFontStack(value: string): string {
+  const choice = FONT_LIST.find((f) => f.value === value);
+  if (choice) return choice.stack;
+  if (GENERIC_FAMILY_RE.test(value)) return value;
+  const name = value.replace(/["']/g, '').trim();
+  const quoted = /\s/.test(name) ? `"${name}"` : name;
+  return `${quoted}, sans-serif`;
+}
+
 const SIZE_LIST = ['10', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '64'];
 
 /* ---- RichTextBar ---- */
@@ -159,15 +168,21 @@ export class RichTextBar {
     const fontSel = this.makeDropdownTrigger('selfont', t('rt_font'), 'System UI');
     fontSel.querySelector('button')!.addEventListener('click', () => {
       this.saveSelection();
+      const anchorEl = this.selectionAnchorElement();
+      const smartValues = sampleAncestorValues(anchorEl, (node) => {
+        const ff = node.ownerDocument.defaultView?.getComputedStyle(node).fontFamily;
+        return ff ? primaryFontFamily(ff) : null;
+      });
       openDropdown({
         root: this.panelLayer,
         anchor: fontSel.querySelector('button') as HTMLElement,
-        items: FONT_LIST.map((f) => ({ value: f, label: f, fontFamily: f === 'System UI' ? undefined : f })),
-        current: this.getComputedProp('fontFamily'),
+        items: FONT_LIST.map((f) => ({ value: f.value, label: f.label, fontFamily: f.stack })),
+        smartItems: smartValues.map((v) => ({ value: v, label: v, fontFamily: resolveFontStack(v) })),
+        current: primaryFontFamily(this.getComputedProp('fontFamily')),
         onPick: (v) => {
           this.restoreSelection();
-          this.execStyle();
-          document.execCommand('fontName', false, v === 'System UI' ? 'system-ui' : v);
+          // 用 !important 内联 span 稳压宿主页 !important 规则
+          this.wrapSelectionStyle('font-family', resolveFontStack(v), true);
         },
       });
     });
@@ -177,20 +192,24 @@ export class RichTextBar {
     const sizeSel = this.makeDropdownTrigger('selsz', t('rt_size'), '16', 'pd-rt-size');
     sizeSel.querySelector('button')!.addEventListener('click', () => {
       this.saveSelection();
+      const anchorEl = this.selectionAnchorElement();
+      const smartValues = sampleAncestorValues(anchorEl, (node) => {
+        const fs = node.ownerDocument.defaultView?.getComputedStyle(node).fontSize;
+        if (!fs) return null;
+        const n = Math.round(parseFloat(fs));
+        return Number.isFinite(n) ? String(n) : null;
+      });
       openDropdown({
         root: this.panelLayer,
         anchor: sizeSel.querySelector('button') as HTMLElement,
         items: SIZE_LIST.map((s) => ({ value: s, label: s + 'px' })),
+        smartItems: smartValues.map((v) => ({ value: v, label: v + 'px' })),
         current: Math.round(parseFloat(this.getComputedProp('fontSize'))).toString(),
         onPick: (v) => {
           this.restoreSelection();
-          // 字号必须用 legacy 模式：styleWithCSS=false 才会生成 <font size="7">，
-          // 再由 replaceLegacyFontSize 改写为 <span style="font-size:Npx">。
-          // （styleWithCSS=true 时 fontSize 会生成 xxx-large 关键字的 span，无法精确设 px）
-          document.execCommand('styleWithCSS', false, 'false');
-          document.execCommand('fontSize', false, '7');
-          // 改写当前 editEl 内的 <font size=7> → <span style="font-size:Npx">
-          this.editEl.innerHTML = replaceLegacyFontSize(this.editEl.innerHTML, parseInt(v, 10));
+          // 直接把选区包进 <span style="font-size:Npx !important">，不再整段重写 innerHTML
+          // （旧法会毁掉选区与节点标识，导致后续命令作用于失效节点）
+          this.wrapSelectionStyle('font-size', `${v}px`, true);
         },
       });
     });
@@ -323,10 +342,12 @@ export class RichTextBar {
     });
     row2.appendChild(alignBtn);
 
-    // 列表
+    // 列表（无序/项目符号列表；图标为左侧圆点，区别于对齐图标）
+    // 注：insertUnorderedList 是块级命令，editEl 为行内元素时浏览器可能 no-op（不报错）。
     const listBtn = document.createElement('button');
     listBtn.className = 'tb';
     listBtn.setAttribute('title', t('rt_list'));
+    listBtn.setAttribute('data-testid', 'pd-rt-list');
     listBtn.innerHTML = listIcon;
     listBtn.addEventListener('mousedown', (ev) => ev.preventDefault());
     listBtn.addEventListener('click', () => { this.execStyle(); document.execCommand('insertUnorderedList'); });
@@ -414,9 +435,73 @@ export class RichTextBar {
     }
   }
 
-  /** 读取当前选区内的 computed style（选区无则从 editEl 读） */
+  /** 当前选区锚点的最近元素（落在 editEl 内），无选区则回退 editEl */
+  private selectionAnchorElement(): HTMLElement {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount) {
+      let node: Node | null = sel.getRangeAt(0).startContainer;
+      if (node && node.nodeType !== Node.ELEMENT_NODE) node = node.parentElement;
+      if (node instanceof HTMLElement && this.editEl.contains(node)) return node;
+    }
+    return this.editEl;
+  }
+
+  /** 读取当前选区锚点元素的 computed style（选区无则从 editEl 读） */
   private getComputedProp(prop: string): string {
-    const cs = window.getComputedStyle(this.editEl);
+    const cs = window.getComputedStyle(this.selectionAnchorElement());
     return (cs as unknown as Record<string, string>)[prop] ?? '';
+  }
+
+  /**
+   * 选区恰好覆盖某个已有 <span> 的全部内容时返回该 span（供复用，避免叠套冗余 span，
+   * 典型链式：先选字体再选字号作用于同一段）。否则返回 null。
+   */
+  private selectionWrapSpan(range: Range): HTMLElement | null {
+    const common = range.commonAncestorContainer;
+    const el = common.nodeType === Node.ELEMENT_NODE ? (common as HTMLElement) : common.parentElement;
+    if (!el || el === this.editEl || el.tagName !== 'SPAN') return null;
+    const full = document.createRange();
+    full.selectNodeContents(el);
+    const sameStart = range.compareBoundaryPoints(Range.START_TO_START, full) === 0;
+    const sameEnd = range.compareBoundaryPoints(Range.END_TO_END, full) === 0;
+    return sameStart && sameEnd ? el : null;
+  }
+
+  /**
+   * 把当前非折叠选区包进一个带内联样式的 <span>，稳压宿主页 CSS（important 可选）。
+   * 单 Range 常规场景走 surroundContents；跨节点选区回退 extract+wrap+insert。
+   * 完成后重新选中该 span 内容，保住选区以便链式修改。
+   */
+  private wrapSelectionStyle(prop: string, value: string, important = false): void {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (range.collapsed || !this.editEl.contains(range.commonAncestorContainer)) return;
+    const priority = important ? 'important' : '';
+
+    // 选区恰好是某个已有 span 的全部内容 → 复用它（合并样式，避免嵌套冗余 span）
+    const reuse = this.selectionWrapSpan(range);
+    if (reuse) {
+      reuse.style.setProperty(prop, value, priority);
+      return;
+    }
+
+    const span = document.createElement('span');
+    span.style.setProperty(prop, value, priority);
+    try {
+      range.surroundContents(span);
+    } catch {
+      // 跨节点选区：surroundContents 会抛错 → 提取内容后整体包裹再插回
+      const frag = range.extractContents();
+      span.appendChild(frag);
+      range.insertNode(span);
+    }
+
+    // 重新选中 span 内容，链式操作继续作用于同一段文本
+    const nr = document.createRange();
+    nr.selectNodeContents(span);
+    sel.removeAllRanges();
+    sel.addRange(nr);
+    this.savedRange = nr.cloneRange();
   }
 }
