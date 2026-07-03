@@ -251,3 +251,82 @@ test('⑥ 关闭按钮 / Esc / 外部点击 → 面板消失', async () => {
 
   await page.close();
 });
+
+// ============================================================
+// 阶段 11b：搜索式语言选择器
+// ============================================================
+
+test('⑦ 点界面语言 → 语言选择器浮层出现', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await openSettings(page);
+  await waitShadowVisible(page, '[data-testid="pd-set-ui-lang"]');
+
+  await clickShadowEl(page, 'pd-set-ui-lang');
+  await waitShadowVisible(page, '[data-testid="pd-lang-picker"]');
+  expect(await shadowExists(page, '[data-testid="pd-lang-search"]')).toBe(true);
+
+  await page.close();
+});
+
+test('⑧ 界面语言搜索「中」→ 筛出中文项、English 被过滤', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await openSettings(page);
+  await clickShadowEl(page, 'pd-set-ui-lang');
+  await waitShadowVisible(page, '[data-testid="pd-lang-picker"]');
+
+  await clickShadowEl(page, 'pd-lang-search');
+  await page.keyboard.type('中');
+
+  await waitShadowVisible(page, '[data-testid="pd-lang-opt-zh_CN"]');
+  await expect
+    .poll(() => shadowExists(page, '[data-testid="pd-lang-opt-en"]'), { timeout: 5000 })
+    .toBe(false);
+
+  await page.close();
+});
+
+test('⑨ 选 English → 面板标题变英文（默认中文起步）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await openSettings(page);
+  await clickShadowEl(page, 'pd-set-ui-lang');
+  await waitShadowVisible(page, '[data-testid="pd-lang-opt-en"]');
+
+  await clickShadowEl(page, 'pd-lang-opt-en');
+
+  // 面板重建后标题为英文 Settings（默认界面语言 zh_CN → 设置）
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const host = document.getElementById('pd-host');
+          const el = host?.shadowRoot?.querySelector<HTMLElement>(
+            '[data-testid="pd-settings"] .shead .t'
+          );
+          return el?.textContent ?? '';
+        }),
+      { timeout: 5000 }
+    )
+    .toBe('Settings');
+
+  await page.close();
+});
+
+test('⑩ 点导出语言 → picker 含「常用」钉住组（英文/跟随）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await openSettings(page);
+  await clickShadowEl(page, 'pd-set-nav-output');
+  await waitShadowVisible(page, '[data-testid="pd-set-export-lang"]');
+
+  await clickShadowEl(page, 'pd-set-export-lang');
+  await waitShadowVisible(page, '[data-testid="pd-lang-picker"]');
+  expect(await shadowExists(page, '[data-testid="pd-lang-opt-en"]')).toBe(true);
+  expect(await shadowExists(page, '[data-testid="pd-lang-opt-auto"]')).toBe(true);
+  // 全部语言组含中文
+  expect(await shadowExists(page, '[data-testid="pd-lang-opt-zh_CN"]')).toBe(true);
+
+  await page.close();
+});
