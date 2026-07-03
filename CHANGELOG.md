@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 8：复制文本（2026-07-03）
+
+- 复制文本格式化管线（`src/content/format.ts`，纯函数、无 DOM/chrome/i18n 运行时依赖）：`buildOperations(annotations)` → 中间操作模型（按 selector 去重合并、Type 组合固定序 `Annotation + Style Modification + Move`、Region 独立），`renderTaskList(ops, ctx, lang)` → 严格按蓝图 §7.1 + preview part 37 渲染 Codex/AI 可执行任务清单（`[Page Context]` / `[Global Editing Rules]` / `[Operations]`，`--- #N Type ---` 区块头）
+- 输出规则：Changes 表 `| cssProp | old | new |`；文本/富文本/媒体（cssProp text/html/src）归 contentChanges 渲染为可读描述（富文本剥标签、dataURL 显 `data:<mime>`、URL 显文件名——不塞原始内容）；移动只输出初始→最终 + 吸附语义/free move；同元素多操作合并为一条；[Global Editing Rules] 固定含「不硬编码 top/left、优先 flex/grid/gap/margin/order、视觉坐标只是线索」
+- 导出语言：`renderTaskList` en/zh_CN 双模板，结构 key 恒英文、仅 Global Rules 正文随语言、用户批注原文不翻译，未知语言回退 en；`settings.exportLang`（`en`/`zh_CN`/`auto`，默认 en，auto 跟随界面 locale）
+- 复制文本 UI（`src/content/copy-text.ts`）：点工具盘「复制文本」→ 构造 PageContext（url/title/viewport/timestamp）→ 生成清单 → **点击手势内同步 `navigator.clipboard.writeText`** + 轻提示 → 弹结果窗（照搬 part 37 `.opanel`：可滚动 `<pre>` 预览 + 底栏左语言快切 en/zh 即时重渲 + 右下载 `.md`/再复制）；点外部/Esc 关闭；无标注轻提示不弹空窗
+- OpenDesign 兼容：输出为纯 Markdown-ish 任务清单，无扩展私有字段污染
+- i18n：结果弹窗 + toast 文案，中英双语
+- 单测：`format.test.ts` 43 条（Type 组合/去重合并/移动初始→最终/Changes 分流/Region/语言 en·zh·回退/内容修改剥标签/渲染结构，均对实际输出串强断言）
+- E2E：`tests/e2e/copy-text.spec.ts` 4 用例（弹窗+正文含 Page Context/Operations/note、**剪贴板 `readText` 断言任务清单结构**、语言快切 en↔zh、样式修改输出 Changes 表），授剪贴板权限、时序轮询
+
 ### Coding — 阶段 7：撤销/重做（2026-07-03）
 
 - 撤销/重做接线（`src/content/main.ts`）：`controller.setCallbacks({ onUndo, onRedo })` 接到 `history.undo()`/`redo()`；`History` 在 `Toolbar` 之前实例化并注入
@@ -193,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | ~~5~~ | ~~区域框选：长按 ≥300ms 拖拽 + 区域批注面板~~ ✅ |
 | ~~6~~ | ~~移动模式：选中 + 拖拽 + 吸附/参考线 + 八向缩放句柄~~ ✅ |
 | ~~7~~ | ~~撤销/重做：合并按钮 + 全操作覆盖 + Ctrl+Z / Ctrl+Shift+Z~~ ✅ |
-| 8 | 复制文本：Codex/AI 任务清单生成 + 去重合并 |
+| ~~8~~ | ~~复制文本：Codex/AI 任务清单生成 + 去重合并~~ ✅ |
 | 9 | 复制图片：单页长图 + 批注叠加 |
 | 10 | 清空确认：贴工具盘确认弹层 |
 | 11 | 设置面板：4 分区 + 贴工具盘 |
