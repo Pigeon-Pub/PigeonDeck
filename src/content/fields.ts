@@ -12,6 +12,7 @@ import type { StyleChange } from '../state/annotations';
 import type { ElementType } from '../shared/dom-utils';
 import { openDropdown, sampleAncestorValues, primaryFontFamily, DropdownItem } from './dropdown';
 import { openColorPicker, parseCssColor, formatCssColor } from './color-picker';
+import type { PopoverHandle } from './popover';
 
 /* ---- 图标（Lucide，与 preview/pigeon-components.js 单一真相源一致） ---- */
 const I = {
@@ -150,12 +151,30 @@ function colorField(labelKey: string, cssProp: string, readRaw: (cs: CSSStyleDec
 const SHADOW_GEOM: Record<string, string> = {
   light: '0 1px 3px',
   mid: '0 4px 10px',
-  heavy: '0 10px 24px -6px',
+  heavy: '0 10px 24px',
 };
 
 function shadowCss(level: string, color: string): string {
   const geom = SHADOW_GEOM[level];
   return geom ? `${geom} ${color}` : 'none';
+}
+
+/**
+ * 判断 computed box-shadow 是否等价「无阴影」：
+ * 空/none，或所有偏移·模糊·扩散均为 0，或阴影色全透明（如 Tailwind reset 的
+ * `0 0 #0000` → `rgba(0, 0, 0, 0) 0px 0px 0px 0px`）。
+ */
+function isShadowlessValue(boxShadow: string): boolean {
+  const bs = (boxShadow ?? '').trim();
+  if (!bs || bs === 'none') return true;
+  const colorMatch = bs.match(/rgba?\([^)]*\)/i);
+  if (colorMatch) {
+    const parsed = parseCssColor(colorMatch[0]);
+    if (parsed && parsed.a === 0) return true;
+  }
+  const nums = bs.match(/-?[\d.]+px/g);
+  if (nums && nums.length > 0 && nums.every((n) => parseFloat(n) === 0)) return true;
+  return false;
 }
 
 /** 从 computed box-shadow 提取颜色（提不到用默认阴影色） */
@@ -441,7 +460,7 @@ export const FIELD_DEFS: Record<string, FieldDef> = {
     kind: 'seg',
     read: (el) => {
       const bs = computed(el).boxShadow;
-      return !bs || bs === 'none' ? 'none' : '';
+      return isShadowlessValue(bs) ? 'none' : '';
     },
     readCss: (el) => computed(el).boxShadow || 'none',
     cssValue: (v) => shadowCss(v, 'rgba(60, 46, 18, 0.22)'),
@@ -764,13 +783,23 @@ function buildColor(session: FieldsSession, key: string, ctx: ControlContext): H
   };
   render(session.get(key));
 
+  // 色块开关：追踪已开浮层句柄，再次点同一色块 = 关闭（逻辑11 切换）；
+  // 点别的色块由 mountPopover 的点外部逻辑关掉旧的，这里开新的。
+  let picker: PopoverHandle | null = null;
   sw.addEventListener('click', () => {
-    openColorPicker({
+    if (picker) {
+      picker.close(); // onClose 同步清空 picker
+      return;
+    }
+    picker = openColorPicker({
       root: ctx.popoverRoot,
       anchor: sw,
       target: session.target,
       value: session.get(key),
       onChange: (color) => session.set(key, color),
+      onClose: () => {
+        picker = null;
+      },
     });
   });
   val.addEventListener('change', () => {
@@ -842,7 +871,13 @@ function buildSelect(session: FieldsSession, key: string, def: FieldDef, ctx: Co
   };
   render(session.get(key));
 
+  // 下拉开关：追踪已开浮层句柄，再次点触发钮 = 关闭（与色块一致的切换语义）
+  let dropdown: PopoverHandle | null = null;
   trigger.addEventListener('click', () => {
+    if (dropdown) {
+      dropdown.close(); // onClose 同步清空 dropdown
+      return;
+    }
     const items: DropdownItem[] = (def.options?.() ?? []).map((o) => ({
       value: o.value,
       label: optionLabel(o),
@@ -854,13 +889,16 @@ function buildSelect(session: FieldsSession, key: string, def: FieldDef, ctx: Co
       label: displayFor(v),
       fontFamily: key === 'font' ? v : undefined,
     }));
-    openDropdown({
+    dropdown = openDropdown({
       root: ctx.popoverRoot,
       anchor: trigger,
       items,
       smartItems,
       current: session.get(key),
       onPick: (v) => session.set(key, v),
+      onClose: () => {
+        dropdown = null;
+      },
     });
   });
   session.subscribe(key, render);
@@ -1109,25 +1147,26 @@ export function modbarRows(type: ElementType): FieldRow[] {
 /** 陌生元素：按 computed style 动态列出最相关控件（前 4，带「自动」角标） */
 export function autoModbarRows(target: HTMLElement): FieldRow[] {
   const cs = computed(target);
+  const num = (v: string): number => parseFloat(v) || 0;
   const hasText = (target.textContent ?? '').trim() !== '';
+  // 逐字段按「元素确有非默认值」打分：命中越具体越靠前，只留真正相关的
   const candidates: Array<{ key: string; relevant: boolean }> = [
     { key: 'bgColor', relevant: (parseCssColor(cs.backgroundColor)?.a ?? 0) > 0 },
-    { key: 'padding', relevant: parseFloat(cs.paddingTop) > 0 },
-    { key: 'radius', relevant: parseFloat(cs.borderTopLeftRadius) > 0 },
+    { key: 'border', relevant: num(cs.borderTopWidth) > 0 && cs.borderTopStyle !== 'none' },
+    { key: 'radius', relevant: num(cs.borderTopLeftRadius) > 0 },
+    { key: 'shadow', relevant: !isShadowlessValue(cs.boxShadow) },
+    { key: 'padding', relevant: num(cs.paddingTop) > 0 || num(cs.paddingLeft) > 0 },
+    { key: 'opacity', relevant: num(cs.opacity || '1') < 1 },
+    {
+      key: 'display',
+      relevant: ['flex', 'grid', 'inline-flex', 'inline-grid'].includes(cs.display),
+    },
     { key: 'color', relevant: hasText },
     { key: 'fontSize', relevant: hasText },
-    { key: 'border', relevant: parseFloat(cs.borderTopWidth) > 0 },
-    { key: 'opacity', relevant: parseFloat(cs.opacity) < 1 },
-    { key: 'display', relevant: true },
   ];
-  const picked: string[] = [];
-  for (const c of candidates) {
-    if (c.relevant && picked.length < 4) picked.push(c.key);
-  }
-  for (const fallback of ['bgColor', 'padding', 'radius', 'display']) {
-    if (picked.length >= 4) break;
-    if (!picked.includes(fallback)) picked.push(fallback);
-  }
+  const picked = candidates.filter((c) => c.relevant).map((c) => c.key).slice(0, 4);
+  // 什么都没命中（毫无特征的裸元素）：给一组克制的合理默认，不再无差别回填 4 项
+  if (picked.length === 0) picked.push('bgColor', 'padding', 'display');
   // 打包：相邻两个数值控件并排（贴 part 35 的紧凑布局）
   const rows: FieldRow[] = [];
   for (let i = 0; i < picked.length; i++) {

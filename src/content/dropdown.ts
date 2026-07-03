@@ -21,9 +21,11 @@ export interface DropdownItem {
 }
 
 /**
- * 采样"选中元素祖先链"上某字段的实际值：
- * 从元素本身沿 parentElement 上溯到 body（含），
- * 收集 getValue 的非空返回值，去重、按出现频次降序（同频保持自下而上先见顺序），取前 max。
+ * 采样"选中元素祖先链 + 同层兄弟"上某字段的实际值：
+ * 先从元素本身沿 parentElement 上溯到 body（含），收集 getValue 的非空返回值
+ * （祖先结果优先，保持既有去重/频次语义）；再补采各层的同级兄弟节点
+ * （target 的兄弟 + 各祖先的兄弟），兄弟只补充不顶替祖先顺序。
+ * 全程限制访问节点数（MAX_NODES），去重、按出现频次降序（同频保持先见顺序），取前 max。
  * 一个值都采不到时返回空数组（调用方自隐智能栏）。
  */
 export function sampleAncestorValues(
@@ -31,11 +33,13 @@ export function sampleAncestorValues(
   getValue: (node: Element) => string | null | undefined,
   max = 5
 ): string[] {
+  const MAX_NODES = 40;
   const counts = new Map<string, number>();
   const order: string[] = [];
-  let node: Element | null = el;
-  const doc = el.ownerDocument;
-  while (node && node !== doc.documentElement) {
+  let visited = 0;
+  const sample = (node: Element): void => {
+    if (visited >= MAX_NODES) return;
+    visited++;
     const value = getValue(node);
     if (value) {
       if (!counts.has(value)) {
@@ -44,7 +48,28 @@ export function sampleAncestorValues(
       }
       counts.set(value, counts.get(value)! + 1);
     }
+  };
+  const doc = el.ownerDocument;
+  // 第一遍：祖先链（祖先结果优先）
+  const ancestors: Element[] = [];
+  const ancestorSet = new Set<Element>();
+  let node: Element | null = el;
+  while (node && node !== doc.documentElement) {
+    ancestors.push(node);
+    ancestorSet.add(node);
+    sample(node);
     node = node.parentElement;
+  }
+  // 第二遍：同层兄弟补采（祖先本身已采过，跳过）
+  for (const a of ancestors) {
+    if (visited >= MAX_NODES) break;
+    const parent = a.parentElement;
+    if (!parent) continue;
+    for (const sib of parent.children) {
+      if (sib === a || ancestorSet.has(sib)) continue;
+      sample(sib);
+      if (visited >= MAX_NODES) break;
+    }
   }
   // 稳定排序：同频保持先见顺序
   return order.sort((a, b) => counts.get(b)! - counts.get(a)!).slice(0, max);
@@ -68,6 +93,8 @@ export interface DropdownOptions {
   /** 当前值（对应行打勾高亮） */
   current: string;
   onPick: (value: string) => void;
+  /** 浮层被任何途径关闭时回调（供触发钮清空句柄做开关） */
+  onClose?: () => void;
 }
 
 function renderItem(item: DropdownItem, current: string, smart: boolean): HTMLElement {
@@ -129,7 +156,7 @@ export function openDropdown(opts: DropdownOptions): PopoverHandle {
   for (const item of opts.items) allList.appendChild(renderItem(item, opts.current, false));
   dd.appendChild(allList);
 
-  const handle = mountPopover(opts.root, dd, opts.anchor);
+  const handle = mountPopover(opts.root, dd, opts.anchor, opts.onClose);
 
   dd.addEventListener('click', (ev) => {
     const row = (ev.target as Element).closest?.('.pd-dd-item');

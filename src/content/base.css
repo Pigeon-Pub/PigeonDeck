@@ -1287,6 +1287,9 @@
 /* 透明度 */
 .opa { margin-top: 12px; }
 .opa-h { display: flex; justify-content: space-between; font-size: 11px; color: var(--ctx2); margin-bottom: 7px; }
+/* 底栏：取消（无边框）/ 确定（主色）右对齐（交互14） */
+.pop-foot { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 13px; }
+.pop-foot .pd-btn { min-height: 28px; padding: 0 13px; }
 
 /* ============================================================
    调试分类只读 readout — 来源：preview/parts/22-adv-debug.html

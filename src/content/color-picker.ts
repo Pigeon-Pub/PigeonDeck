@@ -118,8 +118,9 @@ export interface ElementColorSource {
 }
 
 /**
- * 局部取色推荐：采样元素及祖先链（至 body 含）的 computed
+ * 局部取色推荐：采样元素、祖先链（至 body 含）及同层兄弟的 computed
  * color / background-color，剔除全透明，归一化后去重按频率降序取前 max（默认 7）。
+ * 祖先结果优先（保持既有顺序/去重语义），兄弟仅补充；全程限制访问节点数。
  * getStyles 可注入（单测隔离 jsdom computed style 差异）。
  */
 export function sampleRecommendedColors(
@@ -130,11 +131,13 @@ export function sampleRecommendedColors(
     return cs ? { color: cs.color, backgroundColor: cs.backgroundColor } : {};
   }
 ): string[] {
+  const MAX_NODES = 40;
   const counts = new Map<string, number>();
   const order: string[] = [];
-  const doc = el.ownerDocument;
-  let node: Element | null = el;
-  while (node && node !== doc.documentElement) {
+  let visited = 0;
+  const sample = (node: Element): void => {
+    if (visited >= MAX_NODES) return;
+    visited++;
     const styles = getStyles(node);
     for (const raw of [styles.color, styles.backgroundColor]) {
       if (!raw) continue;
@@ -147,7 +150,28 @@ export function sampleRecommendedColors(
       }
       counts.set(key, counts.get(key)! + 1);
     }
+  };
+  const doc = el.ownerDocument;
+  // 第一遍：祖先链（祖先结果优先）
+  const ancestors: Element[] = [];
+  const ancestorSet = new Set<Element>();
+  let node: Element | null = el;
+  while (node && node !== doc.documentElement) {
+    ancestors.push(node);
+    ancestorSet.add(node);
+    sample(node);
     node = node.parentElement;
+  }
+  // 第二遍：同层兄弟补采（祖先本身已采过，跳过）
+  for (const a of ancestors) {
+    if (visited >= MAX_NODES) break;
+    const parent = a.parentElement;
+    if (!parent) continue;
+    for (const sib of parent.children) {
+      if (sib === a || ancestorSet.has(sib)) continue;
+      sample(sib);
+      if (visited >= MAX_NODES) break;
+    }
   }
   return order.sort((a, b) => counts.get(b)! - counts.get(a)!).slice(0, max);
 }
@@ -165,6 +189,8 @@ export interface ColorPickerOptions {
   value: string;
   /** 每次调整实时回调（hex 或 rgba 串） */
   onChange: (cssColor: string) => void;
+  /** 浮层被任何途径关闭时回调（供色块清空句柄做开关） */
+  onClose?: () => void;
 }
 
 /** 打开调色盘浮层 */
@@ -172,6 +198,9 @@ export function openColorPicker(opts: ColorPickerOptions): PopoverHandle {
   const initial = parseCssColor(opts.value) ?? { r: 184, g: 132, b: 44, a: 1 };
   const hsv = rgbToHsv(initial.r, initial.g, initial.b);
   const state = { h: hsv.h, s: hsv.s, v: hsv.v, a: initial.a };
+  // 打开时的原始色：取消时回滚（交互14）；dirty 标记避免未改动也误写
+  const originalCss = formatCssColor(initial);
+  let dirty = false;
 
   const pop = document.createElement('div');
   pop.className = 'pd-surface pop';
@@ -197,6 +226,10 @@ export function openColorPicker(opts: ColorPickerOptions): PopoverHandle {
     <div class="opa">
       <div class="opa-h"><span>${t('palette_opacity')}</span><span class="opa-v"></span></div>
       <div class="pd-range" data-testid="pd-palette-alpha"><span class="knob"></span></div>
+    </div>
+    <div class="pop-foot">
+      <button type="button" class="pd-btn ghost" data-testid="pd-palette-cancel">${t('panel_cancel')}</button>
+      <button type="button" class="pd-btn primary" data-testid="pd-palette-save">${t('panel_save')}</button>
     </div>`;
 
   const sat = pop.querySelector<HTMLElement>('.sat')!;
@@ -259,6 +292,7 @@ export function openColorPicker(opts: ColorPickerOptions): PopoverHandle {
   };
 
   const commit = (): void => {
+    dirty = true;
     render();
     opts.onChange(formatCssColor(currentColor()));
   };
@@ -339,5 +373,16 @@ export function openColorPicker(opts: ColorPickerOptions): PopoverHandle {
   });
 
   render();
-  return mountPopover(opts.root, pop, opts.anchor);
+  const handle = mountPopover(opts.root, pop, opts.anchor, opts.onClose);
+
+  // 底栏：确定（保留当前预览）/ 取消（回滚到打开前的原始色）
+  pop.querySelector<HTMLButtonElement>('[data-testid="pd-palette-save"]')!.addEventListener('click', () => {
+    handle.close();
+  });
+  pop.querySelector<HTMLButtonElement>('[data-testid="pd-palette-cancel"]')!.addEventListener('click', () => {
+    if (dirty) opts.onChange(originalCss); // 有过预览改动才回滚
+    handle.close();
+  });
+
+  return handle;
 }

@@ -322,3 +322,132 @@ test('⑥ 调试分类默认英文，点翻译图标变中文', async () => {
 
   await page.close();
 });
+
+test('⑦ 展开高级样式隐藏普通修改栏，收起恢复', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#card-text p');
+  await waitShadowVisible(page, '[data-testid="pd-modbox"]');
+
+  // 展开高级样式 → 普通修改栏隐藏（逻辑2）
+  await clickShadowSel(page, '[data-testid="pd-adv-toggle"]');
+  await waitShadowVisible(page, '[data-testid="pd-advbox"]');
+  await page.waitForFunction(() => {
+    const host = document.getElementById('pd-host');
+    const mb = host?.shadowRoot?.querySelector<HTMLElement>('[data-testid="pd-modbox"]');
+    return !!mb && getComputedStyle(mb).display === 'none';
+  });
+
+  // 收起高级样式 → 普通修改栏恢复
+  await clickShadowSel(page, '[data-testid="pd-adv-toggle"]');
+  await waitShadowVisible(page, '[data-testid="pd-modbox"]');
+
+  await page.close();
+});
+
+test('⑧ 调色盘取消回滚颜色到打开前', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#btn-primary');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+
+  const bgBefore = await pageComputed(page, '#btn-primary', 'background-color');
+
+  // 打开调色盘，选一个不同推荐色 → 实时预览生效
+  await clickShadowSel(page, '[data-field="bgColor"] .sw');
+  await waitShadowVisible(page, '[data-testid="pd-palette"]');
+  await waitShadowVisible(page, '[data-testid="pd-palette-sug"] .s');
+  const picked = await page.evaluate((current: string) => {
+    const host = document.getElementById('pd-host');
+    const swatches = [
+      ...host!.shadowRoot!.querySelectorAll<HTMLElement>('[data-testid="pd-palette-sug"] .s'),
+    ];
+    const target = swatches.find((s) => getComputedStyle(s).backgroundColor !== current);
+    if (!target) return null;
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    return target.getAttribute('data-color');
+  }, bgBefore);
+  expect(picked).toBeTruthy();
+  await expect.poll(() => pageComputed(page, '#btn-primary', 'background-color')).not.toBe(bgBefore);
+
+  // 点「取消」→ 调色盘关闭、颜色回滚到打开前（交互14）
+  await clickShadowEl(page, 'pd-palette-cancel');
+  await page.waitForFunction(() => {
+    const host = document.getElementById('pd-host');
+    return !host?.shadowRoot?.querySelector('[data-testid="pd-palette"]');
+  });
+  await expect.poll(() => pageComputed(page, '#btn-primary', 'background-color')).toBe(bgBefore);
+
+  await page.close();
+});
+
+test('⑧b 调色盘确定保留预览色', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#btn-primary');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+
+  const bgBefore = await pageComputed(page, '#btn-primary', 'background-color');
+
+  await clickShadowSel(page, '[data-field="bgColor"] .sw');
+  await waitShadowVisible(page, '[data-testid="pd-palette"]');
+  await waitShadowVisible(page, '[data-testid="pd-palette-sug"] .s');
+  const picked = await page.evaluate((current: string) => {
+    const host = document.getElementById('pd-host');
+    const swatches = [
+      ...host!.shadowRoot!.querySelectorAll<HTMLElement>('[data-testid="pd-palette-sug"] .s'),
+    ];
+    const target = swatches.find((s) => getComputedStyle(s).backgroundColor !== current);
+    if (!target) return null;
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    return target.getAttribute('data-color');
+  }, bgBefore);
+  expect(picked).toBeTruthy();
+
+  // 点「确定」→ 调色盘关闭、颜色保留预览（不回滚）
+  await clickShadowEl(page, 'pd-palette-save');
+  await page.waitForFunction(() => {
+    const host = document.getElementById('pd-host');
+    return !host?.shadowRoot?.querySelector('[data-testid="pd-palette"]');
+  });
+  await expect.poll(() => pageComputed(page, '#btn-primary', 'background-color')).not.toBe(bgBefore);
+
+  await page.close();
+});
+
+test('⑨ 再次点击色块关闭调色盘（切换，不叠加）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#btn-primary');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+
+  // 直接向色块派发 click（避免调色盘钳位后遮住色块导致坐标点击落在浮层上）
+  const clickSwatch = (): Promise<void> =>
+    page.evaluate(() => {
+      const host = document.getElementById('pd-host');
+      const sw = host!.shadowRoot!.querySelector<HTMLElement>('[data-field="bgColor"] .sw');
+      sw!.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    });
+  const paletteCount = (): Promise<number> =>
+    page.evaluate(
+      () => document.getElementById('pd-host')!.shadowRoot!.querySelectorAll('[data-testid="pd-palette"]').length
+    );
+
+  // 第一次点色块 → 打开，只有一个调色盘
+  await clickSwatch();
+  await waitShadowVisible(page, '[data-testid="pd-palette"]');
+  expect(await paletteCount()).toBe(1);
+
+  // 第二次点同一色块 → 关闭（逻辑11），不叠加第二个
+  await clickSwatch();
+  await page.waitForFunction(
+    () => !document.getElementById('pd-host')!.shadowRoot!.querySelector('[data-testid="pd-palette"]')
+  );
+  expect(await paletteCount()).toBe(0);
+
+  await page.close();
+});

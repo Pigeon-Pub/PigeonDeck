@@ -87,6 +87,27 @@ describe('sampleRecommendedColors — 局部取色推荐', () => {
     const { el, getStyles } = buildChain([{}, {}]);
     expect(sampleRecommendedColors(el, 7, getStyles)).toEqual([]);
   });
+
+  it('补采同层兄弟的颜色（兄弟补充，不顶替祖先顺序）', () => {
+    document.body.innerHTML = '';
+    const parent = document.createElement('div');
+    const target = document.createElement('div');
+    const sibling = document.createElement('div');
+    parent.appendChild(target);
+    parent.appendChild(sibling);
+    document.body.appendChild(parent);
+    const map = new Map<Element, ElementColorSource>([
+      [target, { color: '#111111' }],
+      [parent, { color: '#333333' }],
+      [sibling, { backgroundColor: '#222222' }], // 只挂在兄弟上，祖先链走不到
+    ]);
+    const getStyles = (n: Element): ElementColorSource => map.get(n) ?? {};
+    const result = sampleRecommendedColors(target, 7, getStyles);
+    expect(result).toContain('#222222'); // 兄弟色被采到
+    // 祖先优先：兄弟色排在祖先色之后
+    expect(result.indexOf('#111111')).toBeLessThan(result.indexOf('#222222'));
+    expect(result.indexOf('#333333')).toBeLessThan(result.indexOf('#222222'));
+  });
 });
 
 describe('parseCssColor / formatCssColor', () => {

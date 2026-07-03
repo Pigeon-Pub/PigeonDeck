@@ -478,8 +478,10 @@ export class PanelManager {
       this.session = new FieldsSession(target);
       this.panelCommitted = false;
       const ctx: ControlContext = { popoverRoot: this.root };
-      body.appendChild(this.buildModbox(target, elementType, ctx));
-      body.appendChild(this.buildAdvSlot(elementType, ctx));
+      const modbox = this.buildModbox(target, elementType, ctx);
+      body.appendChild(modbox);
+      // 高级样式展开时隐藏普通修改栏（逻辑2，贴 preview part 12 的展开布局），收起恢复
+      body.appendChild(this.buildAdvSlot(elementType, ctx, modbox));
     }
     panel.appendChild(body);
 
@@ -654,11 +656,12 @@ export class PanelManager {
   }
 
   /** 高级样式折叠槽：收起 = .adv 行；展开 = .adv-head + advbox；切换走高度动画 */
-  private buildAdvSlot(elementType: ElementType, ctx: ControlContext): HTMLElement {
+  private buildAdvSlot(elementType: ElementType, ctx: ControlContext, modbox?: HTMLElement): HTMLElement {
     const slot = document.createElement('div');
 
     const renderCollapsed = (): void => {
       slot.innerHTML = '';
+      if (modbox) modbox.style.display = ''; // 收起 → 恢复普通修改栏
       const adv = document.createElement('div');
       adv.className = 'adv';
       adv.setAttribute('data-testid', 'pd-adv-toggle');
@@ -686,6 +689,7 @@ export class PanelManager {
 
     const renderExpanded = (): void => {
       slot.innerHTML = '';
+      if (modbox) modbox.style.display = 'none'; // 展开 → 隐藏普通修改栏
       const head = document.createElement('div');
       head.className = 'adv-head';
       head.setAttribute('data-testid', 'pd-adv-toggle');

@@ -64,6 +64,24 @@ describe('sampleAncestorValues — 祖先链采样', () => {
     expect(sampleAncestorValues(el, () => undefined)).toEqual([]);
     expect(sampleAncestorValues(el, getV)).toEqual(['a', 'b']);
   });
+
+  it('补采同层兄弟的值（兄弟补充，不顶替祖先顺序）', () => {
+    document.body.innerHTML = '';
+    const parent = document.createElement('div');
+    parent.setAttribute('data-v', 'b');
+    const target = document.createElement('div');
+    target.setAttribute('data-v', 'a');
+    const sib = document.createElement('div');
+    sib.setAttribute('data-v', 'sib');
+    parent.appendChild(target);
+    parent.appendChild(sib);
+    document.body.appendChild(parent);
+    const result = sampleAncestorValues(target, getV);
+    expect(result).toContain('sib'); // 兄弟值被采到
+    // 祖先优先：兄弟值排在祖先值之后
+    expect(result.indexOf('a')).toBeLessThan(result.indexOf('sib'));
+    expect(result.indexOf('b')).toBeLessThan(result.indexOf('sib'));
+  });
 });
 
 describe('primaryFontFamily — 首选字体名', () => {

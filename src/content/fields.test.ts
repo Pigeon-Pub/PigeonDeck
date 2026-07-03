@@ -238,4 +238,61 @@ describe('autoModbarRows — 陌生元素自动适配', () => {
     expect(keys).toContain('bgColor');
     expect(keys).toContain('padding');
   });
+
+  it('不同元素真正浮现不同控件（按元素驱动，非固定四项）', () => {
+    // 有边框 + 圆角、无背景无内边距 → 列 border/radius，不再无脑塞 padding
+    const bordered = document.createElement('div');
+    bordered.style.borderTopWidth = '2px';
+    bordered.style.borderTopStyle = 'solid';
+    bordered.style.borderTopLeftRadius = '8px';
+    document.body.appendChild(bordered);
+    const keys = autoModbarRows(bordered).flat();
+    expect(keys).toContain('border');
+    expect(keys).toContain('radius');
+    expect(keys).not.toContain('padding');
+    expect(keys).not.toContain('bgColor');
+  });
+
+  it('毫无特征的裸元素回落到克制的默认（不无差别回填 4 项）', () => {
+    const bare = document.createElement('div');
+    document.body.appendChild(bare);
+    const keys = autoModbarRows(bare).flat();
+    expect(keys.length).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('shadow — 阴影档位与无阴影识别', () => {
+  it('阴影强度随档位单调递增（轻 < 中 < 重 的模糊半径）', () => {
+    const blurOf = (level: string): number => {
+      const css = FIELD_DEFS.shadow.cssValue(level);
+      const nums = css.match(/-?[\d.]+px/g) ?? [];
+      // 几何格式 "0 <y>px <blur>px"：模糊是最后一个 px 值（offset-x 的 0 无 px 后缀）
+      return parseFloat(nums[nums.length - 1] ?? '0');
+    };
+    expect(blurOf('light')).toBeLessThan(blurOf('mid'));
+    expect(blurOf('mid')).toBeLessThan(blurOf('heavy'));
+    // 重档不再带负扩散（历史上 -6px 造成非单调）
+    expect(FIELD_DEFS.shadow.cssValue('heavy')).not.toContain('-');
+  });
+
+  it('shadow.read 把 none / 全零 / 全透明阴影都识别为「无」', () => {
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+    // 显式 none
+    el.style.boxShadow = 'none';
+    expect(FIELD_DEFS.shadow.read(el)).toBe('none');
+    // Tailwind reset 常见形态：全透明色 + 全零几何
+    el.style.boxShadow = 'rgba(0, 0, 0, 0) 0px 0px 0px 0px';
+    expect(FIELD_DEFS.shadow.read(el)).toBe('none');
+    // 全零几何（非透明色）
+    el.style.boxShadow = 'rgb(0, 0, 0) 0px 0px 0px 0px';
+    expect(FIELD_DEFS.shadow.read(el)).toBe('none');
+  });
+
+  it('shadow.read 对真实可见阴影返回空串（不高亮无档）', () => {
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+    el.style.boxShadow = 'rgba(0, 0, 0, 0.2) 0px 4px 10px 0px';
+    expect(FIELD_DEFS.shadow.read(el)).toBe('');
+  });
 });
