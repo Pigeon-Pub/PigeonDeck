@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 9：复制图片（2026-07-03）
+
+- 截图拼接管线（`src/content/capture.ts`，9a）：`chrome.tabs.captureVisibleTab` 滚动拼接单页长图，无第三方依赖；纯函数 `computeCaptureRange`（标注文档坐标 min/max ± padding，总高钳 ≤ `MAX_CAPTURE_HEIGHT`=14000px）+ `planScreens`（逐屏 scrollY 序列、末屏对齐范围底）；`captureStitched` 隐藏自身 UI → 逐屏 `scrollTo` + 渲染等待（350ms）→ 后台截图 → 恢复 UI/scroll → canvas 按 `devicePixelRatio` 缩放拼接
+- 后台限速（`src/background/service-worker.ts`）：`{type:'pd-capture'}` 消息 → `captureVisibleTab`，**≥600ms/屏节流**（captureVisibleTab 上限 2 次/秒）；`manifest.json` 加 `host_permissions: ["<all_urls>"]`
+- 叠加程序化重绘（9b）：编号圆/标注框/区域框/移动预览幽灵框+连线**不截自页面**，按标注文档坐标在拼接 canvas 上重画（更清晰）；纯函数 `layoutOverlay`（文档坐标 → canvas 坐标，Y 减 range.top）；视觉逐值照搬 pigeonlib（邮政金 `#b8842c`、区域软金底、位号圆金底白字+阴影、圆角 6px）；被移动元素反推初始位置=最终−(dx,dy)，主框画初始、幽灵框画最终、虚线连线
+- 剪贴板 / 下载（9b）：结果弹窗（照搬 preview part 38 `.opanel-img`）底栏「复制」(`ClipboardItem('image/png')` via `navigator.clipboard.write`) + 「下载」(`toBlob` → blob URL → `pigeondeck-capture.png`)；`settings.imageMethod`（`clipboard`/`download`，默认 clipboard）生成后自动执行一次；可选水印 `settings.watermark`（长图底部「URL · 时间」浅底药丸）；仅产图不附文本
+- **已知限制**：① `captureVisibleTab` 仅截视口宽，横向滚动页面长图按文档宽拉伸（V1 妥协）；② fixed 定位元素在拼接图中重复出现（V1 妥协）；③ 自动复制到剪贴板在异步截图管线后用户手势已消耗，真实 Chrome 下可能失败并降级 toast——结果弹窗「复制」按钮在手势内可靠可用
+- i18n：截图生成中/无内容/失败 + 已复制/复制失败/已下载 toast，中英双语
+- 单测：`capture.test.ts` 20 条（9a 范围/分屏 16 + 9b `layoutOverlay` 坐标换算 4）
+- E2E：`tests/e2e/copy-image.spec.ts`（① 无标注 toast 正常；②③ 截图弹窗/关闭在 Playwright persistent-context 下 `captureVisibleTab` 挂起，按 §15 软降级 + DEVIATION 记录，附真实 Chrome 手动冒烟清单）
+
+### 修正 — UI 校准（2026-07-03，随阶段 9 合并）
+
+- Logo 换新：`public/brand/logo.svg` + 工具盘/悬浮球图标改为新描边鸽子（`stroke=currentColor` 继承白色 `#fdf6e6`）
+- 工具盘按钮顺序照搬 preview part 02：**Logo → 撤销/重做 → 移动 → 复制文本 → 复制图片 → 清空 → 设置**（原实现误将撤销/重做置于复制图片之后）
+- 移动模式补 hover 反馈：鼠标悬浮未选中元素显示圆角高亮框（`.pd-hover`，经选择粒度解析器指向 click 将实际选中的元素），单击后变八向句柄框
+- 调色盘局部取色推荐：色块不足 7 个时保持原尺寸并左对齐（原 `flex:1` 会拉伸放大）
+
 ### Coding — 阶段 8：复制文本（2026-07-03）
 
 - 复制文本格式化管线（`src/content/format.ts`，纯函数、无 DOM/chrome/i18n 运行时依赖）：`buildOperations(annotations)` → 中间操作模型（按 selector 去重合并、Type 组合固定序 `Annotation + Style Modification + Move`、Region 独立），`renderTaskList(ops, ctx, lang)` → 严格按蓝图 §7.1 + preview part 37 渲染 Codex/AI 可执行任务清单（`[Page Context]` / `[Global Editing Rules]` / `[Operations]`，`--- #N Type ---` 区块头）
@@ -205,7 +223,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | ~~6~~ | ~~移动模式：选中 + 拖拽 + 吸附/参考线 + 八向缩放句柄~~ ✅ |
 | ~~7~~ | ~~撤销/重做：合并按钮 + 全操作覆盖 + Ctrl+Z / Ctrl+Shift+Z~~ ✅ |
 | ~~8~~ | ~~复制文本：Codex/AI 任务清单生成 + 去重合并~~ ✅ |
-| 9 | 复制图片：单页长图 + 批注叠加 |
+| 9 | ~~复制图片：单页长图 + 批注叠加~~ ✅ |
 | 10 | 清空确认：贴工具盘确认弹层 |
 | 11 | 设置面板：4 分区 + 贴工具盘 |
 | 12 | 安装说明页：首次自动打开 + 设置可重看 |
