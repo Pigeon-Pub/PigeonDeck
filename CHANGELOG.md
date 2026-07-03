@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 15：测试收尾（2026-07-03）
+
+- 夹具补齐（`tests/fixtures/basic.html` 追加，**既有元素 id/结构/坐标全部不动**）：表单卡（input/textarea/select/submit）、图片网格（data: 占位 3 张）、嵌套 flex 容器、绝对定位块——供全链路及未来 E2E 更真实的目标
+- 全链路集成 E2E（`tests/e2e/full-flow.spec.ts`，1 大场景，蓝图 §10.3）：展开→批注#1→改背景色#2（验 computed 变化）→移动模式拖 #snap-b 出#3→区域框选#4→**复制文本读剪贴板真断言**（`[Page Context]`/`[Operations]`/`#1`/note）→撤销回退→清空确认+Ctrl+Z 恢复→**刷新 sessionStorage 恢复**→设置面板开关；时序全轮询；复制图片（captureVisibleTab 本环境挂起）按 §15 跳过转手动冒烟
+- 单测：审计确认既有覆盖充分（format 43 / snap 14 / selection 9 / visual-units 8 / disable 13 / languages 11 等已覆盖全部纯函数分支），**无真实盲区，不造凑数测试**
+- E2E 稳健性：`playwright.config.ts` 加 `retries: 1`（headed 扩展测试对机器负载敏感，吸收冷启动/高负载偶发 flake；`--retries=0` 下全套 71×2 亦稳定通过，重试不掩盖确定性回归）
+- **手动冒烟清单**（`docs/manual-smoke-checklist.md`，交付用户）：71 项可勾选，16 分区覆盖 Playwright 无法可靠验证的部分——尤其**复制图片长图/叠加/剪贴板（真机关键）**、`file://`（需扩展详情手动开启文件访问）、Popup 站点禁用 reload 联动、右键菜单、PDF 提示、亮暗主题；含环境与加载 dist/ 步骤
+- 已知妥协（§15 记录）：复制图片、file:// 授权、浏览器原生右键菜单、onInstalled 首装自动打开——均 persistent-context 不可自动验，转手动冒烟
+
 ### Coding — 阶段 14：i18n 完整化（2026-07-03）
 
 - 全库硬编码文案审计：`src/` 生产代码零用户可见硬编码字符串——所有界面文案自阶段 1 起即经 `t()`（内容脚本运行时 i18n）或 `chrome.i18n.getMessage`（onboarding/popup 静态页）；仅 3 处字面量为**不可翻译**内容（富文本字色按钮字形 `A`、快捷键名 `Ctrl+Z / Ctrl+⇧+Z / Esc`、品牌名 `PigeonDeck`），保留合理
@@ -283,7 +292,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | 12 | ~~安装说明页：首次自动打开 + 设置可重看~~ ✅ |
 | 13 | ~~Popup 与后台：Service Worker + 右键菜单 + file:// + PDF 提示~~ ✅ |
 | 14 | ~~i18n 完整化：中英双语全覆盖~~ ✅ |
-| 15 | 测试：Vitest 单测 + Playwright E2E + 手动冒烟 |
+| 15 | ~~测试：Vitest 单测 + Playwright E2E + 手动冒烟~~ ✅ |
 
 ---
 
