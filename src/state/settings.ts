@@ -37,6 +37,20 @@ export interface Settings {
    * 「URL · 时间戳」小字。默认关闭。
    */
   watermark: boolean;
+  /**
+   * 亮/暗主题（蓝图 §9）：Shadow DOM host `data-theme` 切换。默认亮色。
+   */
+  theme: 'light' | 'dark';
+  /**
+   * 区域框选长按触发时长（ms，蓝图 §9）。默认 300。
+   * region-select.ts 每次长按实时读此值。
+   */
+  longPressMs: number;
+  /**
+   * 移动模式本体拖拽防误触阈值（ms，蓝图 §9）：按下后需超过此时长才进入
+   * 位移。默认 0 = 点住即拖（当前行为）。
+   */
+  dragThreshold: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -47,7 +61,16 @@ export const DEFAULT_SETTINGS: Settings = {
   exportLang: 'en',
   imageMethod: 'clipboard',
   watermark: false,
+  theme: 'light',
+  longPressMs: 300,
+  dragThreshold: 0,
 };
+
+/** 数值设置项夹紧到 [min, max]；非数字回退 fallback（设置面板 pd-num 用） */
+export function clampNumber(value: number, min: number, max: number, fallback: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(value)));
+}
 
 const STORAGE_KEY = 'settings';
 
