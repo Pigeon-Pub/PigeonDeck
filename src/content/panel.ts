@@ -842,21 +842,31 @@ export class PanelManager {
     this.panelExisting = null;
   }
 
-  /** 删除标注：回退其已保存的样式修改 + 移除记录 + 进撤销历史 */
+  /** 删除标注：回退其已保存的样式修改 + 移动 DOM 效果 + 移除记录 + 进撤销历史 */
   private deleteAnnotation(annotation: Annotation): void {
-    applyChangesTo(this.resolveBySelector(annotation.selector), annotation.changes, 'old');
-    this.store.remove(annotation.id);
-    this.history.push({
-      label: 'annotation:delete',
-      apply: () => {
-        applyChangesTo(this.resolveBySelector(annotation.selector), annotation.changes, 'old');
-        this.store.remove(annotation.id);
-      },
-      revert: () => {
-        applyChangesTo(this.resolveBySelector(annotation.selector), annotation.changes, 'new');
-        this.store.restore(annotation);
-      },
-    });
+    // 删除移动过的元素时一并回退其移动 DOM 效果（transform），撤销时再复原到「移动态」，
+    // 与清空（clear.ts）一致。重父移动（reparent）的元素靠 DOM 结构定位，不叠加 transform
+    // （否则会在容器内二次偏移），保持嵌入现状即可。
+    const move = annotation.move;
+    const applyTransform = !!move && !move.reparent;
+
+    const doDelete = (): void => {
+      const el = this.resolveBySelector(annotation.selector);
+      applyChangesTo(el, annotation.changes, 'old');
+      if (applyTransform && el instanceof HTMLElement) el.style.transform = '';
+      this.store.remove(annotation.id);
+    };
+    const undoDelete = (): void => {
+      const el = this.resolveBySelector(annotation.selector);
+      applyChangesTo(el, annotation.changes, 'new');
+      if (applyTransform && move && el instanceof HTMLElement) {
+        el.style.transform = `translate(${move.dx}px, ${move.dy}px)`;
+      }
+      this.store.restore(annotation);
+    };
+
+    doDelete();
+    this.history.push({ label: 'annotation:delete', apply: doDelete, revert: undoDelete });
   }
 
   /** 按选择器唯一定位目标元素（定位不到返回 null，不乱改页面） */

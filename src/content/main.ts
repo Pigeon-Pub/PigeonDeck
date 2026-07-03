@@ -26,6 +26,7 @@ import { CopyImageManager } from './capture';
 import { ClearManager } from './clear';
 import { SettingsManager } from './settings-panel';
 import { setupShortcuts } from './shortcuts';
+import { replayRestoredAnnotations } from './restore-replay';
 
 // 防重复注入标记
 const HOST_ID = 'pd-host';
@@ -109,6 +110,12 @@ function inject(settings: Settings): void {
 
   // 撤销/重做历史栈（先建，Toolbar 需引用）
   const history = new History(settings.historyLimit);
+
+  // 刷新恢复（Cluster W5b Bug1）：store.load 只恢复数据，这里重放每条标注的 DOM
+  // 副作用（样式/移动/嵌入）并为每条重建撤销命令（Ctrl+Z 先撤最新）。须在 store.load
+  // + history 建好后、各 UI 管理器建好前执行——DOM 达最终态后 overlay 才据此解析标注框
+  // 位置、getUnresolvedCount 才准确。重父路径会把 selector 同步为当下位置。
+  if (restored) replayRestoredAnnotations(store, history);
 
   // Toolbar（接受 history，用于按钮禁用态订阅）
   const toolbar = new Toolbar(controller, controlLayer, history);

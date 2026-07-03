@@ -112,6 +112,14 @@ export class Overlay {
 
     // hover 追踪
     window.addEventListener('mousemove', this.onMouseMove, true);
+
+    // Bug3（显示17）：指针离开文档/窗口时清除 hover 金框，避免最后一格高亮滞留
+    // （鼠标移出视口时看起来「整页变黄」）。mouseleave 绑 document（E2E 可 dispatch）；
+    // window blur 兜底焦点丢失；mouseout(relatedTarget==null) 兜底离开窗口（元素间正常
+    // 移动 relatedTarget 非空，不误清）。
+    document.addEventListener('mouseleave', this.onDocumentLeave);
+    window.addEventListener('blur', this.onDocumentLeave);
+    window.addEventListener('mouseout', this.onWindowMouseOut, true);
   }
 
   destroy(): void {
@@ -120,6 +128,9 @@ export class Overlay {
     window.removeEventListener('scroll', this.scheduleRefresh, true);
     window.removeEventListener('resize', this.scheduleRefresh);
     window.removeEventListener('mousemove', this.onMouseMove, true);
+    document.removeEventListener('mouseleave', this.onDocumentLeave);
+    window.removeEventListener('blur', this.onDocumentLeave);
+    window.removeEventListener('mouseout', this.onWindowMouseOut, true);
     this.mutationObserver.disconnect();
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     for (const entry of this.entries.values()) {
@@ -221,6 +232,16 @@ export class Overlay {
     this.hoverBox.style.display = 'none';
     this.hoverLabel.style.display = 'none';
   }
+
+  /** 指针离开文档 / 窗口失焦：清除 hover 高亮（Bug3 显示17） */
+  private onDocumentLeave = (): void => {
+    this.clearHover();
+  };
+
+  /** mouseout 兜底：仅当指针离开窗口（relatedTarget 为 null）才清，避免元素间移动误清 */
+  private onWindowMouseOut = (ev: MouseEvent): void => {
+    if (ev.relatedTarget === null) this.clearHover();
+  };
 
   /** 事件是否来自我们自己的 Shadow DOM UI */
   private isOwnUi(ev: Event): boolean {
