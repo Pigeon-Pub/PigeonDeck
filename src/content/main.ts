@@ -20,6 +20,7 @@ import { DirectEditManager } from './direct-edit';
 import { RegionSelectManager } from './region-select';
 import { SelectionResolver } from './selection';
 import { MoveManager } from './move';
+import { CopyTextManager } from './copy-text';
 import { setupShortcuts } from './shortcuts';
 
 // 防重复注入标记
@@ -153,6 +154,15 @@ function inject(settings: Settings): void {
     history,
     resolver: selectionResolver,
     overlayLayer,
+  });
+
+  // 阶段 8b：复制文本（生成任务清单 → 剪贴板 + 结果弹窗 + 语言快切 + 下载）
+  new CopyTextManager({
+    controller,
+    store,
+    settings,
+    toast,
+    panelLayer,
   });
 
   // 恢复后：未能定位的标注数据保留、UI 跳过，轻提示

@@ -201,5 +201,11 @@
   "guide_align_center_v": { "message": "垂直居中", "description": "吸附参考线语义：垂直中心对齐" },
   "guide_align_x": { "message": "对齐", "description": "吸附参考线语义：X 轴通用对齐" },
   "guide_align_y": { "message": "对齐", "description": "吸附参考线语义：Y 轴通用对齐" },
-  "move_free_hint": { "message": "自由移动 · 按住 Alt", "description": "按住 Alt 拖拽时的自由移动轻提示" }
+  "move_free_hint": { "message": "自由移动 · 按住 Alt", "description": "按住 Alt 拖拽时的自由移动轻提示" },
+  "output_copy": { "message": "复制", "description": "复制文本结果弹窗：复制按钮" },
+  "output_download": { "message": "下载为 .md 文件", "description": "复制文本结果弹窗：下载按钮 tooltip" },
+  "output_lang_title": { "message": "导出语言", "description": "复制文本结果弹窗：语言快切 tooltip" },
+  "toast_copy_ok": { "message": "已复制任务清单", "description": "任务清单复制到剪贴板后的轻提示" },
+  "toast_copy_empty": { "message": "暂无可复制的内容", "description": "无标注时触发复制文本的轻提示" },
+  "toast_copy_failed": { "message": "复制失败，可用下方按钮手动复制", "description": "剪贴板写入被拒时的轻提示" }
 }

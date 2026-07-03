@@ -20,6 +20,12 @@ export interface Settings {
    * 阶段 11 再做设置 UI，本阶段只加字段 + 消费。
    */
   historyLimit: number;
+  /**
+   * 复制文本导出语言（蓝图 §7.1：默认英文，可切中文或跟随界面）：
+   * 'en' / 'zh_CN' = 固定语言；'auto' = 跟随界面语言（i18n locale，回退 en）。
+   * 完整设置 UI 在阶段 11，本阶段只加字段 + 消费 + 结果弹窗快切。
+   */
+  exportLang: 'en' | 'zh_CN' | 'auto';
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cardDefaultExpanded: false,
   defaultGranularity: 'smart',
   historyLimit: 50,
+  exportLang: 'en',
 };
 
 const STORAGE_KEY = 'settings';

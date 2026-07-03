@@ -393,6 +393,79 @@
 .pfoot .pd-btn { min-height: 28px; padding: 0 13px; }
 
 /* ============================================================
+   复制文本结果弹窗（panel 层）
+   来源：preview/parts/37-output-text.html（.opanel/.obody/.ofoot/.langpick）
+   ============================================================ */
+.opanel { width: 452px; display: flex; flex-direction: column; overflow: hidden; }
+.obody {
+  margin: 0;
+  padding: 13px 15px;
+  max-height: 430px;
+  overflow: auto;
+  font: 11.5px/1.7 ui-monospace, Consolas, 'Microsoft YaHei', monospace;
+  color: var(--ctx);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ofoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px 9px 13px;
+  border-top: 1px solid var(--cbd);
+  background: var(--cbg);
+  border-radius: 0 0 var(--r-card) var(--r-card);
+}
+.langpick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 6px 0 11px;
+  border-radius: 999px;
+  border: 1px solid var(--cbd);
+  background: var(--csf);
+  color: var(--ctx);
+  font: 500 12px var(--font-ui);
+  cursor: pointer;
+}
+.langpick svg { width: 14px; height: 14px; color: var(--ctx2); }
+.langpick .cur { color: var(--c1); font-weight: 600; }
+.langpick .cd { display: inline-flex; margin-left: 1px; }
+.ofoot .acts { display: inline-flex; align-items: center; gap: 8px; }
+.ofoot .pd-btn { min-height: 30px; }
+
+/* 语言快切浮层（part 39 精简版：仅 en / zh_CN） */
+.langdd { padding: 6px; min-width: 168px; display: flex; flex-direction: column; gap: 1px; }
+.langopt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ctx);
+  font: 13px var(--font-ui);
+  cursor: pointer;
+  text-align: left;
+}
+.langopt:hover { background: var(--chv); }
+.langopt.on { background: var(--c1-soft); }
+.langopt .iso {
+  width: 24px;
+  flex: none;
+  font: 600 10px var(--font-ui);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--ctx2);
+}
+.langopt .nm { flex: 1; }
+.langopt .chk { margin-left: auto; color: var(--c1); display: inline-flex; }
+.langopt .chk svg { width: 15px; height: 15px; }
+
+/* ============================================================
    页面覆盖层基元（overlay 层）
    来源：preview/pigeonlib.css + docs/design-system.md §5.22
    ============================================================ */

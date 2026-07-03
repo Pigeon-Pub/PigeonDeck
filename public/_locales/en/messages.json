@@ -201,5 +201,11 @@
   "guide_align_center_v": { "message": "Vertically centered", "description": "Snap guide semantic: vertical centers aligned" },
   "guide_align_x": { "message": "Aligned", "description": "Snap guide semantic: generic X-axis alignment" },
   "guide_align_y": { "message": "Aligned", "description": "Snap guide semantic: generic Y-axis alignment" },
-  "move_free_hint": { "message": "Free move · hold Alt", "description": "Free-move hint shown while dragging with Alt held" }
+  "move_free_hint": { "message": "Free move · hold Alt", "description": "Free-move hint shown while dragging with Alt held" },
+  "output_copy": { "message": "Copy", "description": "Copy-text result popup: copy button label" },
+  "output_download": { "message": "Download as .md file", "description": "Copy-text result popup: download button tooltip" },
+  "output_lang_title": { "message": "Export language", "description": "Copy-text result popup: language quick-switch tooltip" },
+  "toast_copy_ok": { "message": "Task list copied", "description": "Toast after copying the task list to clipboard" },
+  "toast_copy_empty": { "message": "Nothing to copy yet", "description": "Toast when copy-text is triggered with no annotations" },
+  "toast_copy_failed": { "message": "Copy failed; use the button below to copy manually", "description": "Toast when clipboard write is denied" }
 }
