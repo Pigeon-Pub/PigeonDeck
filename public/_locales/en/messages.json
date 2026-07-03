@@ -214,5 +214,10 @@
   "toast_capture_copied": { "message": "Image copied to clipboard", "description": "Toast after copying the capture image to clipboard" },
   "toast_capture_copy_failed": { "message": "Copy failed; use Download instead", "description": "Toast when clipboard image write is denied" },
   "toast_capture_downloaded": { "message": "Image downloaded", "description": "Toast after downloading the capture image" },
-  "output_img_download": { "message": "Download as PNG", "description": "Copy-image result popup: download button tooltip" }
+  "output_img_download": { "message": "Download as PNG", "description": "Copy-image result popup: download button tooltip" },
+  "clear_confirm_msg": { "message": "Clear all annotations, edits and moves on this page? You can undo (Ctrl+Z).", "description": "Clear confirmation popover message (clearing is undoable)" },
+  "clear_confirm_cancel": { "message": "Cancel", "description": "Clear confirmation cancel button" },
+  "clear_confirm_ok": { "message": "Clear all", "description": "Clear confirmation confirm button" },
+  "toast_clear_empty": { "message": "Nothing to clear", "description": "Toast when clear is triggered with no annotations" },
+  "toast_cleared": { "message": "Cleared", "description": "Toast after clearing the page" }
 }

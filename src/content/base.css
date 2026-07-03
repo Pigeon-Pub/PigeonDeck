@@ -1482,3 +1482,20 @@
   background: #fbfbfc;
   max-height: 400px;
 }
+
+/* ============================================================
+   阶段 10：清空确认弹层
+   来源：preview/parts/14-clear-confirm.html（.confirm + 清空按钮危险态）
+   定位交给 mountPopover（不用 part14 demo 的绝对定位/箭头）
+   ============================================================ */
+.confirm { width: 212px; padding: 13px; }
+.confirm .msg { font-size: 13px; color: var(--ctx); line-height: 1.5; margin-bottom: 11px; }
+.confirm .row { display: flex; justify-content: flex-end; gap: 7px; }
+.confirm .pd-btn { min-height: 28px; }
+
+/* 清空按钮危险态（确认进行中） */
+.pd-tbtn.clear-danger {
+  color: var(--cd);
+  background: rgba(178,58,46,.10);
+  border-color: rgba(178,58,46,.30);
+}

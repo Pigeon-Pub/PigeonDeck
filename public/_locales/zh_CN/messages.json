@@ -214,5 +214,10 @@
   "toast_capture_copied": { "message": "图片已复制到剪贴板", "description": "截图复制到剪贴板后的轻提示" },
   "toast_capture_copy_failed": { "message": "复制失败，请改用下载", "description": "剪贴板图片写入被拒时的轻提示" },
   "toast_capture_downloaded": { "message": "图片已下载", "description": "截图下载后的轻提示" },
-  "output_img_download": { "message": "下载为 PNG", "description": "复制图片结果弹窗：下载按钮 tooltip" }
+  "output_img_download": { "message": "下载为 PNG", "description": "复制图片结果弹窗：下载按钮 tooltip" },
+  "clear_confirm_msg": { "message": "清除当前页全部批注、编辑与移动？可用撤销（Ctrl+Z）恢复。", "description": "清空确认弹层文案（清空可撤销）" },
+  "clear_confirm_cancel": { "message": "取消", "description": "清空确认取消按钮" },
+  "clear_confirm_ok": { "message": "确认清空", "description": "清空确认确认按钮" },
+  "toast_clear_empty": { "message": "无可清空的内容", "description": "无标注时触发清空的轻提示" },
+  "toast_cleared": { "message": "已清空", "description": "清空当前页后的轻提示" }
 }

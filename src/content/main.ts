@@ -22,6 +22,7 @@ import { SelectionResolver } from './selection';
 import { MoveManager } from './move';
 import { CopyTextManager } from './copy-text';
 import { CopyImageManager } from './capture';
+import { ClearManager } from './clear';
 import { setupShortcuts } from './shortcuts';
 
 // 防重复注入标记
@@ -172,6 +173,16 @@ function inject(settings: Settings): void {
     store,
     settings,
     toast,
+    panelLayer,
+  });
+
+  // 阶段 10：清空确认（贴工具盘确认弹层，确认=复合命令可撤销）
+  new ClearManager({
+    controller,
+    store,
+    history,
+    toast,
+    controlLayer,
     panelLayer,
   });
 
