@@ -5,9 +5,35 @@
 
 import { logger } from '../diagnostics/logger';
 
+/** 安装说明页地址（扩展内静态页，public/onboarding.html 构建时复制到 dist/） */
+const ONBOARDING_URL = 'onboarding.html';
+
 chrome.runtime.onInstalled.addListener((details) => {
   logger.info('PigeonDeck installed', details.reason);
+  // 阶段 12：仅首次安装自动打开安装说明页（update 时不弹）
+  if (details.reason === 'install') {
+    chrome.tabs.create({ url: chrome.runtime.getURL(ONBOARDING_URL) });
+  }
 });
+
+/**
+ * 处理内容侧「打开安装说明页」请求 { type: 'pd-open-onboarding' }。
+ * 设置面板 Help 分区的按钮触发；独立 listener，不影响 pd-capture 分支。
+ */
+chrome.runtime.onMessage.addListener(
+  (msg: unknown, _sender, sendResponse: (resp: { ok: boolean }) => void) => {
+    if (
+      typeof msg !== 'object' ||
+      msg === null ||
+      (msg as Record<string, unknown>)['type'] !== 'pd-open-onboarding'
+    ) {
+      return false;
+    }
+    chrome.tabs.create({ url: chrome.runtime.getURL(ONBOARDING_URL) });
+    sendResponse({ ok: true });
+    return false; // 同步响应
+  }
+);
 
 /** 上次截图时间戳（ms），用于限速 */
 let lastCaptureTime = 0;

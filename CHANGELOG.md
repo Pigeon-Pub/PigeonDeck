@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 12：安装说明页（2026-07-03）
+
+- 安装说明页（`public/onboarding.html` + `public/onboarding.js`，静态扩展页，构建时复制到 dist/）：自包含品牌风格教程——品牌头（logo + 标题 + 副标题）→ 快速上手 4 步 → 示例验收场景 → 功能总览 8 项网格 → 页脚（版本号 + GitHub）；文案 `data-i18n` + `chrome.i18n.getMessage`（与 manifest `__MSG_*__` 同源），零硬编码
+- 自动打开（`src/background/service-worker.ts`）：`onInstalled` 仅 `reason==='install'` 时 `chrome.tabs.create(getURL('onboarding.html'))`（update 不弹）；新增独立 `onMessage` 处理 `pd-open-onboarding`（不干扰既有 pd-capture 截图分支）
+- 设置面板重开：Help 分区「打开安装说明页」→ content `chrome.runtime.sendMessage({type:'pd-open-onboarding'})` → 后台开页（替换 11 阶段占位）
+- i18n：onboarding 全部文案，中英双语
+- E2E：`tests/e2e/onboarding.spec.ts` 2 用例（直接 `goto chrome-extension://<id>/onboarding.html` → 断言标题/功能项/场景/logo src 渲染）；onInstalled 首次自动打开列为手动冒烟（persistent-context 无法可靠断言）
+
 ### Coding — 阶段 11：设置面板（2026-07-03）
 
 - 设置面板（`src/content/settings-panel.ts`，`SettingsManager`）：点工具盘「设置」（mode='settings'）→ 贴工具盘**侧边**弹出大面板（`positionBeside`，避免与工具盘列重叠被 control 层遮挡）；`.pd-surface.spanel` 340px，`.shead`（标题 + 关闭）+ `.sbody`（左 `.pd-nav` 4 分区导航 + 右 `.scon` 滚动内容）；点外部/关闭/切模式/Esc 关闭；照搬 preview parts 13/17/18/19
@@ -254,7 +262,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | 9 | ~~复制图片：单页长图 + 批注叠加~~ ✅ |
 | 10 | ~~清空确认：贴工具盘确认弹层~~ ✅ |
 | 11 | ~~设置面板：4 分区 + 贴工具盘~~ ✅ |
-| 12 | 安装说明页：首次自动打开 + 设置可重看 |
+| 12 | ~~安装说明页：首次自动打开 + 设置可重看~~ ✅ |
 | 13 | Popup 与后台：Service Worker + 右键菜单 + file:// + PDF 提示 |
 | 14 | i18n 完整化：中英双语全覆盖 |
 | 15 | 测试：Vitest 单测 + Playwright E2E + 手动冒烟 |
