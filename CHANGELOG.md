@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 10：清空确认（2026-07-03）
+
+- 清空确认弹层（`src/content/clear.ts`，`ClearManager`）：点工具盘「清空」→ 贴清空按钮**侧边**弹出小确认层（照搬 preview part 14 `.pd-surface.confirm`：说明 + 取消 ghost / 确认清空 danger）；再点清空 = 收起；无标注内容时仅轻提示不弹层；点外部/取消/确认后关闭并移除清空按钮危险态
+- 弹层定位（`positionBeside`）：工具盘是屏幕边缘纵向列，弹层贴按钮左侧（靠右缘时）或右侧（放不下时）、竖直居中夹紧视口——避免与工具盘列重叠被 control 层（z-4 > panel z-3）遮挡确认按钮
+- **可撤销复合清空命令**（蓝图 §4.4 撤销覆盖清空 + §5.6）：确认 → `snapshot=store.toPageState()` → doClear（按 selector 重解析每条标注元素，样式/内容改回旧值 + 复位移动 `transform` → `store.clear()` 编号归 1）→ `history.clear()` 清旧栈 → push 单条「clear」命令（apply=doClear，revert=`store.load(snapshot)` 恢复标注/编号/nextNumber + 重放新值/移动 transform）；因此清空后 Ctrl+Z 可整体恢复（标注、编号、直接编辑、移动预览全回来），再 Ctrl+Shift+Z 再清
+- `applyChangesTo`（`src/content/panel.ts`）改为 `export`，清空命令复用（单一真相源，不复制回放逻辑）
+- i18n：确认文案（诚实标注「可撤销」，非「不可撤销」）+ 取消/确认清空 + 无内容/已清空 toast，中英双语
+- 单测：`clear.test.ts` 6 条（清空后 store 空 + nextNumber=1 + 可撤销；撤销恢复标注与编号；重做再清；DOM 样式/移动回退与重放）
+- E2E：`tests/e2e/clear.spec.ts` 4 用例（确认清空位号全消失、清空后 Ctrl+Z 位号恢复、点外部取消弹层关闭且位号仍在、清空后新标注编号重置为 #1），**默认右下角位置**验证弹层侧边定位可点击；时序断言全轮询
+
 ### Coding — 阶段 9：复制图片（2026-07-03）
 
 - 截图拼接管线（`src/content/capture.ts`，9a）：`chrome.tabs.captureVisibleTab` 滚动拼接单页长图，无第三方依赖；纯函数 `computeCaptureRange`（标注文档坐标 min/max ± padding，总高钳 ≤ `MAX_CAPTURE_HEIGHT`=14000px）+ `planScreens`（逐屏 scrollY 序列、末屏对齐范围底）；`captureStitched` 隐藏自身 UI → 逐屏 `scrollTo` + 渲染等待（350ms）→ 后台截图 → 恢复 UI/scroll → canvas 按 `devicePixelRatio` 缩放拼接
@@ -224,7 +234,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | ~~7~~ | ~~撤销/重做：合并按钮 + 全操作覆盖 + Ctrl+Z / Ctrl+Shift+Z~~ ✅ |
 | ~~8~~ | ~~复制文本：Codex/AI 任务清单生成 + 去重合并~~ ✅ |
 | 9 | ~~复制图片：单页长图 + 批注叠加~~ ✅ |
-| 10 | 清空确认：贴工具盘确认弹层 |
+| 10 | ~~清空确认：贴工具盘确认弹层~~ ✅ |
 | 11 | 设置面板：4 分区 + 贴工具盘 |
 | 12 | 安装说明页：首次自动打开 + 设置可重看 |
 | 13 | Popup 与后台：Service Worker + 右键菜单 + file:// + PDF 提示 |
