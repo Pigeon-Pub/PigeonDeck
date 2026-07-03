@@ -20,6 +20,7 @@ import { DirectEditManager } from './direct-edit';
 import { RegionSelectManager } from './region-select';
 import { SelectionResolver } from './selection';
 import { MoveManager } from './move';
+import { setupShortcuts } from './shortcuts';
 
 // 防重复注入标记
 const HOST_ID = 'pd-host';
@@ -76,10 +77,9 @@ function inject(settings: Settings): void {
     shadow.appendChild(el);
   }
 
-  // 实例化 Controller + Toolbar
+  // 实例化 Controller
   const controller = new Controller();
   const controlLayer = shadow.querySelector<HTMLElement>('[data-layer="control"]')!;
-  new Toolbar(controller, controlLayer);
 
   // 批注链路：Store + 会话恢复 + 覆盖层 + 面板 + 轻提示
   const panelLayer = shadow.querySelector<HTMLElement>('[data-layer="panel"]')!;
@@ -91,8 +91,20 @@ function inject(settings: Settings): void {
   if (restored) store.load(restored);
   bindSessionPersistence(store);
 
-  // 撤销/重做历史栈（默认 50 步；按钮/快捷键接线在阶段 7）
-  const history = new History();
+  // 撤销/重做历史栈（先建，Toolbar 需引用）
+  const history = new History(settings.historyLimit);
+
+  // Toolbar（接受 history，用于按钮禁用态订阅）
+  new Toolbar(controller, controlLayer, history);
+
+  // 接线撤销/重做瞬时动作
+  controller.setCallbacks({
+    onUndo: () => history.undo(),
+    onRedo: () => history.redo(),
+  });
+
+  // 快捷键（仅展开态：Ctrl+Z / Ctrl+Shift+Z / Esc）
+  setupShortcuts(controller, history);
 
   const toast = new Toast(feedbackLayer);
 

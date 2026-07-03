@@ -17,9 +17,20 @@ export class History {
   private undoStack: Command[] = [];
   private redoStack: Command[] = [];
   private limit: number;
+  private listeners: Set<() => void> = new Set();
 
   constructor(limit = 50) {
     this.limit = Math.max(1, limit);
+  }
+
+  /** 订阅状态变化（push/undo/redo/clear/setLimit 后触发）。返回取消订阅函数。 */
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notify(): void {
+    for (const l of this.listeners) l();
   }
 
   /** 记录一条已执行的命令：清空 redo，超上限丢弃最旧 */
@@ -29,6 +40,7 @@ export class History {
     if (this.undoStack.length > this.limit) {
       this.undoStack.splice(0, this.undoStack.length - this.limit);
     }
+    this.notify();
   }
 
   /** 撤销栈顶命令；无可撤销返回 false */
@@ -37,6 +49,7 @@ export class History {
     if (!cmd) return false;
     cmd.revert();
     this.redoStack.push(cmd);
+    this.notify();
     return true;
   }
 
@@ -46,6 +59,7 @@ export class History {
     if (!cmd) return false;
     cmd.apply();
     this.undoStack.push(cmd);
+    this.notify();
     return true;
   }
 
@@ -61,6 +75,7 @@ export class History {
   clear(): void {
     this.undoStack = [];
     this.redoStack = [];
+    this.notify();
   }
 
   /** 调整上限（设置项）：立即截断最旧的超额命令 */
@@ -69,5 +84,6 @@ export class History {
     if (this.undoStack.length > this.limit) {
       this.undoStack.splice(0, this.undoStack.length - this.limit);
     }
+    this.notify();
   }
 }

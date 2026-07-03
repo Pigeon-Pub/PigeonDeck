@@ -125,3 +125,34 @@ describe('History — clear', () => {
     expect(h.canRedo()).toBe(false);
   });
 });
+
+describe('History — subscribe', () => {
+  it('push/undo/redo/clear/setLimit 均触发 listener', () => {
+    const log: string[] = [];
+    const h = new History();
+    const unsub = h.subscribe(() => log.push('notify'));
+
+    h.push(cmd([], 'a')); // notify #1
+    h.undo();             // notify #2
+    h.redo();             // notify #3
+    h.clear();            // notify #4
+    h.setLimit(10);       // notify #5
+
+    expect(log).toHaveLength(5);
+
+    // 取消订阅后不再触发
+    unsub();
+    h.push(cmd([], 'b'));
+    expect(log).toHaveLength(5);
+  });
+
+  it('subscribe 返回的函数可安全重复调用', () => {
+    const h = new History();
+    let count = 0;
+    const unsub = h.subscribe(() => count++);
+    unsub();
+    unsub(); // 重复调用不应报错
+    h.push(cmd([], 'a'));
+    expect(count).toBe(0);
+  });
+});

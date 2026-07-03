@@ -6,6 +6,7 @@
 
 import { Controller } from './controller';
 import { t } from './i18n';
+import { History } from '../state/history';
 
 const POS_KEY = 'pigeondeck.pos';
 
@@ -69,14 +70,18 @@ function clampPos(right: number, bottom: number, w: number, h: number): Pos {
 
 export class Toolbar {
   private controller: Controller;
+  private history: History;
   private root: HTMLElement; // control 层根容器
   private wrapper: HTMLElement; // 位置容器（fixed，right/bottom）
   private ball: HTMLElement;
   private toolbar: HTMLElement;
   private btnMove!: HTMLButtonElement;
   private btnSettings!: HTMLButtonElement;
+  private btnUndo!: HTMLButtonElement;
+  private btnRedo!: HTMLButtonElement;
   private pos: Pos;
   private unsubscribe: () => void;
+  private unsubscribeHistory: () => void;
 
   // 拖拽状态
   private dragActive = false;
@@ -85,8 +90,9 @@ export class Toolbar {
   private dragStartPos: Pos = { right: 0, bottom: 0 };
   private dragMoved = false;
 
-  constructor(controller: Controller, controlLayer: HTMLElement) {
+  constructor(controller: Controller, controlLayer: HTMLElement, history: History) {
     this.controller = controller;
+    this.history = history;
     this.root = controlLayer;
     this.pos = loadPos();
 
@@ -106,6 +112,7 @@ export class Toolbar {
     this.syncState();
 
     this.unsubscribe = this.controller.subscribe(() => this.syncState());
+    this.unsubscribeHistory = this.history.subscribe(() => this.refreshUndoRedo());
 
     // resize 夹紧
     window.addEventListener('resize', this.onResize);
@@ -113,6 +120,7 @@ export class Toolbar {
 
   destroy(): void {
     this.unsubscribe();
+    this.unsubscribeHistory();
     window.removeEventListener('resize', this.onResize);
     this.wrapper.remove();
   }
@@ -276,25 +284,39 @@ export class Toolbar {
     wrap.setAttribute('data-testid', 'pd-undoredo');
     wrap.setAttribute('aria-label', `${t('tb_undo')} / ${t('tb_redo')}`);
 
-    const btnUndo = document.createElement('button');
-    btnUndo.setAttribute('data-testid', 'pd-btn-undo');
-    btnUndo.setAttribute('aria-label', t('tb_undo'));
-    btnUndo.innerHTML = ICONS.undo;
-    btnUndo.disabled = true; // 本阶段禁用外观
-    btnUndo.classList.add('disabled');
-    btnUndo.addEventListener('click', () => this.controller.triggerUndo());
+    this.btnUndo = document.createElement('button');
+    this.btnUndo.setAttribute('data-testid', 'pd-btn-undo');
+    this.btnUndo.setAttribute('aria-label', t('tb_undo'));
+    this.btnUndo.innerHTML = ICONS.undo;
+    this.btnUndo.addEventListener('click', () => {
+      if (!this.btnUndo.disabled) this.controller.triggerUndo();
+    });
 
-    const btnRedo = document.createElement('button');
-    btnRedo.setAttribute('data-testid', 'pd-btn-redo');
-    btnRedo.setAttribute('aria-label', t('tb_redo'));
-    btnRedo.innerHTML = ICONS.redo;
-    btnRedo.disabled = true; // 本阶段禁用外观
-    btnRedo.classList.add('disabled');
-    btnRedo.addEventListener('click', () => this.controller.triggerRedo());
+    this.btnRedo = document.createElement('button');
+    this.btnRedo.setAttribute('data-testid', 'pd-btn-redo');
+    this.btnRedo.setAttribute('aria-label', t('tb_redo'));
+    this.btnRedo.innerHTML = ICONS.redo;
+    this.btnRedo.addEventListener('click', () => {
+      if (!this.btnRedo.disabled) this.controller.triggerRedo();
+    });
 
-    wrap.appendChild(btnUndo);
-    wrap.appendChild(btnRedo);
+    wrap.appendChild(this.btnUndo);
+    wrap.appendChild(this.btnRedo);
+
+    // 根据当前 history 状态初始化禁用态
+    this.refreshUndoRedo();
+
     return wrap;
+  }
+
+  /** 根据 history.canUndo/canRedo 刷新按钮禁用态 */
+  private refreshUndoRedo(): void {
+    const canUndo = this.history.canUndo();
+    const canRedo = this.history.canRedo();
+    this.btnUndo.disabled = !canUndo;
+    this.btnUndo.classList.toggle('disabled', !canUndo);
+    this.btnRedo.disabled = !canRedo;
+    this.btnRedo.classList.toggle('disabled', !canRedo);
   }
 
   // ---- 拖拽（长按 ≥ 300ms） ----

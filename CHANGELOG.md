@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 7：撤销/重做（2026-07-03）
+
+- 撤销/重做接线（`src/content/main.ts`）：`controller.setCallbacks({ onUndo, onRedo })` 接到 `history.undo()`/`redo()`；`History` 在 `Toolbar` 之前实例化并注入
+- 历史栈订阅（`src/state/history.ts`）：新增 `subscribe(listener)` + `notify()`，在 `push/undo/redo/clear/setLimit` 后触发；既有命令模式语义不变（push 不调 apply、undo→revert、redo→apply、新命令清 redo 栈）
+- 工具盘按钮禁用态（`src/content/toolbar.ts`）：合并撤销/重做药丸的左半(撤销)/右半(重做) 按 `canUndo()`/`canRedo()` 实时刷新禁用态，订阅 history 变化驱动；初始栈空 → 两半均禁用
+- 键盘快捷键（`src/content/shortcuts.ts`）：window capture 监听，**仅展开态生效**——`Ctrl/Cmd+Z` 撤销、`Ctrl/Cmd+Shift+Z` 重做、`Esc` 退出当前工具（移动/设置 → 回默认批注态）；内联编辑的 Esc 由 direct-edit 在 capture 段先消费，互不冲突
+- 覆盖范围：阶段 3–6 全部操作（标注保存/删除、富文本编辑、图片/视频替换、区域批注、句柄缩放、拖拽移动）均已 push 撤销命令，闭环可撤销/重做（清空的复合命令留待阶段 10）
+- 历史上限（`src/state/settings.ts`）：新增 `historyLimit`（默认 50），`new History(settings.historyLimit)` 消费（完整设置 UI 阶段 11）
+- 单测：`history.test.ts` 补 2 条（subscribe 触发计数 / 取消订阅安全），共 12 条
+- E2E：`tests/e2e/undo-redo.spec.ts` 4 用例（初始按钮禁用、点击 undo/redo 位号消失/恢复闭环、快捷键 Ctrl+Z/Ctrl+Shift+Z 闭环、收起态 Ctrl+Z 不生效），时序断言轮询
+
 ### Coding — 阶段 6：移动模式（2026-07-03）
 
 - 移动模式选中（`src/content/move.ts`）：工具盘移动按钮进入移动模式后，单击页面元素 → 邮政金选中框 `.pd-selbox` + 八向缩放句柄（四角 + 四边中点）；overlay 层渲染、scroll/resize 跟随；点空白/切模式/收起取消选中
@@ -181,7 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | ~~4~~ | ~~直接编辑：双击文本编辑 + 内联富文本浮条 + 图片/视频替换~~ ✅ |
 | ~~5~~ | ~~区域框选：长按 ≥300ms 拖拽 + 区域批注面板~~ ✅ |
 | ~~6~~ | ~~移动模式：选中 + 拖拽 + 吸附/参考线 + 八向缩放句柄~~ ✅ |
-| 7 | 撤销/重做：合并按钮 + 全操作覆盖 + Ctrl+Z / Ctrl+Shift+Z |
+| ~~7~~ | ~~撤销/重做：合并按钮 + 全操作覆盖 + Ctrl+Z / Ctrl+Shift+Z~~ ✅ |
 | 8 | 复制文本：Codex/AI 任务清单生成 + 去重合并 |
 | 9 | 复制图片：单页长图 + 批注叠加 |
 | 10 | 清空确认：贴工具盘确认弹层 |
