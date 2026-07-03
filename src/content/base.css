@@ -466,6 +466,71 @@
 .langopt .chk svg { width: 15px; height: 15px; }
 
 /* ============================================================
+   搜索式语言选择器浮层（parts 29 界面语言 / 39 导出语言）
+   ============================================================ */
+.pd-surface.dd { padding: 8px; overflow: hidden; }
+.dd .srch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--cbd);
+  background: var(--cbg);
+  margin-bottom: 8px;
+}
+.dd .srch svg { width: 15px; height: 15px; color: var(--ctx2); flex: none; }
+.dd .srch input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font: 13px var(--font-ui);
+  color: var(--ctx);
+}
+.dd .srch input::placeholder { color: var(--ctx2); }
+.dd .srch:focus-within {
+  border-color: var(--c1-edge);
+  box-shadow: 0 0 0 3px var(--c1-soft);
+}
+.dd .srch .cnt { font: 11px var(--font-ui); color: var(--ctx2); }
+.dd .grp-h {
+  font: 600 10px var(--font-ui);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--ctx2);
+  margin: 2px 4px 5px;
+}
+.dd .list { display: flex; flex-direction: column; gap: 1px; }
+.dd .sep { height: 1px; margin: 8px 6px; background: var(--cbd); }
+.dd .opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.dd .opt:hover { background: var(--chv); }
+.dd .opt.on { background: var(--c1-soft); }
+.dd .opt .iso {
+  width: 30px;
+  flex: none;
+  font: 600 10px var(--font-ui);
+  letter-spacing: .5px;
+  color: var(--ctx2);
+  text-transform: uppercase;
+}
+.dd .opt .iso.f { display: flex; align-items: center; color: var(--c1); }
+.dd .opt .iso.f svg { width: 16px; height: 16px; }
+.dd .opt .nm { font: 13px var(--font-ui); color: var(--ctx); }
+.dd .opt .nm mark { background: transparent; color: var(--c1); font-weight: 600; }
+.dd .opt .sub { font-size: 11px; color: var(--ctx2); margin-left: auto; }
+.dd .opt.on .chk { margin-left: auto; color: var(--c1); display: inline-flex; }
+.dd .opt.on .chk svg { width: 15px; height: 15px; }
+.dd .opt.on .sub { display: none; }
+
+/* ============================================================
    页面覆盖层基元（overlay 层）
    来源：preview/pigeonlib.css + docs/design-system.md §5.22
    ============================================================ */
