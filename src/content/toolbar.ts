@@ -19,7 +19,7 @@ const LONG_PRESS_MS = 300;
 
 /* ---- SVG 图标（内联，与 preview part 02 完全一致） ---- */
 const ICONS = {
-  logo: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.6 15.2Q10 9.2 17 10.1Q12.8 14.2 7.4 16.1Q5.7 16.6 4.6 15.2ZM9 12.6Q12 5.9 18.8 5Q16.4 9.8 12.4 11.7Q10.5 12.7 9 12.6ZM16.7 10L20.4 8.9 17.2 11.4Z"/></svg>`,
+  logo: `<svg viewBox="0 0 630.367 618.433" fill="none" stroke="currentColor" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"><path d="M78 387.5C152.631 368.891 76.4167 392.232 49.7159 390.136C29.1717 388.523 9.13425 371.072 2.55369 390.136C-12.5464 433.88 43.4887 557.5 61.4994 557.5C97.5603 557.5 95.1332 499.399 184.592 475.119C256.159 455.694 409.626 508.071 456.782 345.043C503.939 182.015 572.94 180.281 582.476 175.078C592.011 169.875 556.99 105.184 472.386 130.853C450.907 137.369 435.465 148.71 424.171 156.868C399.875 174.416 397.5 180 389 185.5C380.5 191 368.5 203 313.753 182.016C259.005 161.031 242.331 146.042 189.5 107C156.829 82.8558 176 96.4999 75.369 10.3161C-25.262 -75.8676 145.757 407.479 184.592 365.855C197.353 352.189 196.253 346.982 199.328 332.903C205.612 304.136 206.358 271.572 217.532 286.943C224.842 296.998 237.881 316.154 248.739 335.504C262.601 360.21 276.478 376.261 284.28 374.527C292.081 372.793 325.888 347.298 325.888 335.504C325.888 331.568 324.906 329.488 317.921 320.623C315.251 317.234 311.705 312.855 307 307C287.143 282.288 243.751 226.465 280 273" transform="matrix(0.996195,-0.0871557,0.0871557,0.996195,0,50.899)"/></svg>`,
   move: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><path d="M2 12h20"/><path d="M12 2v20"/></svg>`,
   copyText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>`,
   copyImage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>`,
@@ -226,6 +226,10 @@ export class Toolbar {
     });
     tb.appendChild(btnLogo);
 
+    // 撤销/重做（合并药丸，紧邻 Logo —— 顺序照搬 preview part 02）
+    const undoredo = this.createUndoRedo();
+    tb.appendChild(undoredo);
+
     // 移动按钮
     this.btnMove = this.createTbtn('pd-tbtn', ICONS.move, 'tb_move');
     this.btnMove.setAttribute('data-testid', 'pd-btn-move');
@@ -243,10 +247,6 @@ export class Toolbar {
     btnCopyImage.setAttribute('data-testid', 'pd-btn-copy-image');
     btnCopyImage.addEventListener('click', () => this.controller.triggerCopyImage());
     tb.appendChild(btnCopyImage);
-
-    // 撤销/重做（合并药丸）
-    const undoredo = this.createUndoRedo();
-    tb.appendChild(undoredo);
 
     // 清空
     const btnClear = this.createTbtn('pd-tbtn', ICONS.clear, 'tb_clear');
