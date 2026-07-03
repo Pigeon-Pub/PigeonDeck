@@ -462,6 +462,24 @@ describe('renderTaskList — [Operations] section', () => {
     expect(result).toContain('Snap: no snap');
   });
 
+  it('Move: reparent → "Into: <toSelector>" line + "Snap: embedded into container"', () => {
+    const MOVE_EMBED: MoveData = {
+      dx: 0,
+      dy: -120,
+      initialRect: INITIAL_RECT,
+      finalRect: { x: 100, y: 80, w: 300, h: 50 },
+      snap: null,
+      freeMove: false,
+      reparent: { fromSelector: 'div.card > div.old', toSelector: 'section.sidebar' },
+    };
+    const ops = buildOperations([ann({ number: 5, selector: 'section.sidebar > div.old', move: MOVE_EMBED })]);
+    const result = renderTaskList(ops, CTX);
+    expect(result).toContain('--- #5 Move ---');
+    expect(result).toContain('Source: section.sidebar > div.old');
+    expect(result).toContain('Into: section.sidebar');
+    expect(result).toContain('Snap: embedded into container');
+  });
+
   it('Region op: Scope, Coordinates, Instruction; no Target line', () => {
     const region: RegionData = {
       docRect: { x: 320, y: 180, w: 400, h: 340 },

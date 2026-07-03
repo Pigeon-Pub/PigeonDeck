@@ -71,6 +71,12 @@ export interface MoveData {
   snap: string | null;
   /** 是否为 free move（Alt 拖拽，不吸附） */
   freeMove: boolean;
+  /**
+   * DOM 重父描述（默认拖拽把元素嵌入另一容器时存在）：
+   * fromSelector = 移动前的原始选择器（拖拽前捕获，稳定，供导出与恢复）；
+   * toSelector = 目标容器选择器（拖放时按原始/拖前 DOM 捕获）。
+   */
+  reparent?: { fromSelector: string; toSelector: string };
 }
 
 /** 一条标注记录 */

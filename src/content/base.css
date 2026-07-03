@@ -1601,6 +1601,16 @@
   pointer-events: none;
 }
 
+/* 交互12：拖放嵌入目标高亮（overlay 层，pointer-events:none 穿透） */
+.pd-drop-target {
+  position: absolute;
+  border: 2px dashed var(--c1);
+  border-radius: var(--r-card);
+  background: var(--c1-soft);
+  box-shadow: 0 0 0 1px var(--c1-edge);
+  pointer-events: none;
+}
+
 /* ============================================================
    阶段 9a：复制图片结果弹窗
    来源：preview/parts/38-output-image.html（.shot-wrap/.shot/.ofoot 照搬）

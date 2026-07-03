@@ -441,3 +441,97 @@ test('⑨  移动模式鼠标悬浮未选中元素 → 圆角高亮框出现', a
 
   await page.close();
 });
+
+test('⑩  默认拖拽把元素嵌入另一容器 → DOM 真重父 + transform 清空 + 撤销复原', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await enterMoveMode(page);
+
+  const c = await selectSnapB(page);
+
+  // 拖拽前：#snap-b 的父是 #snap-zone
+  const parentBefore = await page.evaluate(() => document.getElementById('snap-b')?.parentElement?.id);
+  expect(parentBefore).toBe('snap-zone');
+
+  // 拖 #snap-b 向上 ~120px，落到 #snap-a 上方（同层兄弟，非祖先/后代）→ 嵌入 #snap-a
+  await page.mouse.move(c.cx, c.cy);
+  await page.mouse.down();
+  await page.mouse.move(c.cx, c.cy - 120, { steps: 15 });
+
+  // 拖拽中出现拖放目标高亮
+  await expect.poll(async () => {
+    return shadowTestIdExists(page, 'pd-drop-target');
+  }, { timeout: 5000, message: 'drop-target highlight should appear over a valid container' }).toBe(true);
+
+  await page.mouse.up();
+
+  // #snap-b 被真正重父到 #snap-a
+  await expect.poll(async () => {
+    return page.evaluate(() => document.getElementById('snap-b')?.parentElement?.id);
+  }, { timeout: 6000, message: 'snap-b should be re-parented into snap-a' }).toBe('snap-a');
+
+  // transform 已清空（嵌入后自然排布）
+  const transformAfter = await page.evaluate(() => document.getElementById('snap-b')?.style.transform);
+  expect(transformAfter, 'transform should be cleared after embed').toBe('');
+
+  // 选中框仍在（跟随元素新位置）
+  expect(await shadowTestIdExists(page, 'pd-selbox'), 'selbox should remain after embed').toBe(true);
+
+  // 位号出现（move 记入 store）
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const host = document.getElementById('pd-host');
+      return !!host?.shadowRoot?.querySelector('[data-testid="pd-pin"]');
+    });
+  }, { timeout: 8000, message: 'pin should appear after embed commit' }).toBe(true);
+
+  // 撤销 → 恢复原父 #snap-zone
+  await clickShadowEl(page, 'pd-btn-undo');
+  await expect.poll(async () => {
+    return page.evaluate(() => document.getElementById('snap-b')?.parentElement?.id);
+  }, { timeout: 6000, message: 'undo should restore snap-b to its original parent' }).toBe('snap-zone');
+
+  await page.close();
+});
+
+test('⑪  显示15：移动后撤销 → 选中框跟随元素归位（不滞留移动处）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await enterMoveMode(page);
+
+  const c = await selectSnapB(page);
+
+  const selboxTop = (): Promise<number> =>
+    page.evaluate(() => {
+      const sb = document
+        .getElementById('pd-host')
+        ?.shadowRoot?.querySelector<HTMLElement>('[data-testid="pd-selbox"]');
+      return sb ? Math.round(parseFloat(sb.style.top)) : -1;
+    });
+
+  const topInitial = await selboxTop();
+  expect(topInitial).toBeGreaterThan(0);
+
+  // 向下拖 +40（#snap-zone 是祖先被排除、下方无其它容器 → 回退为 transform 位移，保留选中框）
+  await page.mouse.move(c.cx, c.cy);
+  await page.mouse.down();
+  await page.mouse.move(c.cx, c.cy + 40, { steps: 12 });
+  await page.mouse.up();
+
+  // 选中框跟着下移
+  await expect.poll(selboxTop, {
+    timeout: 6000,
+    message: 'selbox should follow the element down after move',
+  }).toBeGreaterThan(topInitial + 20);
+
+  // 撤销 → history.subscribe 触发 scheduleReposition → 选中框跟随元素归位（Bug1 前会滞留移动处）
+  await clickShadowEl(page, 'pd-btn-undo');
+  await expect.poll(selboxTop, {
+    timeout: 6000,
+    message: 'selbox should snap back to the element after undo',
+  }).toBeLessThan(topInitial + 12);
+
+  await page.close();
+});
+
+

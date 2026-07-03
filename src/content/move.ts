@@ -17,6 +17,7 @@ import { Settings } from '../state/settings';
 import { SelectionResolver } from './selection';
 import { buildSelector, isVisible } from '../shared/dom-utils';
 import { snapDrag, Rect, Guide } from './snap';
+import { pickDropTarget, pickInsertIndex, parseTranslate } from './embed';
 import { t } from './i18n';
 
 /** 八向句柄方位 */
@@ -140,8 +141,13 @@ export class MoveManager {
   private moveFree = false; // 当前是否 free move（Alt）
   private moveSnapSemantic: string | null = null; // 最近一次吸附命中的语义（松手记录用）
   private movePreExistingMove: MoveData | null = null; // 拖拽前已有的 move 数据（合并用）
+  private moveOrigInlineTransform = ''; // 拖拽前元素 inline transform（撤销复原 + 位移基准）
   private guideEls: HTMLElement[] = [];
   private freeHintEl: HTMLElement | null = null;
+
+  // 拖放嵌入目标（默认拖拽，交互12）：指向拖放点下方可接收的容器
+  private dropTargetEl: HTMLElement | null = null;
+  private dropTargetBoxEl: HTMLElement | null = null;
 
   // 拖拽防误触阈值（settings.dragThreshold）：未达时长前不触发位移
   private moveArmed = false;
@@ -152,6 +158,7 @@ export class MoveManager {
 
   private active = false;
   private unsubscribeController: () => void;
+  private unsubscribeHistory: () => void;
 
   constructor(opts: {
     controller: Controller;
@@ -172,6 +179,11 @@ export class MoveManager {
     this.unsubscribeController = opts.controller.subscribe(() => this.syncActive());
     this.syncActive();
 
+    // Bug1（显示15）：撤销/重做改动 el.style.transform 或重父后，选中框必须跟随。
+    // scheduleReposition 原本只绑 scroll/resize；此处订阅 history，任一 push/undo/redo
+    // 后重新按选中元素矩形定位选中框（元素已断连则清除选中）。
+    this.unsubscribeHistory = opts.history.subscribe(() => this.scheduleReposition());
+
     // capture 段：移动模式接管 click/mousedown
     window.addEventListener('click', this.onClick, true);
     window.addEventListener('mousedown', this.onMouseDown, true);
@@ -182,6 +194,7 @@ export class MoveManager {
 
   destroy(): void {
     this.unsubscribeController();
+    this.unsubscribeHistory();
     window.removeEventListener('click', this.onClick, true);
     window.removeEventListener('mousedown', this.onMouseDown, true);
     window.removeEventListener('mousemove', this.onHoverMove, true);
@@ -296,6 +309,7 @@ export class MoveManager {
     this.selboxEl = null;
     this.selectedEl = null;
     this.clearHover();
+    this.clearDropTarget();
     if (this.dragging) {
       this.endDrag();
     }
@@ -489,6 +503,7 @@ export class MoveManager {
     this.moveFree = ev.altKey;
     this.moveSnapSemantic = null;
     this.moveOrigRect = this.selectedEl.getBoundingClientRect();
+    this.moveOrigInlineTransform = this.selectedEl.style.transform;
     this.clearHover();
 
     // 记住已有 move（多次移动合并：保留最初 initialRect）
@@ -523,22 +538,24 @@ export class MoveManager {
     const rawDx = ev.clientX - this.moveStartX;
     const rawDy = ev.clientY - this.moveStartY;
 
-    // 已有移动的偏移（transform 需在其基础上叠加本次拖拽，避免多次移动时跳回原点）
-    const preDx = this.movePreExistingMove ? this.movePreExistingMove.dx : 0;
-    const preDy = this.movePreExistingMove ? this.movePreExistingMove.dy : 0;
+    // 位移基准 = 拖拽前 inline transform 的 translate 分量。
+    // 普通连续位移时 = 上次 translate；嵌入后本次拖拽时 = 0（元素已由 DOM 定位），
+    // 避免叠加历史位移导致跳位（交互12 混合场景）。
+    const pre = parseTranslate(this.moveOrigInlineTransform);
 
     this.clearGuides();
+    this.clearDropTarget();
 
     if (this.moveFree) {
-      // free move：原始位移，无吸附、无参考线，显 free hint
+      // free move：原始位移，无吸附、无参考线、无嵌入，显 free hint
       this.moveDx = rawDx;
       this.moveDy = rawDy;
       this.moveSnapSemantic = null;
-      this.selectedEl.style.transform = `translate(${preDx + rawDx}px, ${preDy + rawDy}px)`;
+      this.selectedEl.style.transform = `translate(${pre.x + rawDx}px, ${pre.y + rawDy}px)`;
       this.showFreeHint();
     } else {
       this.hideFreeHint();
-      // dragged 矩形 = 原始（含已有偏移的视口）矩形 + 本次原始位移
+      // dragged 矩形 = 拖拽起点视口矩形 + 本次原始位移
       const dragged: Rect = {
         left: this.moveOrigRect.left + rawDx,
         top: this.moveOrigRect.top + rawDy,
@@ -550,8 +567,11 @@ export class MoveManager {
       this.moveDx = rawDx + snap.dx;
       this.moveDy = rawDy + snap.dy;
       this.moveSnapSemantic = snap.semantics.length > 0 ? snap.semantics[0] : null;
-      this.selectedEl.style.transform = `translate(${preDx + this.moveDx}px, ${preDy + this.moveDy}px)`;
+      this.selectedEl.style.transform = `translate(${pre.x + this.moveDx}px, ${pre.y + this.moveDy}px)`;
+      // 参考线为次要对齐辅助；主行为是嵌入容器
       if (snap.guides.length > 0) this.renderGuides(snap.guides);
+      // 交互12：检测拖放点下方可接收的容器并高亮
+      this.renderDropTarget(this.findDropTarget(ev.clientX, ev.clientY));
     }
 
     this.repositionSelbox();
@@ -569,17 +589,29 @@ export class MoveManager {
     const snapSemantic = this.moveSnapSemantic;
     const origRect = this.moveOrigRect;
     const preMove = this.movePreExistingMove;
+    const origInlineTransform = this.moveOrigInlineTransform;
+    // 仅默认（非 Alt）拖拽支持嵌入；捕获拖放点用于插入位置计算
+    const dropTarget = free ? null : this.dropTargetEl;
+    const dropX = ev.clientX;
+    const dropY = ev.clientY;
 
     this.endMove();
 
-    // 位移过小视为点击，不记录（保留选中）
+    // 位移过小视为点击，不记录（保留选中）：复原拖拽前 transform
     if (Math.abs(dx) < CLICK_SLOP && Math.abs(dy) < CLICK_SLOP) {
-      el.style.transform = preMove ? `translate(${preMove.dx}px, ${preMove.dy}px)` : '';
+      el.style.transform = origInlineTransform;
       return;
     }
 
     if (!origRect) return;
-    this.commitMove(el, dx, dy, free, snapSemantic, origRect, preMove);
+
+    if (dropTarget && dropTarget.isConnected && dropTarget !== el && !el.contains(dropTarget)) {
+      // 交互12：拖放点上方有可接收容器 → 真正的 DOM 重父嵌入
+      this.commitEmbed(el, dropTarget, dropX, dropY, origRect, preMove, origInlineTransform);
+    } else {
+      // 无嵌入目标 → 回退为 transform 位移（可预测：默认拖拽也保留自由重定位）
+      this.commitMove(el, dx, dy, free, snapSemantic, origRect, preMove, origInlineTransform);
+    }
   }
 
   private endMove(): void {
@@ -592,6 +624,7 @@ export class MoveManager {
     }
     this.selectedEl?.classList.remove('pd-moving');
     this.clearGuides();
+    this.clearDropTarget();
     this.hideFreeHint();
     window.removeEventListener('mousemove', this.onMoveMove, true);
     window.removeEventListener('mouseup', this.onMoveUp, true);
@@ -622,6 +655,77 @@ export class MoveManager {
       out.push(toRect(r));
     }
     return out;
+  }
+
+  // ---- 拖放嵌入目标（交互12）----
+
+  /**
+   * 找拖放点下方可接收的容器：elementsFromPoint 命中栈 → 过滤为可见块级 HTMLElement
+   * （排除 inline/隐藏）→ pickDropTarget 排除自身/祖先/后代/工具 UI，取最内层。
+   */
+  private findDropTarget(clientX: number, clientY: number): HTMLElement | null {
+    const self = this.selectedEl;
+    if (!self) return null;
+    const stack = document.elementsFromPoint(clientX, clientY);
+    const candidates: Element[] = [];
+    for (const el of stack) {
+      if (!(el instanceof HTMLElement)) continue;
+      if (el === document.body || el === document.documentElement) continue;
+      const disp = window.getComputedStyle(el).display;
+      if (disp === 'inline' || disp === 'none' || disp === 'contents') continue;
+      candidates.push(el);
+    }
+    const target = pickDropTarget(candidates, self, this.shadowHost);
+    return target instanceof HTMLElement ? target : null;
+  }
+
+  private renderDropTarget(el: HTMLElement | null): void {
+    this.dropTargetEl = el;
+    if (!el) {
+      this.dropTargetBoxEl?.remove();
+      this.dropTargetBoxEl = null;
+      return;
+    }
+    const rect = el.getBoundingClientRect();
+    if (!this.dropTargetBoxEl) {
+      const box = document.createElement('div');
+      box.className = 'pd-drop-target';
+      box.setAttribute('data-testid', 'pd-drop-target');
+      this.overlayLayer.appendChild(box);
+      this.dropTargetBoxEl = box;
+    }
+    this.dropTargetBoxEl.style.left = `${rect.left}px`;
+    this.dropTargetBoxEl.style.top = `${rect.top}px`;
+    this.dropTargetBoxEl.style.width = `${rect.width}px`;
+    this.dropTargetBoxEl.style.height = `${rect.height}px`;
+  }
+
+  private clearDropTarget(): void {
+    this.dropTargetEl = null;
+    this.dropTargetBoxEl?.remove();
+    this.dropTargetBoxEl = null;
+  }
+
+  /** 容器主轴是否水平（flex row / grid → 按 left 比较，否则按 top） */
+  private isHorizontalFlow(container: HTMLElement): boolean {
+    const cs = window.getComputedStyle(container);
+    if (cs.display === 'flex' || cs.display === 'inline-flex') {
+      return cs.flexDirection.startsWith('row');
+    }
+    if (cs.display === 'grid' || cs.display === 'inline-grid') return true;
+    return false;
+  }
+
+  /** 按拖放点算插入参照节点（null = 追加到末尾）；排除被拖元素自身 */
+  private computeInsertRef(container: HTMLElement, dragged: HTMLElement, clientX: number, clientY: number): Node | null {
+    const horizontal = this.isHorizontalFlow(container);
+    const children = Array.from(container.children).filter((c) => c !== dragged) as HTMLElement[];
+    const starts = children.map((c) => {
+      const r = c.getBoundingClientRect();
+      return horizontal ? r.left : r.top;
+    });
+    const idx = pickInsertIndex(starts, horizontal ? clientX : clientY);
+    return children[idx] ?? null;
   }
 
   // ---- 参考线渲染 ----
@@ -702,6 +806,7 @@ export class MoveManager {
   /**
    * 松手后记录移动：多次移动合并（保留最初 initialRect，只更新 dx/dy/finalRect/snap）。
    * 撤销/重做用 el.style.transform 复原（参照句柄缩放 commitChanges）。
+   * 位移基准取拖拽前 inline transform（嵌入后再拖拽时 = 0），dx/dy 记为 initial→final 净位移。
    */
   private commitMove(
     el: HTMLElement,
@@ -710,16 +815,14 @@ export class MoveManager {
     free: boolean,
     snapSemantic: string | null,
     origRect: DOMRect,
-    preMove: MoveData | null
+    preMove: MoveData | null,
+    origInlineTransform: string
   ): void {
     const selector = buildSelector(el);
     const existing = this.store.getBySelector(selector);
 
     // 合并：若本次拖拽前已有 move，initialRect 沿用最初；否则用本次拖拽起点矩形
     const initialRect: ViewportPos = preMove ? preMove.initialRect : toViewportPos(origRect);
-    // 累计位移 = 已有位移 + 本次位移
-    const totalDx = (preMove ? preMove.dx : 0) + dx;
-    const totalDy = (preMove ? preMove.dy : 0) + dy;
 
     const finalRect: ViewportPos = {
       x: Math.round(origRect.x + dx),
@@ -729,17 +832,21 @@ export class MoveManager {
     };
 
     const newMove: MoveData = {
-      dx: totalDx,
-      dy: totalDy,
+      // 净视觉位移（initial→final），对纯 translate 等于 transform 值，对嵌入后微调亦自洽
+      dx: finalRect.x - initialRect.x,
+      dy: finalRect.y - initialRect.y,
       initialRect,
       finalRect,
       snap: snapSemantic,
       freeMove: free,
+      // 保留既有嵌入上下文（嵌入后再自由微调时不丢失结构信息）
+      reparent: preMove?.reparent,
     };
 
-    // transform 新旧值（撤销/重做）
-    const newTransform = `translate(${totalDx}px, ${totalDy}px)`;
-    const oldTransform = preMove ? `translate(${preMove.dx}px, ${preMove.dy}px)` : '';
+    // transform 新旧值（撤销/重做）：基准取拖拽前 inline transform，叠加本次位移
+    const pre = parseTranslate(origInlineTransform);
+    const newTransform = `translate(${pre.x + dx}px, ${pre.y + dy}px)`;
+    const oldTransform = origInlineTransform;
 
     const applyTransform = (sel: string, transform: string): void => {
       const target = resolveTarget(sel);
@@ -783,6 +890,108 @@ export class MoveManager {
         },
         revert: () => {
           applyTransform(addedSnap.selector, oldTransform);
+          this.store.remove(addedSnap.id);
+        },
+      });
+    }
+  }
+
+  /**
+   * 交互12（Bug3）：默认拖拽把元素真正嵌入目标容器（DOM 重父）。
+   * - 重父到目标容器、按拖放点插到最近子项前（否则追加），清空 transform（自然排布）。
+   * - 撤销/重做用「捕获的元素引用」（抗选择器漂移）：revert 放回原父 + 原 transform，
+   *   apply 重插目标容器 + 清 transform；两向都同步标注 selector 到元素当下位置。
+   */
+  private commitEmbed(
+    el: HTMLElement,
+    container: HTMLElement,
+    clientX: number,
+    clientY: number,
+    origRect: DOMRect,
+    preMove: MoveData | null,
+    origInlineTransform: string
+  ): void {
+    const fromSelector = buildSelector(el); // 重父前选择器（当下位置）
+    const toSelector = buildSelector(container); // 目标容器选择器（拖前 DOM，稳定）
+    const existing = this.store.getBySelector(fromSelector);
+
+    // 撤销用：捕获原始 DOM 位置（元素引用，不受选择器漂移影响）
+    const originalParent = el.parentElement;
+    if (!originalParent) return;
+    const originalNextSibling = el.nextSibling;
+
+    // 插入参照（重父前按拖放点计算）
+    const insertRef = this.computeInsertRef(container, el, clientX, clientY);
+
+    // 执行重父 + 清 transform（元素在容器内自然排布）
+    container.insertBefore(el, insertRef);
+    el.style.transform = '';
+    this.repositionSelbox();
+
+    const finalDomRect = el.getBoundingClientRect();
+    const finalRect = toViewportPos(finalDomRect);
+    const initialRect: ViewportPos = preMove ? preMove.initialRect : toViewportPos(origRect);
+    const newSelector = buildSelector(el); // 重父后新位置选择器
+    // 导出用原始选择器：优先沿用既有嵌入的 fromSelector（多次嵌入保留最初来源）
+    const reparentFrom = preMove?.reparent?.fromSelector ?? fromSelector;
+
+    const move: MoveData = {
+      dx: finalRect.x - initialRect.x, // 纯嵌入的 dx/dy 记为视觉净位移（结构以 reparent 为准）
+      dy: finalRect.y - initialRect.y,
+      initialRect,
+      finalRect,
+      snap: null,
+      freeMove: false,
+      reparent: { fromSelector: reparentFrom, toSelector },
+    };
+
+    // 元素引用重插（插入参照失效时兜底 append）
+    const reinsertInto = (parent: Element, ref: Node | null): void => {
+      if (ref && ref.parentNode === parent) parent.insertBefore(el, ref);
+      else parent.appendChild(el);
+    };
+
+    if (existing) {
+      const before = existing;
+      const beforeMove = before.move ?? null;
+      const beforeSelector = before.selector;
+      const after = this.store.update(before.id, { move, selector: newSelector });
+      if (after) {
+        this.history.push({
+          label: 'move:embed',
+          apply: () => {
+            reinsertInto(container, insertRef);
+            el.style.transform = '';
+            this.store.update(before.id, { move, selector: buildSelector(el) });
+          },
+          revert: () => {
+            reinsertInto(originalParent, originalNextSibling);
+            el.style.transform = origInlineTransform;
+            this.store.update(before.id, { move: beforeMove ?? undefined, selector: beforeSelector });
+          },
+        });
+      }
+    } else {
+      const added = this.store.add({
+        selector: newSelector,
+        elementType: 'container',
+        summary: el.tagName.toLowerCase(),
+        note: '',
+        changes: [],
+        viewportPos: toViewportPos(origRect),
+        move,
+      });
+      const addedSnap = added;
+      this.history.push({
+        label: 'move:embed',
+        apply: () => {
+          reinsertInto(container, insertRef);
+          el.style.transform = '';
+          this.store.restore({ ...addedSnap, selector: buildSelector(el) });
+        },
+        revert: () => {
+          reinsertInto(originalParent, originalNextSibling);
+          el.style.transform = origInlineTransform;
           this.store.remove(addedSnap.id);
         },
       });

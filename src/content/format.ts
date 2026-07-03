@@ -200,6 +200,7 @@ function normalizeLang(lang: string): 'en' | 'zh_CN' {
 
 /** 吸附语义 → 英文描述 */
 function describeSnap(move: MoveData): string {
+  if (move.reparent) return 'embedded into container';
   if (move.freeMove) return 'free move';
   if (!move.snap) return 'no snap';
   const label: Record<string, string> = {
@@ -299,6 +300,10 @@ function renderOp(op: Operation): string {
     const m = op.move;
     lines.push('Move:');
     lines.push(`  Source: ${op.target}`);
+    // 嵌入（DOM 重父）：把结构关系放在坐标之前，指示 AI 按 DOM/flex 结构移动而非硬编码坐标
+    if (m.reparent) {
+      lines.push(`  Into: ${m.reparent.toSelector}`);
+    }
     lines.push(`  Target: (${m.finalRect.x}, ${m.finalRect.y})`);
     lines.push(`  Initial: ${renderVp(m.initialRect)}`);
     lines.push(`  Final: ${renderVp(m.finalRect)}`);
