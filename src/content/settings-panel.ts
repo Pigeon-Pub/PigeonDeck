@@ -13,7 +13,9 @@ import { History } from '../state/history';
 import { SelectionResolver } from './selection';
 import { Toast } from './toast';
 import { setTheme } from './main';
-import { t, getLocale } from './i18n';
+import { t, getLocale, setLocale } from './i18n';
+import { openLanguagePicker } from './language-picker';
+import { BCP47_LANGUAGES } from '../shared/languages';
 
 /** 扩展版本号（about 区展示；manifest 为发布号，V1 展示固定 1.0.0） */
 const VERSION = '1.0.0';
@@ -262,10 +264,26 @@ export class SettingsManager {
   // ---- 各分区 ----
 
   private renderGeneral(root: HTMLElement): void {
-    // 界面语言：本阶段仅显示当前语言名（搜索式选择器 11b 接入）
+    // 界面语言：搜索式选择器（仅 AVAILABLE_LANGUAGES：en / zh_CN）
     const langName = getLocale() === 'zh_CN' ? '简体中文' : 'English';
     root.appendChild(
-      this.srow(t('set_ui_language'), null, this.selectDisplay(langName, 'pd-set-ui-lang'))
+      this.srow(
+        t('set_ui_language'),
+        null,
+        this.selectDisplay(langName, 'pd-set-ui-lang', (anchor) => {
+          openLanguagePicker({
+            root: this.panelLayer,
+            anchor,
+            mode: 'ui',
+            current: getLocale(),
+            onSelect: async (code) => {
+              await setLocale(code);
+              this.rebuild();
+              this.toast.show(t('toast_lang_switched'), 'ok');
+            },
+          });
+        })
+      )
     );
 
     // 主题：亮/暗（立即应用 + 持久）
@@ -393,17 +411,24 @@ export class SettingsManager {
   }
 
   private renderOutput(root: HTMLElement): void {
-    // 导出语言：本阶段仅显示当前值（搜索式选择器 11b 接入）
-    const map: Record<Settings['exportLang'], string> = {
-      en: t('opt_export_en'),
-      zh_CN: t('opt_export_zh'),
-      auto: t('opt_export_auto'),
-    };
+    // 导出语言：搜索式全量选择器（钉住 英文 / 跟随界面）
     root.appendChild(
       this.srow(
         t('set_export_language'),
         t('set_export_lang_sub'),
-        this.selectDisplay(map[this.settings.exportLang], 'pd-set-export-lang')
+        this.selectDisplay(this.exportLangLabel(this.settings.exportLang), 'pd-set-export-lang', (anchor) => {
+          openLanguagePicker({
+            root: this.panelLayer,
+            anchor,
+            mode: 'export',
+            current: this.settings.exportLang,
+            onSelect: (code) => {
+              this.settings.exportLang = code;
+              saveSettings({ exportLang: code });
+              this.renderSection();
+            },
+          });
+        })
       )
     );
 
@@ -502,8 +527,12 @@ export class SettingsManager {
     return row;
   }
 
-  /** 只读语言选择器占位（11b 接入搜索式选择器） */
-  private selectDisplay(value: string, testid: string): HTMLElement {
+  /** 语言选择器行：显示当前值 + 箭头，点击打开搜索式浮层 */
+  private selectDisplay(
+    value: string,
+    testid: string,
+    onOpen?: (anchor: HTMLElement) => void
+  ): HTMLElement {
     const wrap = document.createElement('span');
     wrap.className = 'pd-sel';
     wrap.style.width = '150px';
@@ -517,7 +546,28 @@ export class SettingsManager {
     arrow.innerHTML = svg('<path d="m6 9 6 6 6-6"/>', 2);
     wrap.appendChild(btn);
     wrap.appendChild(arrow);
+    if (onOpen) {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        onOpen(wrap);
+      });
+    }
     return wrap;
+  }
+
+  /** 导出语言 code → 展示名（auto/en/zh_CN 用 i18n，其它查 BCP47 nativeName） */
+  private exportLangLabel(code: string): string {
+    if (code === 'auto') return t('opt_export_auto');
+    if (code === 'en') return t('opt_export_en');
+    if (code === 'zh_CN') return t('opt_export_zh');
+    const entry = BCP47_LANGUAGES.find((e) => e.code === code);
+    return entry ? entry.nativeName : code;
+  }
+
+  /** 界面语言切换后重建面板，使已渲染文案立即切到新语言 */
+  private rebuild(): void {
+    this.close();
+    this.open();
   }
 
   private segIcons(

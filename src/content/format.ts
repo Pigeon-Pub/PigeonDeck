@@ -315,7 +315,7 @@ function renderOp(op: Operation): string {
 export function renderTaskList(
   ops: Operation[],
   ctx: PageContext,
-  lang: 'en' | 'zh_CN' = 'en'
+  lang: string = 'en'
 ): string {
   const effectiveLang = normalizeLang(lang);
   const rules = GLOBAL_RULES[effectiveLang];

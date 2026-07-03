@@ -355,7 +355,6 @@ describe('renderTaskList — global editing rules', () => {
   });
 
   it('unknown lang → fallback to en rules', () => {
-    // @ts-expect-error: test unknown lang fallback
     const result = renderTaskList([], CTX, 'fr');
     expect(result).toContain('Do NOT hardcode top/left absolute positions.');
   });

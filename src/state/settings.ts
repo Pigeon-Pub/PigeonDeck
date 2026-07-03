@@ -21,11 +21,12 @@ export interface Settings {
    */
   historyLimit: number;
   /**
-   * 复制文本导出语言（蓝图 §7.1：默认英文，可切中文或跟随界面）：
-   * 'en' / 'zh_CN' = 固定语言；'auto' = 跟随界面语言（i18n locale，回退 en）。
-   * 完整设置 UI 在阶段 11，本阶段只加字段 + 消费 + 结果弹窗快切。
+   * 复制文本导出语言（蓝图 §7.1：默认英文，可切任意语言或跟随界面）：
+   * 'auto' = 跟随界面语言（i18n locale）；其余为 BCP47 code（如 'en'/'zh_CN'/'ja'）。
+   * 仅 en / zh_CN 有任务清单模板，其余 code 导出时回退英文模板（见 format.normalizeLang）。
+   * 完整搜索式选择器在阶段 11b，结果弹窗仍提供 en/zh 快切。
    */
-  exportLang: 'en' | 'zh_CN' | 'auto';
+  exportLang: string;
   /**
    * 复制图片输出方式（蓝图 §7.2）：
    * 'clipboard' = 写入剪贴板（默认）；'download' = 下载为 PNG 文件。

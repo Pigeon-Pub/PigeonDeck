@@ -39,12 +39,10 @@ function formatTimestamp(d = new Date()): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-/** settings.exportLang → 实际渲染语言（'auto' 取界面 locale，回退 en） */
+/** settings.exportLang → 实际渲染语言（'auto' 取界面 locale；仅 zh_CN 有中文模板，其余回退 en） */
 function resolveLang(setting: Settings['exportLang']): ExportLang {
-  if (setting === 'auto') {
-    return getLocale() === 'zh_CN' ? 'zh_CN' : 'en';
-  }
-  return setting;
+  const code = setting === 'auto' ? getLocale() : setting;
+  return code === 'zh_CN' ? 'zh_CN' : 'en';
 }
 
 export class CopyTextManager {
