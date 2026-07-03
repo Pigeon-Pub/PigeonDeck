@@ -1134,7 +1134,7 @@
   color: var(--ctx);
   font-variant-numeric: tabular-nums;
 }
-/* 局部取色推荐：7 色块铺满卡片宽度 */
+/* 局部取色推荐：7 色块铺满卡片宽度；不足 7 个保持原尺寸并左对齐（不放大） */
 .sug { margin-top: 12px; }
 .sug-h {
   font: 600 10px var(--font-ui);
@@ -1148,7 +1148,7 @@
 }
 .sug-h small { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ctx2); opacity: .85; }
 .sug-row { display: flex; gap: 6px; }
-.sug-row .s { flex: 1; aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(0,0,0,.1); cursor: pointer; }
+.sug-row .s { flex: 0 0 auto; width: calc((210px - 36px) / 7); aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(0,0,0,.1); cursor: pointer; }
 .sug-row .s.on { box-shadow: 0 0 0 2px var(--csf), 0 0 0 3.5px var(--c1); }
 /* 透明度 */
 .opa { margin-top: 12px; }
@@ -1460,4 +1460,25 @@
   border-radius: 6px;
   padding: 3px 8px;
   pointer-events: none;
+}
+
+/* ============================================================
+   阶段 9a：复制图片结果弹窗
+   来源：preview/parts/38-output-image.html（.shot-wrap/.shot/.ofoot 照搬）
+   .opanel-img 覆盖宽度；.ofoot-end 让底栏右对齐（图片面板无左侧语言快切）
+   ============================================================ */
+.opanel-img { width: 360px; }
+.opanel-img .ofoot { justify-content: flex-end; }
+
+/* 图片预览区外框 */
+.shot-wrap { padding: 12px; }
+
+/* 图片容器：圆角边框 + 滚动（长图时上下滚动） */
+.shot {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid var(--cbd);
+  overflow: auto;
+  background: #fbfbfc;
+  max-height: 400px;
 }

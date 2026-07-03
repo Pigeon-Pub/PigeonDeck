@@ -407,4 +407,26 @@ test('⑧  按 Alt 拖 → 无参考线 + 出 free hint', async () => {
   await page.close();
 });
 
+test('⑨  移动模式鼠标悬浮未选中元素 → 圆角高亮框出现', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await enterMoveMode(page);
 
+  // 悬浮 card-buttons（未点击选中）→ 应出现 pd-move-hover 圆角框
+  const c = await page.evaluate(() => {
+    const el = document.getElementById('card-buttons')!;
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.mouse.move(c.x, c.y);
+
+  await expect.poll(async () => {
+    return shadowTestIdExists(page, 'pd-move-hover');
+  }, { timeout: 5000, message: 'move-mode hover box should appear on hover' }).toBe(true);
+
+  // 未选中态：不应有 selbox
+  const hasSelbox = await shadowTestIdExists(page, 'pd-selbox');
+  expect(hasSelbox, 'no selbox before click').toBe(false);
+
+  await page.close();
+});

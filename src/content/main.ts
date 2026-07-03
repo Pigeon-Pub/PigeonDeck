@@ -21,6 +21,7 @@ import { RegionSelectManager } from './region-select';
 import { SelectionResolver } from './selection';
 import { MoveManager } from './move';
 import { CopyTextManager } from './copy-text';
+import { CopyImageManager } from './capture';
 import { setupShortcuts } from './shortcuts';
 
 // 防重复注入标记
@@ -158,6 +159,15 @@ function inject(settings: Settings): void {
 
   // 阶段 8b：复制文本（生成任务清单 → 剪贴板 + 结果弹窗 + 语言快切 + 下载）
   new CopyTextManager({
+    controller,
+    store,
+    settings,
+    toast,
+    panelLayer,
+  });
+
+  // 阶段 9a/9b：复制图片（截图拼接 + 叠加绘制 + 剪贴板/下载 + 水印）
+  new CopyImageManager({
     controller,
     store,
     settings,

@@ -39,6 +39,8 @@ const SNAP_THRESHOLD = 4;
 const CLICK_SLOP = 2;
 /** 候选块级元素上限（性能） */
 const CANDIDATE_LIMIT = 20;
+/** hover 高亮框相对目标外扩（与 overlay.ts 一致，preview part 06） */
+const MARK_INSET = 3;
 
 /** 语义标识 → i18n key */
 function guideLabelKey(semantic: string): string {
@@ -114,6 +116,10 @@ export class MoveManager {
   private selectedEl: HTMLElement | null = null;
   private selboxEl: HTMLElement | null = null;
 
+  // hover 预览（未选中时鼠标悬浮 → 圆角高亮框，指向 click 将选中的元素）
+  private hoverBoxEl: HTMLElement | null = null;
+  private hoverTargetEl: HTMLElement | null = null;
+
   // 句柄缩放拖拽状态
   private dragging = false;
   private dragDir: HandleDir | null = null;
@@ -161,6 +167,7 @@ export class MoveManager {
     // capture 段：移动模式接管 click/mousedown
     window.addEventListener('click', this.onClick, true);
     window.addEventListener('mousedown', this.onMouseDown, true);
+    window.addEventListener('mousemove', this.onHoverMove, true);
     window.addEventListener('scroll', this.scheduleReposition, { capture: true, passive: true });
     window.addEventListener('resize', this.scheduleReposition);
   }
@@ -169,6 +176,7 @@ export class MoveManager {
     this.unsubscribeController();
     window.removeEventListener('click', this.onClick, true);
     window.removeEventListener('mousedown', this.onMouseDown, true);
+    window.removeEventListener('mousemove', this.onHoverMove, true);
     window.removeEventListener('scroll', this.scheduleReposition, true);
     window.removeEventListener('resize', this.scheduleReposition);
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
@@ -279,12 +287,75 @@ export class MoveManager {
     this.selboxEl?.remove();
     this.selboxEl = null;
     this.selectedEl = null;
+    this.clearHover();
     if (this.dragging) {
       this.endDrag();
     }
     if (this.moving) {
       this.endMove();
     }
+  }
+
+  // ---- hover 预览（未选中/未拖拽时）----
+
+  private onHoverMove = (ev: MouseEvent): void => {
+    if (!this.active || this.dragging || this.moving) {
+      this.clearHover();
+      return;
+    }
+    if (this.isOwnUi(ev)) {
+      this.clearHover();
+      return;
+    }
+    const target = ev.target;
+    if (
+      !(target instanceof HTMLElement) ||
+      target === document.body ||
+      target === document.documentElement
+    ) {
+      this.clearHover();
+      return;
+    }
+    // 指向 click 将实际选中的元素（应用当前粒度/偏移），与选中框一致
+    const resolved = this.resolver.resolve(target);
+    // 已选中的元素本身不再画 hover（已有句柄框）
+    if (resolved === this.selectedEl) {
+      this.clearHover();
+      return;
+    }
+    this.hoverTargetEl = resolved;
+    this.renderHover();
+  };
+
+  private renderHover(): void {
+    const el = this.hoverTargetEl;
+    if (!el || !el.isConnected) {
+      this.clearHover();
+      return;
+    }
+    const rect = el.getBoundingClientRect();
+    if (!rect.width && !rect.height) {
+      this.clearHover();
+      return;
+    }
+    if (!this.hoverBoxEl) {
+      const box = document.createElement('div');
+      box.className = 'pd-hover';
+      box.setAttribute('data-testid', 'pd-move-hover');
+      this.overlayLayer.appendChild(box);
+      this.hoverBoxEl = box;
+    }
+    // 与 overlay hover 一致：外扩 MARK_INSET，宽高减边框宽度×2（1.5px）
+    this.hoverBoxEl.style.left = `${rect.left - MARK_INSET}px`;
+    this.hoverBoxEl.style.top = `${rect.top - MARK_INSET}px`;
+    this.hoverBoxEl.style.width = `${rect.width + MARK_INSET * 2 - 3}px`;
+    this.hoverBoxEl.style.height = `${rect.height + MARK_INSET * 2 - 3}px`;
+  }
+
+  private clearHover(): void {
+    this.hoverTargetEl = null;
+    this.hoverBoxEl?.remove();
+    this.hoverBoxEl = null;
   }
 
   private repositionSelbox(): void {
@@ -305,6 +376,7 @@ export class MoveManager {
     this.rafId = requestAnimationFrame(() => {
       this.rafId = null;
       this.repositionSelbox();
+      if (this.hoverTargetEl) this.renderHover();
     });
   };
 
@@ -409,6 +481,7 @@ export class MoveManager {
     this.moveFree = ev.altKey;
     this.moveSnapSemantic = null;
     this.moveOrigRect = this.selectedEl.getBoundingClientRect();
+    this.clearHover();
 
     // 记住已有 move（多次移动合并：保留最初 initialRect）
     const existing = this.store.getBySelector(buildSelector(this.selectedEl));

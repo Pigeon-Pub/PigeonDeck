@@ -207,5 +207,12 @@
   "output_lang_title": { "message": "导出语言", "description": "复制文本结果弹窗：语言快切 tooltip" },
   "toast_copy_ok": { "message": "已复制任务清单", "description": "任务清单复制到剪贴板后的轻提示" },
   "toast_copy_empty": { "message": "暂无可复制的内容", "description": "无标注时触发复制文本的轻提示" },
-  "toast_copy_failed": { "message": "复制失败，可用下方按钮手动复制", "description": "剪贴板写入被拒时的轻提示" }
+  "toast_copy_failed": { "message": "复制失败，可用下方按钮手动复制", "description": "剪贴板写入被拒时的轻提示" },
+  "toast_capture_generating": { "message": "正在生成截图…", "description": "截图拼接管线运行中的轻提示" },
+  "toast_capture_empty": { "message": "暂无可截取的内容", "description": "无标注时触发复制图片的轻提示" },
+  "toast_capture_failed": { "message": "截图失败，请检查扩展权限", "description": "captureVisibleTab 或拼接失败时的轻提示" },
+  "toast_capture_copied": { "message": "图片已复制到剪贴板", "description": "截图复制到剪贴板后的轻提示" },
+  "toast_capture_copy_failed": { "message": "复制失败，请改用下载", "description": "剪贴板图片写入被拒时的轻提示" },
+  "toast_capture_downloaded": { "message": "图片已下载", "description": "截图下载后的轻提示" },
+  "output_img_download": { "message": "下载为 PNG", "description": "复制图片结果弹窗：下载按钮 tooltip" }
 }

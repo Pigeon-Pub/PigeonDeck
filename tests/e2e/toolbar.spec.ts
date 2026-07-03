@@ -91,7 +91,7 @@ test('② click to expand shows 7 items, click Logo to collapse', async () => {
   const ballVisible = await isShadowElVisible(page, 'pd-ball');
   expect(ballVisible).toBe(false);
 
-  // Toolbar has 7 items: Logo + Move + CopyText + CopyImage + UndoRedo(container) + Clear + Settings
+  // Toolbar has 7 items: Logo + UndoRedo(container) + Move + CopyText + CopyImage + Clear + Settings
   // Count direct children of toolbar (not including inner undo/redo buttons)
   const itemCount = await page.evaluate(() => {
     const host = document.getElementById('pd-host');

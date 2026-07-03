@@ -26,6 +26,17 @@ export interface Settings {
    * 完整设置 UI 在阶段 11，本阶段只加字段 + 消费 + 结果弹窗快切。
    */
   exportLang: 'en' | 'zh_CN' | 'auto';
+  /**
+   * 复制图片输出方式（蓝图 §7.2）：
+   * 'clipboard' = 写入剪贴板（默认）；'download' = 下载为 PNG 文件。
+   * 生成后按此项自动执行一次；结果弹窗仍同时提供两个按钮。
+   */
+  imageMethod: 'clipboard' | 'download';
+  /**
+   * 复制图片元数据水印（蓝图 §7.2）：开启后在长图底部叠加
+   * 「URL · 时间戳」小字。默认关闭。
+   */
+  watermark: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -34,6 +45,8 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultGranularity: 'smart',
   historyLimit: 50,
   exportLang: 'en',
+  imageMethod: 'clipboard',
+  watermark: false,
 };
 
 const STORAGE_KEY = 'settings';
