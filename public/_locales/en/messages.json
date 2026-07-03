@@ -190,5 +190,16 @@
   "replace_media_change": { "message": "Media source", "description": "Card change-row label for image/video replacement" },
   "toast_media_unpersisted": { "message": "Large media replaced in memory only; won't survive a refresh", "description": "Toast when a replaced dataURL exceeds the persistence cap" },
   "region_note_placeholder": { "message": "Describe the region change…", "description": "Region annotation panel textarea placeholder" },
-  "region_label": { "message": "Region", "description": "Region annotation type label in card meta" }
+  "region_label": { "message": "Region", "description": "Region annotation type label in card meta" },
+  "gran_narrow": { "message": "Narrow selection (child element)", "description": "Granularity capsule: shrink to child element" },
+  "gran_widen": { "message": "Widen selection (parent element)", "description": "Granularity capsule: expand to parent element" },
+  "guide_align_left": { "message": "Left aligned", "description": "Snap guide semantic: left edges aligned" },
+  "guide_align_right": { "message": "Right aligned", "description": "Snap guide semantic: right edges aligned" },
+  "guide_align_top": { "message": "Top aligned", "description": "Snap guide semantic: top edges aligned" },
+  "guide_align_bottom": { "message": "Bottom aligned", "description": "Snap guide semantic: bottom edges aligned" },
+  "guide_align_center_h": { "message": "Horizontally centered", "description": "Snap guide semantic: horizontal centers aligned" },
+  "guide_align_center_v": { "message": "Vertically centered", "description": "Snap guide semantic: vertical centers aligned" },
+  "guide_align_x": { "message": "Aligned", "description": "Snap guide semantic: generic X-axis alignment" },
+  "guide_align_y": { "message": "Aligned", "description": "Snap guide semantic: generic Y-axis alignment" },
+  "move_free_hint": { "message": "Free move · hold Alt", "description": "Free-move hint shown while dragging with Alt held" }
 }

@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 6：移动模式（2026-07-03）
+
+- 移动模式选中（`src/content/move.ts`）：工具盘移动按钮进入移动模式后，单击页面元素 → 邮政金选中框 `.pd-selbox` + 八向缩放句柄（四角 + 四边中点）；overlay 层渲染、scroll/resize 跟随；点空白/切模式/收起取消选中
+- 选择粒度（`src/content/visual-units.ts` + `src/content/selection.ts`）：`defaultGranularity` 设置（智能组件块 / 单元素）；`resolveComponentBlock` 启发式——沿祖先链找最近「组件块」（可见背景/边框/阴影 或语义标签，超视口 98%×50% 阈值即页面容器停止）；`SelectionResolver` 维护相对偏移并记忆、应用到后续选择
+- 选择粒度 +/- 胶囊（`src/content/panel.ts`）：批注面板底栏最左（仅智能块基准显示），沿 DOM 链多级放大(祖先)/缩小(子)并重指向标注目标；**始终以稳定的原始命中元素 + 累加偏移解析**（避免多级过冲）
+- 八向句柄缩放：拖四角/四边句柄改 width/height，走 `StyleChange` 管线（与面板尺寸控件等价、同进撤销历史）；window 捕获段监听（不用 setPointerCapture）
+- 拖拽移动（阶段 6b）：选中元素本体点住即拖，**用 `transform: translate()` 预览**（绝不改 position/top/left，不破坏布局、易回滚）；松手记录移动进标注 + 撤销历史；**同元素多次移动合并**——保留最初 initialRect、只更新累计位移/finalRect
+- 吸附与参考线（`src/content/snap.ts` 纯函数）：拖拽实时扫描视口内可见块级元素，`snapDrag` 计算边缘 / 中心对齐（阈值 4px，取最小修正量）→ 吸附到位并画虚线参考线 `.pd-guide` + 方位语义标签（左/右/顶/底边对齐、水平/垂直居中）；参考线颜色按页面背景亮度自动白/黑反色
+- Alt+拖拽 = 自由移动：跳过吸附、不画参考线、显 `.pd-freehint` 轻提示、记 freeMove
+- 数据模型：Annotation 新增可选 `move?: { dx, dy, initialRect, finalRect, snap, freeMove }`（向后兼容）；`applyChangesTo` 的样式回放支持 width/height（既有 else 分支）
+- i18n：粒度胶囊、参考线语义、自由移动提示，中英双语
+- 单测：`snap.ts` 14 条（各对齐类型 / 阈值边界 3吸4吸5不吸 / XY 同吸 / 多候选取最近 / 空候选 / 参考线并集）+ `visual-units` 8 条 + `selection` 9 条
+- E2E：`tests/e2e/move.spec.ts` 8 用例（selbox+8 句柄出现、句柄缩放 width/height 变化、缩放进 store 出位号、切模式 selbox 消失、**多级 +/- 粒度不过冲落在正确 2 级祖先**、拖拽出 translate+位号、拖到对齐处出参考线、Alt 拖无参考线+free hint）
+
 ### Coding — 阶段 5：区域框选（2026-07-03）
 
 - 长按框选（`src/content/region-select.ts`）：批注模式下长按 ≥300ms（`LONG_PRESS_MS` 常量，阶段 11 接设置）→ 拖拽实时品牌金框（`.pd-region` 半透明预览）→ 松手弹小型区域批注面板（照搬 preview part 08 `.rpanel`：自适应 textarea + 保存/删除）；松手后 `suppressNextClick` 抑制紧随的 click，避免误开元素面板；小于 6px 视为误触取消
@@ -166,7 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | ~~3~~ | ~~批注模式：单击标注 + 修改栏 + 高级样式 + 调色盘 + 批注卡片/位号~~ ✅ |
 | ~~4~~ | ~~直接编辑：双击文本编辑 + 内联富文本浮条 + 图片/视频替换~~ ✅ |
 | ~~5~~ | ~~区域框选：长按 ≥300ms 拖拽 + 区域批注面板~~ ✅ |
-| 6 | 移动模式：选中 + 拖拽 + 吸附/参考线 + 八向缩放句柄 |
+| ~~6~~ | ~~移动模式：选中 + 拖拽 + 吸附/参考线 + 八向缩放句柄~~ ✅ |
 | 7 | 撤销/重做：合并按钮 + 全操作覆盖 + Ctrl+Z / Ctrl+Shift+Z |
 | 8 | 复制文本：Codex/AI 任务清单生成 + 去重合并 |
 | 9 | 复制图片：单页长图 + 批注叠加 |

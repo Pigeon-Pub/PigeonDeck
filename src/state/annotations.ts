@@ -54,6 +54,25 @@ export interface RegionData {
   elements: string[];
 }
 
+/**
+ * 移动数据（阶段 6b 拖拽移动，存在即元素被移动过）。
+ * 蓝图 §4.3：多次移动合并为「初始→最终」——保留最初 initialRect，
+ * 只更新 dx/dy/finalRect/snap。预览用 transform:translate(dx,dy)，不改 position。
+ */
+export interface MoveData {
+  /** 累计位移（px，相对元素原始位置） */
+  dx: number;
+  dy: number;
+  /** 首次移动前的视口矩形（合并后保持不变） */
+  initialRect: ViewportPos;
+  /** 最近一次松手后的视口矩形 */
+  finalRect: ViewportPos;
+  /** 命中的吸附语义标识（无吸附为 null），move.ts 里翻译展示 */
+  snap: string | null;
+  /** 是否为 free move（Alt 拖拽，不吸附） */
+  freeMove: boolean;
+}
+
 /** 一条标注记录 */
 export interface Annotation {
   id: string;
@@ -69,6 +88,8 @@ export interface Annotation {
   kind?: 'element' | 'region';
   /** 区域数据（kind==='region' 时有效） */
   region?: RegionData;
+  /** 移动数据（阶段 6b，元素被拖拽移动过时有效） */
+  move?: MoveData;
 }
 
 /** 新建标注的输入（id/number/createdAt 由 Store 分配） */

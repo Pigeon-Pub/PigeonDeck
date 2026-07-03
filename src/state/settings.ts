@@ -8,11 +8,19 @@ export interface Settings {
   hoverLabel: boolean;
   /** 标注卡片默认展开（默认关闭） */
   cardDefaultExpanded: boolean;
+  /**
+   * 移动/批注模式默认选择粒度：
+   * 'smart'   = 智能组件块（resolveComponentBlock 启发式爬升）
+   * 'element' = 命中元素本身（不爬升）
+   * 阶段 11 再做设置 UI，本阶段只加字段 + 消费。
+   */
+  defaultGranularity: 'smart' | 'element';
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   hoverLabel: true,
   cardDefaultExpanded: false,
+  defaultGranularity: 'smart',
 };
 
 const STORAGE_KEY = 'settings';

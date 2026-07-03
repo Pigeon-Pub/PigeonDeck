@@ -1281,3 +1281,110 @@
 }
 .rpanel .pd-btn { min-height: 26px; padding: 0 11px; font-size: 11px; }
 .rpanel .pd-iconbtn { width: 26px; height: 26px; }
+
+/* ============================================================
+   阶段 6a：移动模式选中框 + 八向缩放句柄
+   来源：preview/pigeonlib.css 第 336-342 行（逐值照搬）
+   ============================================================ */
+
+/* 批注面板底栏粒度 +/- 胶囊（仅智能块基准时显示） */
+.pd-gran-capsule {
+  display: inline-flex;
+  gap: 0;
+  padding: 2px;
+  background: var(--chv);
+  border-radius: 999px;
+  flex: none;
+}
+.pd-gran-capsule .step-btn {
+  border: 0;
+  background: transparent;
+  color: var(--ctx2);
+  cursor: pointer;
+  font: 500 12px var(--font-ui);
+  padding: 1px 7px;
+  border-radius: 999px;
+  line-height: 1.4;
+  min-width: 20px;
+  height: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t-fast) var(--ease);
+}
+.pd-gran-capsule .step-btn:hover { background: var(--csf); }
+
+/* 选中框（overlay 层，pointer-events:none 穿透） */
+.pd-selbox {
+  position: absolute;
+  border: 1.5px solid var(--c1);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* 八向句柄（pointer-events:auto，可拖拽） */
+.pd-selbox .h {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: var(--csf);
+  border: 1.5px solid var(--c1);
+  border-radius: 2px;
+  pointer-events: auto;
+}
+
+/* 四角句柄 */
+.pd-selbox .h.tl { left: -4px; top: -4px; cursor: nwse-resize; }
+.pd-selbox .h.tr { right: -4px; top: -4px; cursor: nesw-resize; }
+.pd-selbox .h.bl { left: -4px; bottom: -4px; cursor: nesw-resize; }
+.pd-selbox .h.br { right: -4px; bottom: -4px; cursor: nwse-resize; }
+
+/* 四边中点句柄 */
+.pd-selbox .h.tm { left: 50%; top: -4px; margin-left: -3.5px; cursor: ns-resize; }
+.pd-selbox .h.bm { left: 50%; bottom: -4px; margin-left: -3.5px; cursor: ns-resize; }
+.pd-selbox .h.ml { left: -4px; top: 50%; margin-top: -3.5px; cursor: ew-resize; }
+.pd-selbox .h.mr { right: -4px; top: 50%; margin-top: -3.5px; cursor: ew-resize; }
+
+/* ============================================================
+   阶段 6b：拖拽移动 + 吸附参考线 + free move
+   来源：preview/pigeonlib.css 第 365-379 行（逐值照搬）
+   参考线颜色默认 var(--c1)，白/黑反色由 move.ts 按页面背景亮度内联覆盖 border/color
+   ============================================================ */
+
+/* 参考线（overlay 层，pointer-events:none 穿透） */
+.pd-guide { position: absolute; pointer-events: none; }
+.pd-guide.v { width: 0; border-left: 1px dashed var(--c1); }
+.pd-guide.h { height: 0; border-top: 1px dashed var(--c1); }
+
+/* 参考线语义标签 */
+.pd-guide-label {
+  position: absolute;
+  font: 500 10px var(--font-ui);
+  color: var(--c1);
+  background: var(--csf);
+  border: 1px solid var(--c1-edge);
+  border-radius: 5px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 移动预览幽灵态（挂在被移动的页面元素上） */
+.pd-moving {
+  outline: 1.5px solid var(--c1);
+  outline-offset: 1px;
+  opacity: .92;
+  box-shadow: 0 10px 26px -10px rgba(60,46,18,.4);
+}
+
+/* free move 轻提示（overlay 层） */
+.pd-freehint {
+  position: absolute;
+  font: 500 10px var(--font-ui);
+  color: var(--ctx2);
+  background: var(--csf);
+  border: 1px solid var(--cbd);
+  border-radius: 6px;
+  padding: 3px 8px;
+  pointer-events: none;
+}

@@ -18,6 +18,8 @@ import { restoreSession, bindSessionPersistence } from '../state/session';
 import { loadSettings, Settings } from '../state/settings';
 import { DirectEditManager } from './direct-edit';
 import { RegionSelectManager } from './region-select';
+import { SelectionResolver } from './selection';
+import { MoveManager } from './move';
 
 // 防重复注入标记
 const HOST_ID = 'pd-host';
@@ -128,6 +130,17 @@ function inject(settings: Settings): void {
     panelLayer,
     panel: panelManager,
     settings,
+  });
+
+  // 阶段 6a：移动模式（单击选中 + 选择粒度 + 八向句柄缩放）
+  const selectionResolver = new SelectionResolver(settings.defaultGranularity);
+  panelManager.setResolver(selectionResolver);
+  new MoveManager({
+    controller,
+    store,
+    history,
+    resolver: selectionResolver,
+    overlayLayer,
   });
 
   // 恢复后：未能定位的标注数据保留、UI 跳过，轻提示
