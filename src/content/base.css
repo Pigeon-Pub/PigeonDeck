@@ -1461,3 +1461,24 @@
   padding: 3px 8px;
   pointer-events: none;
 }
+
+/* ============================================================
+   阶段 9a：复制图片结果弹窗
+   来源：preview/parts/38-output-image.html（.shot-wrap/.shot/.ofoot 照搬）
+   .opanel-img 覆盖宽度；.ofoot-end 让底栏右对齐（图片面板无左侧语言快切）
+   ============================================================ */
+.opanel-img { width: 360px; }
+.opanel-img .ofoot { justify-content: flex-end; }
+
+/* 图片预览区外框 */
+.shot-wrap { padding: 12px; }
+
+/* 图片容器：圆角边框 + 滚动（长图时上下滚动） */
+.shot {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid var(--cbd);
+  overflow: auto;
+  background: #fbfbfc;
+  max-height: 400px;
+}

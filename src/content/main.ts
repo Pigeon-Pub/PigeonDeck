@@ -21,6 +21,7 @@ import { RegionSelectManager } from './region-select';
 import { SelectionResolver } from './selection';
 import { MoveManager } from './move';
 import { CopyTextManager } from './copy-text';
+import { CopyImageManager } from './capture';
 import { setupShortcuts } from './shortcuts';
 
 // 防重复注入标记
@@ -161,6 +162,14 @@ function inject(settings: Settings): void {
     controller,
     store,
     settings,
+    toast,
+    panelLayer,
+  });
+
+  // 阶段 9a：复制图片（截图拼接管线 + 基础结果弹窗）
+  new CopyImageManager({
+    controller,
+    store,
     toast,
     panelLayer,
   });
