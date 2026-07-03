@@ -17,6 +17,7 @@ import {
   startFixtureServer,
   waitForExtensionInjected,
   clickShadowEl,
+  isShadowElVisible,
   TestServer,
 } from './helpers/extension';
 
@@ -268,6 +269,82 @@ test('⑥ 批注模式点击链接不导航', async () => {
     (expected: string) => location.href === expected,
     urlBefore
   );
+
+  await page.close();
+});
+
+test('⑦ 空批注（无说明无修改）保存被拦截：轻提示 + 无位号 + 面板保留', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#btn-primary');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+
+  // 不填说明、不做修改，直接保存 → 被拦截
+  await clickShadowEl(page, 'pd-panel-save');
+
+  // 轻提示出现
+  await waitShadowVisible(page, '[data-testid="pd-toast"]');
+  // 面板仍在（未按"已保存"关闭），且无位号落盘
+  await expect.poll(() => isShadowElVisible(page, 'pd-panel')).toBe(true);
+  const hasPin = await page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    return !!host?.shadowRoot?.querySelector('[data-testid="pd-pin"]');
+  });
+  expect(hasPin).toBe(false);
+
+  await page.close();
+});
+
+test('⑧ Ctrl+Enter 在批注框内保存', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#btn-primary');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+
+  // textarea 自动聚焦，键入后按 Ctrl+Enter 保存
+  await page.keyboard.type('用快捷键保存');
+  await page.keyboard.press('Control+Enter');
+
+  await waitShadowGone(page, '[data-testid="pd-panel"]');
+  await waitShadowVisible(page, '[data-testid="pd-pin"][data-number="1"]');
+
+  await page.close();
+});
+
+test('⑨ 取消按钮关闭面板且不落盘', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#btn-primary');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+  await page.keyboard.type('这条应被丢弃');
+
+  await clickShadowEl(page, 'pd-btn-cancel');
+  await waitShadowGone(page, '[data-testid="pd-panel"]');
+  const hasPin = await page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    return !!host?.shadowRoot?.querySelector('[data-testid="pd-pin"]');
+  });
+  expect(hasPin).toBe(false);
+
+  await page.close();
+});
+
+test('⑩ 批注模式右键空白处关闭面板（不报错）', async () => {
+  const page = await openFixturePage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#btn-primary');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+
+  // 右键页面空白区（左上角）→ 面板关闭
+  await page.mouse.click(6, 6, { button: 'right' });
+  await waitShadowGone(page, '[data-testid="pd-panel"]');
+  expect(errors).toEqual([]);
 
   await page.close();
 });

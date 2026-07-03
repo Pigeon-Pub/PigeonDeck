@@ -35,6 +35,7 @@ import {
 import { createAdvancedBox } from './advanced-styles';
 import { closeAllPopovers } from './popover';
 import { SelectionResolver } from './selection';
+import { Toast } from './toast';
 
 /* ---- SVG 图标（Lucide 风格，与 preview parts 07/11/26/35 一致） ---- */
 const ICONS = {
@@ -163,12 +164,19 @@ export class PanelManager {
   private settings: Settings;
   private history: History;
   private shadowHost: Element;
+  private toast: Toast;
   private resolver: SelectionResolver | null = null;
 
   // 批注面板（一次一个）
   private panelEl: HTMLElement | null = null;
   private panelTarget: Element | null = null;
   private panelExisting: Annotation | null = null;
+  /**
+   * 面板拖拽偏移（相对锚点自动放置位置的 dx/dy）：用户拖动顶部把手后记录，
+   * scroll/resize 重定位时在锚点基准上叠加它，保持用户拖到的位置不回弹。
+   * 每次打开面板重置为 null。
+   */
+  private panelDragOffset: { dx: number; dy: number } | null = null;
   /**
    * 粒度会话的稳定原始命中元素：+/- 粒度胶囊始终以它 + 累加 offset 解析目标，
    * 避免用"已被上次 +/- 移动过的 panelTarget"复合叠加导致过冲。
@@ -208,7 +216,8 @@ export class PanelManager {
     overlay: Overlay,
     panelLayer: HTMLElement,
     settings: Settings,
-    history: History
+    history: History,
+    toast: Toast
   ) {
     this.controller = controller;
     this.store = store;
@@ -216,6 +225,7 @@ export class PanelManager {
     this.root = panelLayer;
     this.settings = settings;
     this.history = history;
+    this.toast = toast;
     this.shadowHost = (panelLayer.getRootNode() as ShadowRoot).host;
 
     this.unsubscribeController = controller.subscribe(() => this.syncActive());
@@ -226,6 +236,8 @@ export class PanelManager {
     // capture 段拦截：批注模式下接管页面点击
     window.addEventListener('mousedown', this.onMouseDown, true);
     window.addEventListener('click', this.onClick, true);
+    // 批注模式下右键空白处：吞掉浏览器原生菜单 + 关闭面板/菜单（见 onContextMenu）
+    window.addEventListener('contextmenu', this.onContextMenu, true);
 
     // 面板/卡片跟随目标元素
     window.addEventListener('scroll', this.scheduleReposition, { capture: true, passive: true });
@@ -237,6 +249,7 @@ export class PanelManager {
     this.unsubscribeController();
     window.removeEventListener('mousedown', this.onMouseDown, true);
     window.removeEventListener('click', this.onClick, true);
+    window.removeEventListener('contextmenu', this.onContextMenu, true);
     window.removeEventListener('scroll', this.scheduleReposition, true);
     window.removeEventListener('resize', this.scheduleReposition);
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
@@ -339,6 +352,21 @@ export class PanelManager {
   };
 
   /**
+   * 批注模式右键：吞掉浏览器原生菜单并关闭已开的面板/菜单。
+   * - 仅批注模式（this.active = expanded && annotate）生效；其余模式不干预原生菜单。
+   * - 自身 UI（含位号圆——位号圆有自己的 contextmenu 处理）一律放行：isOwnUi 命中即 return，
+   *   让位号圆的右键菜单照常弹出（overlay.ts 中 pin 自带 preventDefault）。
+   */
+  private onContextMenu = (ev: MouseEvent): void => {
+    if (!this.active) return;
+    if (this.isOwnUi(ev)) return;
+    // 空白/页面元素右键：抑制原生菜单，等效"点外部"关闭当前面板/菜单
+    ev.preventDefault();
+    this.closeMenu();
+    this.closePanel();
+  };
+
+  /**
    * 新鲜单击打开面板：记录稳定原始命中元素（granHitEl，供 +/- 复用）。
    * 若已有记忆偏移（用户此前用 +/- 调过粒度，offset≠0），按 §4.3 相对偏移记忆
    * 从原始命中元素解析目标；offset==0 时保持点中元素本身（不改默认批注粒度）。
@@ -426,6 +454,9 @@ export class PanelManager {
     panel.style.position = 'absolute';
     panel.style.width = `${PANEL_WIDTH}px`;
 
+    // 顶部拖拽把手：抓住它可拖动面板（建议3）
+    panel.appendChild(this.buildPanelDragHandle(panel));
+
     const body = document.createElement('div');
     body.className = 'pbody pd-scroll';
     const textarea = document.createElement('textarea');
@@ -433,6 +464,13 @@ export class PanelManager {
     textarea.setAttribute('data-testid', 'pd-panel-note');
     textarea.placeholder = t('panel_note_placeholder');
     textarea.value = existing?.note ?? '';
+    // Ctrl/Cmd+Enter 保存（普通 Enter 仍换行）（建议1）
+    textarea.addEventListener('keydown', (ev) => {
+      if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
+        ev.preventDefault();
+        this.savePanel();
+      }
+    });
     body.appendChild(textarea);
 
     // ---- 修改栏（按元素类型智能切换）+ 高级样式区 ----
@@ -502,6 +540,14 @@ export class PanelManager {
       acts.appendChild(btnDelete);
     }
 
+    // 取消：无边框黑字文本按钮，置于保存左侧；点击 = closePanel（回滚未保存预览）（建议4）
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'pd-btn ghost';
+    btnCancel.setAttribute('data-testid', 'pd-btn-cancel');
+    btnCancel.textContent = t('panel_cancel');
+    btnCancel.addEventListener('click', () => this.closePanel());
+    acts.appendChild(btnCancel);
+
     const btnSave = document.createElement('button');
     btnSave.className = 'pd-btn primary';
     btnSave.setAttribute('data-testid', 'pd-panel-save');
@@ -530,8 +576,51 @@ export class PanelManager {
     const anchor = this.panelTarget.getBoundingClientRect();
     const { offsetWidth: w, offsetHeight: h } = this.panelEl;
     const pos = placeNear(anchor, w, h);
-    this.panelEl.style.left = `${pos.left}px`;
-    this.panelEl.style.top = `${pos.top}px`;
+    // 用户拖过 → 在自动放置基准上叠加拖拽偏移，保持拖到的位置不回弹
+    const left = pos.left + (this.panelDragOffset?.dx ?? 0);
+    const top = pos.top + (this.panelDragOffset?.dy ?? 0);
+    this.panelEl.style.left = `${left}px`;
+    this.panelEl.style.top = `${top}px`;
+  }
+
+  /**
+   * 顶部拖拽把手：克制的一条横向抓杆（建议3）。
+   * 指针拖动改面板绝对位置，并记录相对"锚点自动放置基准"的偏移 dx/dy，
+   * 供 scroll/resize 重定位（positionPanel）叠加，避免拖后回弹到锚点。
+   */
+  private buildPanelDragHandle(panel: HTMLElement): HTMLElement {
+    const handle = document.createElement('div');
+    handle.className = 'pd-panel-drag';
+    handle.setAttribute('data-testid', 'pd-panel-drag');
+
+    let start: { mx: number; my: number; left: number; top: number } | null = null;
+    handle.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      handle.setPointerCapture(ev.pointerId);
+      start = { mx: ev.clientX, my: ev.clientY, left: panel.offsetLeft, top: panel.offsetTop };
+    });
+    handle.addEventListener('pointermove', (ev) => {
+      if (!start || !this.panelTarget) return;
+      const left = start.left + (ev.clientX - start.mx);
+      const top = start.top + (ev.clientY - start.my);
+      panel.style.left = `${left}px`;
+      panel.style.top = `${top}px`;
+      // 记录相对锚点基准的偏移，供后续 scroll/resize 保持
+      const base = placeNear(
+        this.panelTarget.getBoundingClientRect(),
+        panel.offsetWidth,
+        panel.offsetHeight
+      );
+      this.panelDragOffset = { dx: left - base.left, dy: top - base.top };
+    });
+    const end = (ev: PointerEvent): void => {
+      if (!start) return;
+      start = null;
+      if (handle.hasPointerCapture(ev.pointerId)) handle.releasePointerCapture(ev.pointerId);
+    };
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+    return handle;
   }
 
   // ---- 修改栏 + 高级样式区 ----
@@ -691,6 +780,12 @@ export class PanelManager {
         });
       }
     } else {
+      // 新建批注空内容守卫（逻辑13）：既无批注说明、又无任何样式修改 → 不落盘，
+      // 轻提示并保持面板打开，让用户补充（不算"已保存"关闭）。
+      if (!note && sessionChanges.length === 0) {
+        this.toast.show(t('toast_empty_annotation'));
+        return;
+      }
       saved = this.store.add({
         selector: buildSelector(target),
         elementType: classifyElement(target),
@@ -731,6 +826,7 @@ export class PanelManager {
     }
     this.session = null;
     this.panelCommitted = false;
+    this.panelDragOffset = null;
     this.panelEl.remove();
     this.panelEl = null;
     this.panelTarget = null;
@@ -881,10 +977,13 @@ export class PanelManager {
     card.appendChild(foot);
   }
 
-  /** 用位号圆当前视口位置为锚点放置卡片；放不下画虚线连回 */
+  /** 卡片放在被批注元素旁（不遮挡元素本体）；放不下画虚线连回位号圆 */
   private positionCard(open: OpenCard): void {
+    // 锚点用元素完整外框（非 22px 位号圆），placeNear 右→下→左→上 均落在元素之外，
+    // 保证被批注元素始终可见（批注展开不再遮挡元素）。
+    const targetRect = this.overlay.getTargetRect(open.annotation.id);
     const pinRect = this.overlay.getPinRect(open.annotation.id);
-    if (!pinRect) {
+    if (!targetRect || !pinRect) {
       // 目标元素消失 → 隐藏卡片（数据保留）
       open.el.style.display = 'none';
       this.removeConnector(open);
@@ -892,11 +991,12 @@ export class PanelManager {
     }
     open.el.style.display = 'block';
     const { offsetWidth: w, offsetHeight: h } = open.el;
-    const pos = placeNear(pinRect, w, h);
+    const pos = placeNear(targetRect, w, h);
     open.el.style.left = `${pos.left}px`;
     open.el.style.top = `${pos.top}px`;
 
     if (!pos.fits) {
+      // 兜底夹紧时，虚线仍连回位号圆（视觉锚点）
       this.drawConnector(open, pinRect, pos, w, h);
     } else {
       this.removeConnector(open);

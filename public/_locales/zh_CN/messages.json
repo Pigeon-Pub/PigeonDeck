@@ -40,12 +40,16 @@
     "description": "工具盘设置按钮提示"
   },
   "panel_note_placeholder": {
-    "message": "填写批注说明…",
+    "message": "填写批注说明…（Ctrl+Enter 保存）",
     "description": "批注面板文本框占位提示"
   },
   "panel_save": {
     "message": "保存",
     "description": "批注面板保存按钮"
+  },
+  "panel_cancel": {
+    "message": "取消",
+    "description": "批注面板取消按钮（丢弃未保存改动）"
   },
   "menu_edit_annotation": {
     "message": "修改批注",
@@ -207,6 +211,7 @@
   "output_lang_title": { "message": "导出语言", "description": "复制文本结果弹窗：语言快切 tooltip" },
   "toast_copy_ok": { "message": "已复制任务清单", "description": "任务清单复制到剪贴板后的轻提示" },
   "toast_copy_empty": { "message": "暂无可复制的内容", "description": "无标注时触发复制文本的轻提示" },
+  "toast_empty_annotation": { "message": "请先填写批注或做出修改", "description": "新建批注既无说明也无修改时保存的轻提示" },
   "toast_copy_failed": { "message": "复制失败，可用下方按钮手动复制", "description": "剪贴板写入被拒时的轻提示" },
   "toast_capture_generating": { "message": "正在生成截图…", "description": "截图拼接管线运行中的轻提示" },
   "toast_capture_empty": { "message": "暂无可截取的内容", "description": "无标注时触发复制图片的轻提示" },

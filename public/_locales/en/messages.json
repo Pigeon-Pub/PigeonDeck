@@ -40,12 +40,16 @@
     "description": "Toolbar settings button tooltip"
   },
   "panel_note_placeholder": {
-    "message": "Add a note…",
+    "message": "Add a note… (Ctrl+Enter to save)",
     "description": "Annotation panel textarea placeholder"
   },
   "panel_save": {
     "message": "Save",
     "description": "Annotation panel save button"
+  },
+  "panel_cancel": {
+    "message": "Cancel",
+    "description": "Annotation panel cancel button (discards uncommitted changes)"
   },
   "menu_edit_annotation": {
     "message": "Edit annotation",
@@ -207,6 +211,7 @@
   "output_lang_title": { "message": "Export language", "description": "Copy-text result popup: language quick-switch tooltip" },
   "toast_copy_ok": { "message": "Task list copied", "description": "Toast after copying the task list to clipboard" },
   "toast_copy_empty": { "message": "Nothing to copy yet", "description": "Toast when copy-text is triggered with no annotations" },
+  "toast_empty_annotation": { "message": "Add a note or a change first", "description": "Toast when saving a new annotation with no note and no modification" },
   "toast_copy_failed": { "message": "Copy failed; use the button below to copy manually", "description": "Toast when clipboard write is denied" },
   "toast_capture_generating": { "message": "Generating screenshot…", "description": "Toast shown while capture pipeline is running" },
   "toast_capture_empty": { "message": "Nothing to capture yet", "description": "Toast when copy-image is triggered with no annotations" },

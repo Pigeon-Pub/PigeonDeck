@@ -408,6 +408,27 @@
   overflow: hidden;
   transition: height var(--t-mid) var(--ease);
 }
+
+/* 面板顶部拖拽把手（建议3）：克制的一条横向抓杆，居中；hover 加深 */
+.pd-panel-drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0 2px;
+  cursor: grab;
+  flex: none;
+  touch-action: none;
+}
+.pd-panel-drag::before {
+  content: "";
+  width: 32px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--cbd);
+  transition: background var(--t-fast) var(--ease);
+}
+.pd-panel-drag:hover::before { background: var(--ctx2); }
+.pd-panel-drag:active { cursor: grabbing; }
 .pbody {
   padding: 12px 12px 11px;
   /* 修改栏/高级样式加入后内容可能超视口：主体滚动，底栏常驻 */
@@ -579,6 +600,8 @@
   border: 1.5px solid var(--c1-edge);
   border-radius: 6px;
   background: var(--c1-soft);
+  /* 外扩一圈 --c1-edge 提升可辨识度（不引入新色值） */
+  box-shadow: 0 0 0 1px var(--c1-edge);
   pointer-events: none;
 }
 
@@ -1033,6 +1056,14 @@
 }
 .pd-diff i { font-style: normal; margin: 0 3px; opacity: .65; }
 .pd-diff b { color: var(--c1); font-weight: 600; }
+
+/* 修改栏/高级样式标题行内的变更说明：长值省略号截断，锁死面板 330px 宽（逻辑：修改文字过长导致变形） */
+.prop-h .pd-diff {
+  min-width: 0;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* 滑杆 — 药丸轨 + 金色拇指 */
 .pd-range {

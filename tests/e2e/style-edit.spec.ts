@@ -242,6 +242,37 @@ test('④ 未保存关面板 → 页面样式回滚', async () => {
   await page.close();
 });
 
+test('④b 取消按钮回滚预览且不落盘', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  await clickPageEl(page, '#card-text p');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+
+  // 改字号（即时预览生效）
+  await clickShadowSel(page, '[data-field="fontSize"] .step button[data-dir="1"]');
+  await expect
+    .poll(() => pageComputed(page, '#card-text p', 'font-size'))
+    .toBe('15px');
+
+  // 点「取消」→ 面板关闭、预览回滚、无位号（未落盘）
+  await clickShadowEl(page, 'pd-btn-cancel');
+  await page.waitForFunction(() => {
+    const host = document.getElementById('pd-host');
+    return !host?.shadowRoot?.querySelector('[data-testid="pd-panel"]');
+  });
+  await expect
+    .poll(() => pageComputed(page, '#card-text p', 'font-size'))
+    .toBe('14px');
+  const hasPin = await page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    return !!host?.shadowRoot?.querySelector('[data-testid="pd-pin"]');
+  });
+  expect(hasPin).toBe(false);
+
+  await page.close();
+});
+
 test('⑤ 陌生元素面板出「自动」角标控件', async () => {
   const page = await openFixturePage();
   await expandToolbar(page);

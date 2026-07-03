@@ -38,6 +38,7 @@ const LABEL_OFFSET_Y = 26;
 export class Overlay {
   private controller: Controller;
   private root: HTMLElement; // overlay 层根容器
+  private feedbackRoot: HTMLElement; // feedback 层（hover 高亮/标签渲染于此，压在面板/工具盘之上）
   private settings: Settings;
   private hooks: OverlayHooks;
   private shadowHost: Element;
@@ -62,27 +63,31 @@ export class Overlay {
     controller: Controller,
     store: AnnotationStore,
     overlayLayer: HTMLElement,
+    feedbackLayer: HTMLElement,
     settings: Settings,
     hooks: OverlayHooks = {}
   ) {
     this.controller = controller;
     this.root = overlayLayer;
+    this.feedbackRoot = feedbackLayer;
     this.settings = settings;
     this.hooks = hooks;
     this.shadowHost = (overlayLayer.getRootNode() as ShadowRoot).host;
 
     // hover UI（常驻 DOM，display 切换）
+    // 渲染进 feedback 层（z-5）：确保 hover 高亮/标签压在面板（z-3）与工具盘（z-4）之上，
+    // 始终可见；pointer-events:none 保证不拦截交互。
     this.hoverBox = document.createElement('div');
     this.hoverBox.className = 'pd-hover';
     this.hoverBox.setAttribute('data-testid', 'pd-hover');
     this.hoverBox.style.display = 'none';
-    this.root.appendChild(this.hoverBox);
+    this.feedbackRoot.appendChild(this.hoverBox);
 
     this.hoverLabel = document.createElement('div');
     this.hoverLabel.className = 'pd-hlabel';
     this.hoverLabel.setAttribute('data-testid', 'pd-hlabel');
     this.hoverLabel.style.display = 'none';
-    this.root.appendChild(this.hoverLabel);
+    this.feedbackRoot.appendChild(this.hoverLabel);
 
     // 订阅数据 → 同步标注 UI
     this.unsubscribeStore = store.subscribe((annotations) => this.syncMarks(annotations));
