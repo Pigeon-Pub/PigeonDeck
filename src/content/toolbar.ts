@@ -127,6 +127,20 @@ export class Toolbar {
 
   // ---- 位置管理 ----
 
+  /** 重置悬浮球位置到默认右下角（设置面板「重置位置」调用） */
+  resetPosition(): void {
+    this.pos = { right: DEFAULT_RIGHT, bottom: DEFAULT_BOTTOM };
+    this.applyPos();
+    try {
+      localStorage.removeItem(POS_KEY);
+    } catch {
+      // 静默失败
+    }
+    if (this.controller.getState().expanded) {
+      this.updateToolbarDirection();
+    }
+  }
+
   private applyPos(): void {
     const el = this.wrapper;
     el.style.position = 'fixed';

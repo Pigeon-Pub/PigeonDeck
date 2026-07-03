@@ -13,6 +13,7 @@
 import { Controller } from './controller';
 import { AnnotationStore, StyleChange, MoveData, ViewportPos, mergeChanges } from '../state/annotations';
 import { History } from '../state/history';
+import { Settings } from '../state/settings';
 import { SelectionResolver } from './selection';
 import { buildSelector, isVisible } from '../shared/dom-utils';
 import { snapDrag, Rect, Guide } from './snap';
@@ -110,6 +111,7 @@ export class MoveManager {
   private history: History;
   private resolver: SelectionResolver;
   private overlayLayer: HTMLElement;
+  private settings: Settings;
   private shadowHost: Element;
 
   // 当前选中
@@ -141,6 +143,10 @@ export class MoveManager {
   private guideEls: HTMLElement[] = [];
   private freeHintEl: HTMLElement | null = null;
 
+  // 拖拽防误触阈值（settings.dragThreshold）：未达时长前不触发位移
+  private moveArmed = false;
+  private moveArmTimer: ReturnType<typeof setTimeout> | null = null;
+
   // 跟随刷新
   private rafId: number | null = null;
 
@@ -153,12 +159,14 @@ export class MoveManager {
     history: History;
     resolver: SelectionResolver;
     overlayLayer: HTMLElement;
+    settings: Settings;
   }) {
     this.controller = opts.controller;
     this.store = opts.store;
     this.history = opts.history;
     this.resolver = opts.resolver;
     this.overlayLayer = opts.overlayLayer;
+    this.settings = opts.settings;
     this.shadowHost = (opts.overlayLayer.getRootNode() as ShadowRoot).host;
 
     this.unsubscribeController = opts.controller.subscribe(() => this.syncActive());
@@ -489,6 +497,16 @@ export class MoveManager {
 
     this.selectedEl.classList.add('pd-moving');
 
+    // 拖拽防误触阈值（默认 0 = 立即启用，行为与既有一致）；>0 时延迟启用位移
+    const threshold = this.settings.dragThreshold;
+    this.moveArmed = threshold <= 0;
+    if (!this.moveArmed) {
+      this.moveArmTimer = setTimeout(() => {
+        this.moveArmed = true;
+        this.moveArmTimer = null;
+      }, threshold);
+    }
+
     window.addEventListener('mousemove', this.onMoveMove, { capture: true });
     window.addEventListener('mouseup', this.onMoveUp, { capture: true });
   }
@@ -497,6 +515,9 @@ export class MoveManager {
     if (!this.moving || !this.selectedEl || !this.moveOrigRect) return;
     ev.preventDefault();
     ev.stopPropagation();
+
+    // 未达防误触阈值：吞掉页面默认行为但不触发位移
+    if (!this.moveArmed) return;
 
     this.moveFree = ev.altKey; // 实时监听 Alt
     const rawDx = ev.clientX - this.moveStartX;
@@ -564,6 +585,11 @@ export class MoveManager {
   private endMove(): void {
     this.moving = false;
     this.moveOrigRect = null;
+    this.moveArmed = false;
+    if (this.moveArmTimer !== null) {
+      clearTimeout(this.moveArmTimer);
+      this.moveArmTimer = null;
+    }
     this.selectedEl?.classList.remove('pd-moving');
     this.clearGuides();
     this.hideFreeHint();

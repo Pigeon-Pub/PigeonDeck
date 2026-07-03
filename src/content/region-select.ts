@@ -12,7 +12,7 @@ import { PanelManager } from './panel';
 import { buildSelector, isVisible } from '../shared/dom-utils';
 import { t } from './i18n';
 
-/** 长按阈值（ms）；阶段 11 设置接入后用 settings 值 */
+/** 长按阈值默认值（ms）；实际用 settings.longPressMs（阶段 11 接入） */
 const LONG_PRESS_MS = 300;
 /** 最小区域尺寸（px）：宽或高小于此值视为误触 */
 const MIN_REGION = 6;
@@ -37,6 +37,7 @@ export class RegionSelectManager {
   private overlayLayer: HTMLElement;
   private panelLayer: HTMLElement;
   private panel: PanelManager;
+  private settings: Settings;
   private shadowHost: Element;
 
   // 长按状态
@@ -59,6 +60,7 @@ export class RegionSelectManager {
     this.overlayLayer = opts.overlayLayer;
     this.panelLayer = opts.panelLayer;
     this.panel = opts.panel;
+    this.settings = opts.settings;
     this.shadowHost = (opts.overlayLayer.getRootNode() as ShadowRoot).host;
 
     this.unsubscribeController = this.controller.subscribe(() => this.syncActive());
@@ -109,11 +111,12 @@ export class RegionSelectManager {
     const startX = ev.clientX;
     const startY = ev.clientY;
 
-    // 300ms 定时器：到时仍按下则进入框选
+    // 长按定时器：到时仍按下则进入框选（时长读实时 settings，回退默认）
+    const longPress = this.settings.longPressMs > 0 ? this.settings.longPressMs : LONG_PRESS_MS;
     this.pressTimer = setTimeout(() => {
       this.pressTimer = null;
       this.startSelecting(startX, startY);
-    }, LONG_PRESS_MS);
+    }, longPress);
 
     // mouseup 在 300ms 内：取消（是单击，交给 PanelManager）
     const onUp = (): void => {
