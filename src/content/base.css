@@ -816,6 +816,8 @@
   border: 1px solid var(--cbd);
   box-shadow: var(--sh-up);
   box-sizing: border-box;
+  /* 富文本浮条 .rtbar 有 z-index:10；下拉从浮条第二行弹出必须叠在其之上 */
+  z-index: 11;
 }
 .pd-dd-h {
   font: 600 10px var(--font-ui);
@@ -1193,7 +1195,7 @@
    调色盘（展开浮层）— 来源：preview/parts/23-palette.html
    卡片宽度 = 7 个预制色块的总宽：content 210 + padding 13×2 = 236
    ============================================================ */
-.pop { position: absolute; width: 236px; padding: 13px; box-sizing: content-box; }
+.pop { position: absolute; width: 236px; padding: 13px; box-sizing: content-box; z-index: 11; }
 .pop-h {
   font: 600 12px var(--font-ui);
   color: var(--ctx);

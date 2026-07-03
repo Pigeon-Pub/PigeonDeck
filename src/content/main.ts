@@ -158,6 +158,8 @@ function inject(settings: Settings): void {
     panelLayer,
     panel: panelManager,
     settings,
+    // 内联富文本编辑中屏蔽区域框选（长按拖拽 = 选字，不建区域）
+    isInlineEditing: () => panelManager.isInlineEditing(),
   });
 
   // 阶段 6a：移动模式（单击选中 + 选择粒度 + 八向句柄缩放）

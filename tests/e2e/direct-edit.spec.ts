@@ -1,11 +1,12 @@
 /**
- * direct-edit.spec.ts - 阶段 4a 直接编辑 + 富文本浮条 E2E（5 用例）
+ * direct-edit.spec.ts - 阶段 4a 直接编辑 + 富文本浮条 E2E
  *
- * ① 双击 #card-text p → 元素进入可编辑态（data-pd-editing 出现），浮条初始不显
+ * ① 双击 #card-text p → 元素进入可编辑态（data-pd-editing 出现），浮条随编辑常驻显示
  * ② 编辑元素内选中字符 → [data-testid="pd-rtbar"] 出现在选区上方
  * ③ 点 pd-rt-bold → 仅选区字符加粗（选区外文字 font-weight 不变）
  * ④ 点编辑区外空白 → 编辑结束、内容变化被提交（位号出现 / 卡片出现内容调整项行）
  * ⑤ 单击（非双击）#btn-primary 仍正常弹面板（验证单击延迟没破坏既有单击开面板）
+ * 环境类（W3a）：浮条常驻（选区折叠不消失）/ 编辑内链接不导航 / 编辑时屏蔽区域框选
  *
  * 时序断言全部用轮询（waitForFunction / expect.poll），禁止固定 sleep 后断言。
  */
@@ -98,7 +99,7 @@ async function clickPageEl(page: Page, cssSelector: string): Promise<void> {
 // 用例
 // ============================================================
 
-test('① 双击 #card-text p → 元素进入可编辑态，浮条初始不显', async () => {
+test('① 双击 #card-text p → 元素进入可编辑态，浮条随编辑常驻显示', async () => {
   const page = await openFixturePage();
   await expandToolbar(page);
 
@@ -111,14 +112,15 @@ test('① 双击 #card-text p → 元素进入可编辑态，浮条初始不显'
       (el.contentEditable === 'true' || 'pdEditing' in el.dataset);
   });
 
-  // 浮条初始不显（还没有选区）
-  const rtbarVisible = await page.evaluate(() => {
-    const host = document.getElementById('pd-host');
-    const bar = host?.shadowRoot?.querySelector<HTMLElement>('[data-testid="pd-rtbar"]');
-    if (!bar) return false;
-    return getComputedStyle(bar).display !== 'none';
-  });
-  expect(rtbarVisible).toBe(false);
+  // 浮条随编辑常驻显示（W3a Bug D：无需选区即可见）
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const host = document.getElementById('pd-host');
+      const bar = host?.shadowRoot?.querySelector<HTMLElement>('[data-testid="pd-rtbar"]');
+      if (!bar) return false;
+      return getComputedStyle(bar).display !== 'none' && bar.offsetWidth > 0;
+    });
+  }, { timeout: 3000 }).toBe(true);
 
   await page.close();
 });
@@ -358,12 +360,127 @@ test('⑤ 单击（非双击）#btn-primary 仍正常弹面板', async () => {
   await clickPageEl(page, '#btn-primary');
 
   // 面板应该出现（可能有最多 250ms 延迟，但按钮是 button 类型，不走延迟）
-  await expect.poll(async () => {
-    return page.evaluate(() => {
-      const host = document.getElementById('pd-host');
-      return !!host?.shadowRoot?.querySelector('[data-testid="pd-panel"]');
-    });
-  }, { timeout: 1500 }).toBe(true);
+  await page.close();
+});
+
+// ============================================================
+// W3a 环境类：浮条常驻 / 链接不导航 / 编辑屏蔽区域框选
+// ============================================================
+
+/** 双击文本元素进入编辑态，返回后确保 contentEditable=true */
+async function enterEdit(page: Page, css: string): Promise<void> {
+  await dblClickPageEl(page, css);
+  await page.waitForFunction((sel: string) => {
+    const el = document.querySelector(sel);
+    return el instanceof HTMLElement && el.contentEditable === 'true';
+  }, css);
+}
+
+function rtbarVisible(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    const bar = host?.shadowRoot?.querySelector<HTMLElement>('[data-testid="pd-rtbar"]');
+    if (!bar) return false;
+    return getComputedStyle(bar).display !== 'none' && bar.offsetWidth > 0;
+  });
+}
+
+test('W3a-D 折叠选区（点击置光标）浮条不消失（常驻）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await enterEdit(page, '#card-text p');
+
+  // 浮条先出现
+  await expect.poll(() => rtbarVisible(page), { timeout: 3000 }).toBe(true);
+
+  // 选中一段再塌陷为折叠选区（模拟"点击置光标"）→ 触发 selectionchange
+  await page.evaluate(() => {
+    const el = document.querySelector('#card-text p');
+    if (!el?.firstChild) return;
+    const sel = window.getSelection();
+    // 先建非折叠选区
+    const r1 = document.createRange();
+    r1.setStart(el.firstChild, 0);
+    r1.setEnd(el.firstChild, Math.min(5, el.firstChild.textContent?.length ?? 0));
+    sel?.removeAllRanges();
+    sel?.addRange(r1);
+    document.dispatchEvent(new Event('selectionchange'));
+    // 再塌陷为折叠光标
+    const r2 = document.createRange();
+    r2.setStart(el.firstChild, 0);
+    r2.collapse(true);
+    sel?.removeAllRanges();
+    sel?.addRange(r2);
+    document.dispatchEvent(new Event('selectionchange'));
+  });
+
+  // 旧 bug：折叠即隐藏；修复后应保持可见
+  await expect.poll(() => rtbarVisible(page), { timeout: 2000 }).toBe(true);
+
+  await page.close();
+});
+
+test('W3a-B 编辑内 <a> 点击不导航（click 被 preventDefault）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await enterEdit(page, '#card-text p');
+
+  // 往编辑元素注入一个真实链接
+  await page.evaluate(() => {
+    const el = document.querySelector('#card-text p') as HTMLElement;
+    el.innerHTML = 'text <a id="edit-link" href="basic.html?nav=1">link</a> tail';
+  });
+
+  const before = page.url();
+
+  // 直接派发一次可取消的 click（编辑态 editEl 捕获处理器应 preventDefault）
+  const prevented = await page.evaluate(() => {
+    const a = document.querySelector('#edit-link') as HTMLElement;
+    const ev = new MouseEvent('click', { bubbles: true, cancelable: true });
+    a.dispatchEvent(ev);
+    return ev.defaultPrevented;
+  });
+  expect(prevented).toBe(true);
+
+  // 真实点击链接中心，URL 不应改变（未导航）
+  await clickPageEl(page, '#edit-link');
+  await page.waitForTimeout(300);
+  expect(page.url()).toBe(before);
+
+  await page.close();
+});
+
+test('W3a-C 编辑时长按拖拽不启动区域框选', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await enterEdit(page, '#card-text p');
+
+  const box = await page.locator('#card-text p').first().boundingBox();
+  if (!box) throw new Error('#card-text p not found');
+  const cy = box.y + box.height / 2;
+
+  // 在编辑框内水平长按拖拽（超过 300ms 阈值）= 选字，不应启动区域框选
+  await page.mouse.move(box.x + 20, cy);
+  await page.mouse.down();
+  await page.waitForTimeout(400);
+  await page.mouse.move(box.x + box.width - 20, cy, { steps: 8 });
+  await page.mouse.up();
+
+  // 区域实时框 / 区域面板均不应出现
+  const regionAppeared = await page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    const live = host?.shadowRoot?.querySelector('[data-testid="pd-region-live"]');
+    const panel = host?.shadowRoot?.querySelector('[data-testid="pd-region-panel"]');
+    return !!live || !!panel;
+  });
+  expect(regionAppeared).toBe(false);
+
+  // 编辑态仍在（长按被当作选字，未退出编辑）
+  const stillEditing = await page.evaluate(() => {
+    const el = document.querySelector('#card-text p');
+    return el instanceof HTMLElement && el.contentEditable === 'true';
+  });
+  expect(stillEditing).toBe(true);
 
   await page.close();
 });

@@ -33,6 +33,13 @@ export class DirectEditManager {
   private editEl: HTMLElement | null = null;
   /** 编辑前快照 innerHTML */
   private snapshot: string = '';
+  /**
+   * 编辑前元素原始 style 属性（含 null = 无 style 属性）。
+   * 进入编辑时会往元素内联样式写入编辑态样式（金边/user-select 等，
+   * 因为编辑元素在 light DOM，shadow 内的 [data-pd-editing] 规则无效），
+   * 退出时按此原样恢复，避免留下残留内联样式。
+   */
+  private originalStyleAttr: string | null = null;
   /** 当前富文本浮条实例 */
   private rtBar: RichTextBar | null = null;
   /** 当前替换弹层句柄 */
@@ -128,6 +135,9 @@ export class DirectEditManager {
 
   private enterEdit(el: HTMLElement): void {
     this.snapshot = el.innerHTML;
+    // 记录原始 style 属性，退出时原样恢复（编辑态样式写在内联样式上）
+    this.originalStyleAttr = el.getAttribute('style');
+    this.applyEditingStyles(el);
     el.contentEditable = 'true';
     el.dataset['pdEditing'] = '';
     el.focus();
@@ -137,10 +147,53 @@ export class DirectEditManager {
     // 监听 blur 和 mousedown（点外部）
     el.addEventListener('blur', this.onEditBlur, { capture: true, once: true });
     window.addEventListener('mousedown', this.onOutsideMouseDown, true);
+    // 编辑态内屏蔽 <a> 跳转（框选/点击链接文本只落光标，不导航）
+    el.addEventListener('click', this.onEditAnchorNav, true);
+    el.addEventListener('auxclick', this.onEditAnchorNav, true);
 
     // 富文本浮条
     this.rtBar = new RichTextBar({ panelLayer: this.panelLayer, editEl: el });
   }
+
+  /**
+   * 编辑元素在 light DOM，base.css（仅注入 shadow）里的 [data-pd-editing]
+   * 金边规则对它无效；且元素会继承宿主任意 CSS（user-select:none、
+   * -webkit-user-modify、pointer-events:none 等），导致无法编辑或样式错乱。
+   * 这里用内联样式（多数场景可压过宿主规则，必要处加 !important）打上编辑态
+   * 观感 + 最小重置。金色取 --c1 令牌具体值（light DOM 无法解析 var()）。
+   */
+  private applyEditingStyles(el: HTMLElement): void {
+    const s = el.style;
+    // 金边观感（照 [data-pd-editing]：1.5px 实线 + 偏移 + 小圆角）
+    s.setProperty('outline', '1.5px solid #b8842c', 'important');
+    s.setProperty('outline-offset', '3px', 'important');
+    s.setProperty('border-radius', '4px');
+    // 最小重置：确保可选中/可编辑/可点/不被裁剪
+    s.setProperty('user-select', 'text', 'important');
+    s.setProperty('-webkit-user-modify', 'read-write', 'important');
+    s.setProperty('cursor', 'text', 'important');
+    s.setProperty('pointer-events', 'auto', 'important');
+    s.setProperty('white-space', 'normal');
+  }
+
+  /** 退出编辑时按进入前的 style 属性原样恢复 */
+  private restoreEditingStyles(el: HTMLElement): void {
+    if (this.originalStyleAttr === null) {
+      el.removeAttribute('style');
+    } else {
+      el.setAttribute('style', this.originalStyleAttr);
+    }
+    this.originalStyleAttr = null;
+  }
+
+  /** 编辑态内点/中键点链接：阻止导航（不 stopPropagation，保住光标定位） */
+  private onEditAnchorNav = (ev: MouseEvent): void => {
+    if (!this.editEl) return;
+    const inAnchor = ev
+      .composedPath()
+      .some((n) => n instanceof HTMLElement && n.tagName === 'A');
+    if (inAnchor) ev.preventDefault();
+  };
 
   /** 编辑元素 blur（切焦点时提交） */
   private onEditBlur = (): void => {
@@ -171,6 +224,8 @@ export class DirectEditManager {
     // 清理事件
     el.removeEventListener('blur', this.onEditBlur, true);
     window.removeEventListener('mousedown', this.onOutsideMouseDown, true);
+    el.removeEventListener('click', this.onEditAnchorNav, true);
+    el.removeEventListener('auxclick', this.onEditAnchorNav, true);
 
     // 销毁浮条
     this.rtBar?.destroy();
@@ -179,9 +234,10 @@ export class DirectEditManager {
     // 读新内容
     const newHtml = el.innerHTML;
 
-    // 退出编辑态
+    // 退出编辑态（恢复原始内联样式，清除编辑态金边/重置）
     el.contentEditable = 'inherit';
     delete el.dataset['pdEditing'];
+    this.restoreEditingStyles(el);
     this.editEl = null;
     this.panel.setInlineEditActive(null);
 

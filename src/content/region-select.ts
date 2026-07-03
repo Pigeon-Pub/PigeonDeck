@@ -28,6 +28,8 @@ export interface RegionSelectOptions {
   panelLayer: HTMLElement;
   panel: PanelManager;
   settings: Settings;
+  /** 内联富文本编辑中返回 true → 编辑期间不启动区域框选 */
+  isInlineEditing?: () => boolean;
 }
 
 export class RegionSelectManager {
@@ -39,6 +41,7 @@ export class RegionSelectManager {
   private panel: PanelManager;
   private settings: Settings;
   private shadowHost: Element;
+  private isInlineEditing: () => boolean;
 
   // 长按状态
   private pressTimer: ReturnType<typeof setTimeout> | null = null;
@@ -61,6 +64,7 @@ export class RegionSelectManager {
     this.panelLayer = opts.panelLayer;
     this.panel = opts.panel;
     this.settings = opts.settings;
+    this.isInlineEditing = opts.isInlineEditing ?? (() => false);
     this.shadowHost = (opts.overlayLayer.getRootNode() as ShadowRoot).host;
 
     this.unsubscribeController = this.controller.subscribe(() => this.syncActive());
@@ -100,6 +104,8 @@ export class RegionSelectManager {
 
   private onMouseDown = (ev: MouseEvent): void => {
     if (!this.active || this.isOwnUi(ev)) return;
+    // 内联富文本编辑中：长按拖拽属于选字，不启动区域框选
+    if (this.isInlineEditing()) return;
 
     const target = ev.target;
     if (
@@ -136,7 +142,7 @@ export class RegionSelectManager {
   // ---- 框选阶段 ----
 
   private startSelecting(startX: number, startY: number): void {
-    if (this.selecting) return;
+    if (this.selecting || this.isInlineEditing()) return;
     this.selecting = true;
 
     // 通知 PanelManager 取消待定的单击延迟

@@ -428,6 +428,11 @@ export class PanelManager {
     this.inlineEditEl = el;
   }
 
+  /** 是否正处于内联富文本编辑（供 RegionSelectManager 编辑时屏蔽框选） */
+  isInlineEditing(): boolean {
+    return this.inlineEditEl != null;
+  }
+
   /**
    * 打开批注面板（existing 非空 = 修改已有批注，预填内容）。
    * granHit：本次是否作为新的粒度会话原始命中元素记录（新鲜单击/编辑=true；

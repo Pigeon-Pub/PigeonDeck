@@ -1,7 +1,8 @@
 /* ============================================================
    inline-richtext.ts — Word 式双行富文本浮条（阶段 4a）
    视觉配方严格照搬 preview/parts/24-inline-edit.html 的 .rtbar 结构。
-   显示时机：内联编辑中出现非折叠选区 → 浮条出现于选区上方。
+   显示时机：进入内联编辑即常驻显示，直到退出编辑（有非折叠选区贴选区上方，
+   否则锚定 editEl 上边缘，绝不遮挡正在编辑的文字）。
    所有浮条按钮在 mousedown 上 preventDefault（保住选区、避免 contentEditable 失焦）。
    execCommand 在 click 里执行（mousedown 后 click 仍会触发）。
    字号：execCommand('fontSize','7') 后把生成的 <font size="7"> 改写为 <span style="font-size:Npx">。
@@ -78,7 +79,6 @@ export class RichTextBar {
   private el: HTMLElement;
   private panelLayer: HTMLElement;
   private editEl: HTMLElement;
-  private visible = false;
   /** 当前颜色状态（字色 abar） */
   private currentFgColor = 'var(--c1)';
   /** 打开弹层前存下的选区（弹层交互会塌陷页面选区，回调时恢复） */
@@ -88,32 +88,45 @@ export class RichTextBar {
     this.panelLayer = opts.panelLayer;
     this.editEl = opts.editEl;
     this.el = this.buildBar();
-    this.el.style.display = 'none';
     this.panelLayer.appendChild(this.el);
 
-    // 监听选区变化
-    document.addEventListener('selectionchange', this.onSelectionChange);
+    // 浮条在整个编辑期间常驻显示（不随选区折叠隐藏）：
+    // 选区变化时重定位；滚动/缩放时跟随。
+    document.addEventListener('selectionchange', this.reposition);
+    window.addEventListener('scroll', this.reposition, { capture: true, passive: true });
+    window.addEventListener('resize', this.reposition);
+    this.reposition();
   }
 
   destroy(): void {
-    document.removeEventListener('selectionchange', this.onSelectionChange);
+    document.removeEventListener('selectionchange', this.reposition);
+    window.removeEventListener('scroll', this.reposition, true);
+    window.removeEventListener('resize', this.reposition);
     this.el.remove();
   }
 
-  private onSelectionChange = (): void => {
-    const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) {
-      this.hide();
-      return;
-    }
-    // 确认选区落在 editEl 内
-    const range = sel.getRangeAt(0);
-    if (!this.editEl.contains(range.commonAncestorContainer)) {
-      this.hide();
-      return;
-    }
-    this.showAt(range.getBoundingClientRect());
+  /**
+   * 重定位浮条（常驻，不隐藏）：
+   * 有落在 editEl 内的非折叠选区 → 贴选区上方；
+   * 否则（折叠光标/无选区）→ 锚定在 editEl 上边缘上方，绝不遮挡正在编辑的文字。
+   */
+  private reposition = (): void => {
+    const rect = this.currentAnchorRect();
+    this.showAt(rect);
   };
+
+  /** 选出锚定矩形：优先 editEl 内的非折叠选区框，回退 editEl 外框 */
+  private currentAnchorRect(): DOMRect {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && !sel.isCollapsed) {
+      const range = sel.getRangeAt(0);
+      if (this.editEl.contains(range.commonAncestorContainer)) {
+        const r = range.getBoundingClientRect();
+        if (r.width > 0 || r.height > 0) return r;
+      }
+    }
+    return this.editEl.getBoundingClientRect();
+  }
 
   private showAt(rect: DOMRect): void {
     const barW = this.el.offsetWidth || 320;
@@ -122,6 +135,7 @@ export class RichTextBar {
     const EDGE = 8;
     let top = rect.top - barH - GAP;
     let left = rect.left;
+    // 上方放不下 → 翻到锚定矩形下方（editEl 锚定时即整个元素下方，不压文字）
     if (top < EDGE) top = rect.bottom + GAP;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -129,16 +143,6 @@ export class RichTextBar {
     top = Math.max(EDGE, Math.min(top, vh - barH - EDGE));
     this.el.style.left = `${left}px`;
     this.el.style.top = `${top}px`;
-    if (!this.visible) {
-      this.el.style.display = '';
-      this.visible = true;
-    }
-  }
-
-  hide(): void {
-    if (!this.visible) return;
-    this.el.style.display = 'none';
-    this.visible = false;
   }
 
   private buildBar(): HTMLElement {
