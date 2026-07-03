@@ -4,7 +4,7 @@
 
 ## 仓库当前阶段
 
-**编码阶段进行中**。设计系统已就绪（[preview/](preview/) 画廊 + [docs/design-system.md](docs/design-system.md)），按 [docs/v1-plan.md](docs/v1-plan.md) 的 15 个阶段逐阶段实施。**阶段 1–9 已完成并合并 main（已 push）**：
+**🎉 V1 全 15 阶段代码闭环完成，全部合并 main。** 设计系统已就绪（[preview/](preview/) 画廊 + [docs/design-system.md](docs/design-system.md)），按 [docs/v1-plan.md](docs/v1-plan.md) 的 15 个阶段逐阶段实施完毕。**剩余为用户手动冒烟（[docs/manual-smoke-checklist.md](docs/manual-smoke-checklist.md)，71 项）+ 打包上架。** 各阶段要点：
 - **阶段 1 工程骨架**：Vite 双配置构建（content IIFE + background ES）、Shadow DOM 四层宿主、pigeonlib 设计令牌、i18n 框架、logger。
 - **阶段 2 工具盘与悬浮球**：模式控制器状态机、42px 悬浮球、7 按钮工具盘、tooltip、长按拖拽持久化、E2E 测试基建。
 - **阶段 3 批注模式**：3a 批注核心 + 3b 修改栏与高级样式（fields.ts 双入口单源、自制下拉/调色盘、样式修改管线→撤销历史、卡片调整项）。
@@ -14,8 +14,14 @@
 - **阶段 7 撤销/重做**：`History` 加 subscribe（语义不变）；工具盘合并药丸左半撤销/右半重做按 canUndo/canRedo 订阅刷新禁用态；`shortcuts.ts` 全局键盘 Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z / Esc 仅展开态；`settings.historyLimit`（默认 50）。阶段 3–6 全操作闭环可撤销（清空复合命令留阶段 10）。
 - **阶段 8 复制文本**：`format.ts` 纯函数管线（buildOperations 去重合并/Type 组合 `Annotation + Style Modification + Move`/移动只留初始→最终/Changes 表 vs 内容修改分流 → renderTaskList en/zh_CN 模板回退 en，逐字对齐 §7.1+part37）；`copy-text.ts` 点击手势内 `navigator.clipboard.writeText` + 结果弹窗（part37 滚动预览+语言快切+下载.md/再复制）+ `settings.exportLang`。
 - **阶段 9 复制图片**：9a `capture.ts` 截图拼接（`chrome.tabs.captureVisibleTab` 滚动拼接、纯函数 `computeCaptureRange`/`planScreens`、总高钳 ≤14000px、后台 ≥600ms 限速、manifest `host_permissions <all_urls>`）；9b canvas 叠加程序化重绘（`layoutOverlay` 纯函数，编号/框/区域/移动幽灵框+连线，逐值照搬 pigeonlib）+ `ClipboardItem` 复制/blob 下载 + 水印 + `settings.imageMethod`。已知妥协：横向滚动页拉伸、fixed 元素重复、自动剪贴板在异步管线后手势失效（弹窗复制按钮可靠）。**随阶段 9 合并的 UI 校准**：新 Logo（白描边鸽）、工具盘顺序照 part02（Logo→撤销/重做→移动→复制文本→复制图片→清空→设置）、移动模式 hover 圆角框、调色盘推荐色不足 7 保持尺寸左对齐。
+- **阶段 10 清空确认**：`clear.ts` ClearManager 贴工具盘**侧边**确认弹层（照 part14，`positionBeside` 避免被 control 层遮挡）；**可撤销复合命令**（snapshot→doClear[DOM 回退+store.clear 编号归 1]→history.clear→push clear 命令，revert=store.load 恢复标注/编号/DOM）；`applyChangesTo` 导出复用。
+- **阶段 11 设置面板**：`settings-panel.ts` 4 分区（通用/交互/输出/帮助）贴工具盘侧边；全部设置项 live-apply（单一 settings 对象共享引用：主题 setTheme/粒度/长按/拖拽阈值/历史 setLimit/hover/图片/水印/导出语言）；`language-picker.ts` + `languages.ts` 搜索式语言选择器（`matchLanguages` 模糊/首字母/ISO + BCP47 curated 子集）；新增 settings 字段 theme/longPressMs/dragThreshold，exportLang 加宽为 string。V1 简化：快捷键只读、界面语言仅 en/zh_CN 有翻译、界面语言切换非全局实时重渲。
+- **阶段 12 安装说明页**：`public/onboarding.html`+js 自包含品牌教程（chrome.i18n），background onInstalled 首装自动开页 + `pd-open-onboarding` 消息；设置 Help 分区重开。
+- **阶段 13 Popup 与后台**：`public/popup.html`+js（全局/站点禁用开关、禁用列表、file/PDF 提示，照 part16）；`disable.ts` 纯函数 `isPageDisabled` + storage 模型；main.ts 注入守卫 + `storage.onChanged` reload 实时启停；右键菜单「快速标注」→ SW onClicked → content `expand()`；manifest 加 action + contextMenus 权限。
+- **阶段 14 i18n 完整化**：全库审计零用户可见硬编码文案（仅字形 A/快捷键名/品牌名 3 处不可翻译字面量）；en/zh_CN 各 278 键严格一致；CONTRIBUTING.md + AVAILABLE_LANGUAGES.json 齐备；i18n:check 持续绿。
+- **阶段 15 测试收尾**：夹具补齐（表单/图片网格/嵌套 flex/绝对定位，既有元素不动）；`full-flow.spec.ts` 全链路集成 E2E（标注→样式→移动→区域→复制文本剪贴板真断言→撤销→清空/恢复→刷新恢复→设置）；`docs/manual-smoke-checklist.md` 71 项手动冒烟清单；playwright `retries:1` 负载安全网（retries=0 下亦 71×2 绿）。
 
-门禁基线：build ✓ / typecheck ✓ / vitest 260 ✓ / e2e 50 ✓ / i18n ✓。**下一阶段：阶段 10 清空确认（贴工具盘确认弹层，确认=复合命令可撤销，清 store+编号重置+历史清空但清空本身可撤销；点外部/取消关闭；可与阶段 11 设置面板同代理连做）**。
+门禁基线：build ✓ / typecheck ✓ / vitest 298 ✓ / e2e 71（retries=0 下 ×2 稳定）✓ / i18n ✓。**V1 代码闭环完成。下一步（非编码）：用户按 [docs/manual-smoke-checklist.md](docs/manual-smoke-checklist.md) 真机冒烟 → 修真机暴露的问题 → 定版本号 → 打包上架（Chrome/Edge 商店 + 自托管 .crx）。已知妥协见各阶段 CHANGELOG。**
 
 当前根目录有：
 - `src/` + `public/` + `scripts/` — 扩展源码、静态资源（manifest/_locales/icons/brand）、构建脚本
