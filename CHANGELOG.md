@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Coding — 阶段 14：i18n 完整化（2026-07-03）
+
+- 全库硬编码文案审计：`src/` 生产代码零用户可见硬编码字符串——所有界面文案自阶段 1 起即经 `t()`（内容脚本运行时 i18n）或 `chrome.i18n.getMessage`（onboarding/popup 静态页）；仅 3 处字面量为**不可翻译**内容（富文本字色按钮字形 `A`、快捷键名 `Ctrl+Z / Ctrl+⇧+Z / Esc`、品牌名 `PigeonDeck`），保留合理
+- 语言资源核对：`_locales/en/messages.json` 与 `zh_CN/messages.json` **key 严格一致（各 278 条，无缺失/多余）**；manifest `__MSG_ext_name__`/`__MSG_ext_desc__` 键就位；`_locales/CONTRIBUTING.md`（社区翻译贡献指南）+ `AVAILABLE_LANGUAGES.json`（en/zh_CN 注册）齐备
+- `npm run i18n:check` 全绿（key 集合一致性 + 语言注册校验），已作为每阶段合并门禁持续把关
+- 说明：i18n 完整化为持续性工作，随各功能阶段增量落地，本阶段为收口审计确认，无新增代码
+
 ### Coding — 阶段 13：Popup 与后台（2026-07-03）
 
 - Popup 弹窗（`public/popup.html` + `public/popup.js`，静态扩展页，chrome.i18n）：品牌头（logo + 名称 + 当前站点 host + 运行状态）+ 状态条（运行中/全局已禁用/本站已禁用/不支持页面）+ 全局禁用开关 + 当前站点禁用开关 + 禁用站点列表（内联展开 + 移除）+ file:// 权限提示（`chrome.extension.isAllowedFileSchemeAccess`）+ PDF 不支持提示（url 以 .pdf 结尾）；照搬 preview part 16
@@ -275,7 +282,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | 11 | ~~设置面板：4 分区 + 贴工具盘~~ ✅ |
 | 12 | ~~安装说明页：首次自动打开 + 设置可重看~~ ✅ |
 | 13 | ~~Popup 与后台：Service Worker + 右键菜单 + file:// + PDF 提示~~ ✅ |
-| 14 | i18n 完整化：中英双语全覆盖 |
+| 14 | ~~i18n 完整化：中英双语全覆盖~~ ✅ |
 | 15 | 测试：Vitest 单测 + Playwright E2E + 手动冒烟 |
 
 ---
