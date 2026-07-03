@@ -111,5 +111,50 @@
 
   <!-- Extra space to test scroll + toolbar boundary behavior -->
   <div class="spacer"></div>
+
+  <!-- =========================================================================
+       阶段 15 追加区块（放页面末尾，不影响既有元素坐标）。
+       为表单控件 / 图片网格 / 嵌套 flex / 绝对定位提供带 id 的目标，
+       供全链路及未来 E2E 使用。既有元素 id/结构/尺寸一律不改。
+       ========================================================================== -->
+
+  <!-- 表单控件卡 -->
+  <div class="card" id="card-form">
+    <h2 style="font-size:16px;margin:0 0 12px;">Form Controls</h2>
+    <input id="form-input" type="text" placeholder="Text input" style="display:block;margin-bottom:10px;padding:6px 10px;border:1px solid #dfe2e8;border-radius:6px;width:240px;">
+    <textarea id="form-textarea" rows="3" placeholder="Textarea" style="display:block;margin-bottom:10px;padding:6px 10px;border:1px solid #dfe2e8;border-radius:6px;width:240px;"></textarea>
+    <select id="form-select" style="display:block;margin-bottom:10px;padding:6px 10px;border:1px solid #dfe2e8;border-radius:6px;">
+      <option value="a">Option A</option>
+      <option value="b">Option B</option>
+      <option value="c">Option C</option>
+    </select>
+    <button id="form-submit" type="submit" class="primary">Submit</button>
+  </div>
+
+  <!-- 图片网格（3×小 data: 占位，避免网络依赖） -->
+  <div class="card" id="card-grid">
+    <div id="img-grid" style="display:grid;grid-template-columns:repeat(3,120px);gap:12px;">
+      <img id="grid-1" width="120" height="80" alt="grid 1"
+        src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='80'%3E%3Crect%20width='120'%20height='80'%20fill='%23d8e0e8'/%3E%3C/svg%3E">
+      <img id="grid-2" width="120" height="80" alt="grid 2"
+        src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='80'%3E%3Crect%20width='120'%20height='80'%20fill='%23e0d8e0'/%3E%3C/svg%3E">
+      <img id="grid-3" width="120" height="80" alt="grid 3"
+        src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='80'%3E%3Crect%20width='120'%20height='80'%20fill='%23d8e8d8'/%3E%3C/svg%3E">
+    </div>
+  </div>
+
+  <!-- 嵌套 flex 容器（父 flex + 若干子项） -->
+  <div class="card" id="card-flex">
+    <div id="flex-row" style="display:flex;gap:12px;align-items:stretch;">
+      <div id="flex-item-1" style="flex:1;background:#eef2f7;border-radius:6px;padding:16px;">Item 1</div>
+      <div id="flex-item-2" style="flex:1;background:#eef2f7;border-radius:6px;padding:16px;">Item 2</div>
+      <div id="flex-item-3" style="flex:1;background:#eef2f7;border-radius:6px;padding:16px;">Item 3</div>
+    </div>
+  </div>
+
+  <!-- 绝对定位元素 -->
+  <div class="card" id="card-abs" style="position:relative;height:120px;">
+    <div id="abs-box" style="position:absolute;top:20px;left:20px;width:160px;height:60px;background:#f0e6d2;border:1px solid #d8c8a8;border-radius:8px;"></div>
+  </div>
 </body>
 </html>
