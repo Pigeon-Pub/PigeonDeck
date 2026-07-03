@@ -199,8 +199,8 @@ function inject(settings: Settings): void {
     resolver: selectionResolver,
     toast,
     onResetPosition: () => toolbar.resetPosition(),
-    // 阶段 12 接真实安装说明页；本阶段占位轻提示
-    onOpenOnboarding: () => toast.show(t('toast_coming_soon')),
+    // 阶段 12：发消息给后台打开安装说明页
+    onOpenOnboarding: () => chrome.runtime.sendMessage({ type: 'pd-open-onboarding' }),
   });
 
   // 恢复后：未能定位的标注数据保留、UI 跳过，轻提示
