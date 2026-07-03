@@ -25,6 +25,20 @@ function makeInput(selector: string, note: string): AnnotationInput {
   };
 }
 
+/** 区域标注输入：selector 为空串（document.querySelector('') 会抛错，须被清空跳过） */
+function makeRegionInput(note: string): AnnotationInput {
+  return {
+    kind: 'region',
+    selector: '',
+    elementType: 'other',
+    summary: 'region 100×80',
+    note,
+    changes: [],
+    viewportPos: { x: 10, y: 20, w: 100, h: 80 },
+    region: { docRect: { x: 10, y: 20, w: 100, h: 80 }, elements: ['div.card'] },
+  };
+}
+
 interface Harness {
   controller: Controller;
   store: AnnotationStore;
@@ -132,5 +146,33 @@ describe('ClearManager — 清空复合命令', () => {
     expect(h.panelLayer.querySelector('[data-testid="pd-clear-confirm"]')).not.toBeNull();
     h.controller.triggerClear();
     expect(h.panelLayer.querySelector('[data-testid="pd-clear-confirm"]')).toBeNull();
+  });
+
+  it('含区域标注（空 selector）时清空不抛错、正常清空且可撤销', () => {
+    // 交互11：region 的 selector='' 会让 document.querySelector('') 抛 SyntaxError，
+    // 曾中断整个清空。加入一条区域标注，验证清空完成 + 撤销恢复（含区域）。
+    const region = setup();
+    region.store.add(makeInput('#a', 'element note'));
+    region.store.add(makeRegionInput('区域说明'));
+    expect(region.store.getAll()).toHaveLength(2);
+
+    const ok = region.panelLayer;
+    region.controller.triggerClear();
+    const okBtn = ok.querySelector<HTMLButtonElement>('[data-testid="pd-clear-ok"]');
+    if (!okBtn) throw new Error('confirm popover not opened');
+    expect(() => okBtn.click()).not.toThrow();
+
+    // 全部清空 + 编号重置
+    expect(region.store.getAll()).toHaveLength(0);
+    expect(region.store.peekNextNumber()).toBe(1);
+    expect(region.history.canUndo()).toBe(true);
+
+    // 撤销恢复：区域标注也回来（含 region 数据）
+    region.history.undo();
+    const anns = region.store.getAll();
+    expect(anns).toHaveLength(2);
+    const regionAnn = anns.find((a) => a.kind === 'region');
+    expect(regionAnn).toBeDefined();
+    expect(regionAnn?.region?.elements).toEqual(['div.card']);
   });
 });

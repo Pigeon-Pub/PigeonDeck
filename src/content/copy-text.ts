@@ -149,6 +149,14 @@ export class CopyTextManager {
     const acts = document.createElement('span');
     acts.className = 'acts';
 
+    // 取消/关闭：无边框文字按钮，置于下载左侧（点击即关闭弹窗）
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'pd-btn ghost';
+    btnCancel.setAttribute('data-testid', 'pd-copytext-cancel');
+    btnCancel.textContent = t('panel_cancel');
+    btnCancel.addEventListener('click', () => this.closePanel());
+    acts.appendChild(btnCancel);
+
     const btnDownload = document.createElement('button');
     btnDownload.className = 'pd-iconbtn';
     btnDownload.setAttribute('data-testid', 'pd-output-download');

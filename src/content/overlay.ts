@@ -7,7 +7,7 @@
    ============================================================ */
 
 import { Controller } from './controller';
-import { AnnotationStore, Annotation } from '../state/annotations';
+import { AnnotationStore, Annotation, RegionData } from '../state/annotations';
 import { Settings } from '../state/settings';
 
 export interface OverlayHooks {
@@ -153,13 +153,10 @@ export class Overlay {
     if (!entry) return null;
     // 区域标注：根据 docRect 计算当前视口矩形
     if (entry.isRegion && entry.annotation.region) {
-      const { docRect } = entry.annotation.region;
-      return new DOMRect(
-        docRect.x - window.scrollX,
-        docRect.y - window.scrollY,
-        docRect.w,
-        docRect.h
-      );
+      const region = entry.annotation.region;
+      const { docRect } = region;
+      const { dx, dy } = this.regionScrollOffset(region);
+      return new DOMRect(docRect.x - dx, docRect.y - dy, docRect.w, docRect.h);
     }
     if (!entry.target?.isConnected) return null;
     return entry.target.getBoundingClientRect();
@@ -171,9 +168,11 @@ export class Overlay {
     if (!entry) return null;
     // 区域标注：pin 贴区域左上角
     if (entry.isRegion && entry.annotation.region) {
-      const { docRect } = entry.annotation.region;
-      const vpX = docRect.x - window.scrollX;
-      const vpY = docRect.y - window.scrollY;
+      const region = entry.annotation.region;
+      const { docRect } = region;
+      const { dx, dy } = this.regionScrollOffset(region);
+      const vpX = docRect.x - dx;
+      const vpY = docRect.y - dy;
       return new DOMRect(vpX - PIN_OFFSET, vpY - PIN_OFFSET, 22, 22);
     }
     const rect = this.getTargetRect(annotationId);
@@ -184,6 +183,29 @@ export class Overlay {
       22,
       22
     );
+  }
+
+  /**
+   * 区域标注的视口偏移 = window 滚动 + 嵌套滚动容器的滚动增量。
+   * 顶层滚动时（无 scrollSelector）退化为纯 window 滚动（旧行为，无回归）。
+   * 嵌套滚动容器内的区域：加上「祖先当前滚动 − 创建时滚动」，使框随内层内容移动。
+   * 祖先选择器失效（找不到/非法）时回退纯 window 滚动。
+   */
+  private regionScrollOffset(region: RegionData): { dx: number; dy: number } {
+    let dx = window.scrollX;
+    let dy = window.scrollY;
+    if (region.scrollSelector) {
+      try {
+        const scroller = document.querySelector(region.scrollSelector);
+        if (scroller) {
+          dx += scroller.scrollLeft - (region.scrollLeft ?? 0);
+          dy += scroller.scrollTop - (region.scrollTop ?? 0);
+        }
+      } catch {
+        // 选择器非法：回退纯 window 滚动
+      }
+    }
+    return { dx, dy };
   }
 
   // ---- hover ----
@@ -370,12 +392,14 @@ export class Overlay {
   private refresh(): void {
     for (const entry of this.entries.values()) {
       if (entry.isRegion) {
-        // 区域标注：按 docRect - scroll 重定位，始终可见
+        // 区域标注：按 docRect − 视口偏移重定位，始终可见。
+        // 视口偏移含嵌套滚动容器增量，故内层容器滚动时框也跟随。
         const regionData = entry.annotation.region;
         if (!regionData) continue;
         const { docRect } = regionData;
-        const vpX = docRect.x - window.scrollX;
-        const vpY = docRect.y - window.scrollY;
+        const { dx, dy } = this.regionScrollOffset(regionData);
+        const vpX = docRect.x - dx;
+        const vpY = docRect.y - dy;
         Object.assign(entry.markbox.style, {
           display: 'block',
           left: `${vpX}px`,

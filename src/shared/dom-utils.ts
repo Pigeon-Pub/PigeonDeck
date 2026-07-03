@@ -162,3 +162,26 @@ export function isVisible(el: Element): boolean {
   if (!style) return false;
   return style.display !== 'none' && style.visibility !== 'hidden';
 }
+
+/**
+ * 从 el 向上查找最近的可滚动祖先：overflow(x/y) 为 auto/scroll/overlay
+ * 且实际存在滚动尺寸（scrollHeight>clientHeight 或 scrollWidth>clientWidth）。
+ * 找不到返回 null（区域随 window 滚动即可，无需修正）。
+ * 供区域框选记录嵌套滚动容器用（overlay 复现时按选择器再解析）。
+ */
+export function findScrollableAncestor(el: Element): Element | null {
+  const win = el.ownerDocument.defaultView;
+  if (!win) return null;
+  const doc = el.ownerDocument;
+  const scrollableOverflow = (v: string): boolean =>
+    v === 'auto' || v === 'scroll' || v === 'overlay';
+  let cur: Element | null = el.parentElement;
+  while (cur && cur !== doc.body && cur !== doc.documentElement) {
+    const style = win.getComputedStyle(cur);
+    const canY = scrollableOverflow(style.overflowY) && cur.scrollHeight > cur.clientHeight;
+    const canX = scrollableOverflow(style.overflowX) && cur.scrollWidth > cur.clientWidth;
+    if (canY || canX) return cur;
+    cur = cur.parentElement;
+  }
+  return null;
+}

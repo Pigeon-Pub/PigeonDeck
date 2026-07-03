@@ -602,6 +602,14 @@ export class CopyImageManager {
     const foot = document.createElement('div');
     foot.className = 'ofoot ofoot-end';
 
+    // 取消/关闭：无边框文字按钮，置于下载左侧（点击即关闭弹窗）
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'pd-btn ghost';
+    btnCancel.setAttribute('data-testid', 'pd-copyimage-cancel');
+    btnCancel.textContent = t('panel_cancel');
+    btnCancel.addEventListener('click', () => this.closePanel());
+    foot.appendChild(btnCancel);
+
     const btnDownload = document.createElement('button');
     btnDownload.className = 'pd-iconbtn';
     btnDownload.setAttribute('data-testid', 'pd-image-download');

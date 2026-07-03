@@ -190,6 +190,122 @@ const GLOBAL_RULES: Record<'en' | 'zh_CN', readonly string[]> = {
   ],
 };
 
+/**
+ * 任务清单的可本地化标签表（模块内字符串表，非 t() i18n 键；English 为默认/回退）。
+ * 只翻译分区标题 / 字段标签 / 吸附短语；结构（分区顺序、缩进）与值（URL/选择器/坐标）不变。
+ * 操作 Type（Annotation/Style Modification/Move/Region 及组合）保持英文——它同时是渲染逻辑判据。
+ */
+interface Labels {
+  pageContext: string;
+  globalRules: string;
+  operations: string;
+  noOperations: string;
+  url: string;
+  title: string;
+  viewport: string;
+  timestamp: string;
+  target: string;
+  location: string;
+  instruction: string;
+  content: string;
+  media: string;
+  changes: string;
+  move: string;
+  source: string;
+  into: string;
+  final: string;
+  initial: string;
+  snap: string;
+  scope: string;
+  coordinates: string;
+  snapEmbedded: string;
+  snapFree: string;
+  snapNone: string;
+  /** `snapped (<edge>)` 包装：传入已本地化的边缘描述 */
+  snapped: (edge: string) => string;
+  /** 吸附边缘语义标识 → 本地化描述 */
+  snapEdges: Record<string, string>;
+}
+
+const LABELS: Record<'en' | 'zh_CN', Labels> = {
+  en: {
+    pageContext: '[Page Context]',
+    globalRules: '[Global Editing Rules]',
+    operations: '[Operations]',
+    noOperations: '(no operations)',
+    url: 'URL',
+    title: 'Title',
+    viewport: 'Viewport',
+    timestamp: 'Timestamp',
+    target: 'Target',
+    location: 'Location',
+    instruction: 'Instruction',
+    content: 'Content',
+    media: 'Media',
+    changes: 'Changes',
+    move: 'Move',
+    source: 'Source',
+    into: 'Into',
+    final: 'Final',
+    initial: 'Initial',
+    snap: 'Snap',
+    scope: 'Scope',
+    coordinates: 'Coordinates',
+    snapEmbedded: 'embedded into container',
+    snapFree: 'free move',
+    snapNone: 'no snap',
+    snapped: (edge) => `snapped (${edge})`,
+    snapEdges: {
+      'align-left': 'left edge',
+      'align-right': 'right edge',
+      'align-top': 'top edge',
+      'align-bottom': 'bottom edge',
+      'align-center-h': 'X center',
+      'align-center-v': 'Y center',
+      'align-x': 'X axis',
+      'align-y': 'Y axis',
+    },
+  },
+  zh_CN: {
+    pageContext: '[页面上下文]',
+    globalRules: '[全局编辑规则]',
+    operations: '[操作列表]',
+    noOperations: '（无操作）',
+    url: '网址',
+    title: '标题',
+    viewport: '视口',
+    timestamp: '时间',
+    target: '目标',
+    location: '位置',
+    instruction: '说明',
+    content: '内容',
+    media: '媒体',
+    changes: '修改',
+    move: '移动',
+    source: '源',
+    into: '移入',
+    final: '最终',
+    initial: '初始',
+    snap: '吸附',
+    scope: '范围',
+    coordinates: '坐标',
+    snapEmbedded: '嵌入容器',
+    snapFree: '自由移动',
+    snapNone: '无吸附',
+    snapped: (edge) => `已吸附（${edge}）`,
+    snapEdges: {
+      'align-left': '左边缘',
+      'align-right': '右边缘',
+      'align-top': '顶边缘',
+      'align-bottom': '底边缘',
+      'align-center-h': 'X 轴居中',
+      'align-center-v': 'Y 轴居中',
+      'align-x': 'X 轴',
+      'align-y': 'Y 轴',
+    },
+  },
+};
+
 function normalizeLang(lang: string): 'en' | 'zh_CN' {
   return lang === 'zh_CN' ? 'zh_CN' : 'en';
 }
@@ -198,22 +314,12 @@ function normalizeLang(lang: string): 'en' | 'zh_CN' {
 // Render helpers
 // ============================================================
 
-/** 吸附语义 → 英文描述 */
-function describeSnap(move: MoveData): string {
-  if (move.reparent) return 'embedded into container';
-  if (move.freeMove) return 'free move';
-  if (!move.snap) return 'no snap';
-  const label: Record<string, string> = {
-    'align-left': 'left edge',
-    'align-right': 'right edge',
-    'align-top': 'top edge',
-    'align-bottom': 'bottom edge',
-    'align-center-h': 'X center',
-    'align-center-v': 'Y center',
-    'align-x': 'X axis',
-    'align-y': 'Y axis',
-  };
-  return `snapped (${label[move.snap] ?? move.snap})`;
+/** 吸附语义 → 本地化描述 */
+function describeSnap(move: MoveData, L: Labels): string {
+  if (move.reparent) return L.snapEmbedded;
+  if (move.freeMove) return L.snapFree;
+  if (!move.snap) return L.snapNone;
+  return L.snapped(L.snapEdges[move.snap] ?? move.snap);
 }
 
 function truncate(str: string, max = 60): string {
@@ -244,52 +350,52 @@ function describeMediaUrl(url: string): string {
   return last || url;
 }
 
-function renderContentChange(c: ContentChange): string {
+function renderContentChange(c: ContentChange, L: Labels): string {
   if (c.kind === 'src') {
-    return `Media: "${describeMediaUrl(c.oldValue)}" → "${describeMediaUrl(c.newValue)}"`;
+    return `${L.media}: "${describeMediaUrl(c.oldValue)}" → "${describeMediaUrl(c.newValue)}"`;
   }
   const oldText = c.kind === 'html' ? stripTags(c.oldValue) : c.oldValue;
   const newText = c.kind === 'html' ? stripTags(c.newValue) : c.newValue;
-  return `Content: "${truncate(oldText)}" → "${truncate(newText)}"`;
+  return `${L.content}: "${truncate(oldText)}" → "${truncate(newText)}"`;
 }
 
 function renderVp(vp: ViewportPos): string {
   return `(${vp.x}, ${vp.y}) ${vp.w}×${vp.h}`;
 }
 
-function renderOp(op: Operation): string {
+function renderOp(op: Operation, L: Labels): string {
   const lines: string[] = [];
   lines.push(`--- #${op.number} ${op.type} ---`);
 
   // ---- Region ----
   if (op.type === 'Region') {
     if (op.region) {
-      lines.push(`Scope: [${op.region.elements.join(', ')}]`);
+      lines.push(`${L.scope}: [${op.region.elements.join(', ')}]`);
       const { x, y, w, h } = op.region.docRect;
-      lines.push(`Coordinates: (${x},${y})–(${x + w},${y + h})`);
+      lines.push(`${L.coordinates}: (${x},${y})–(${x + w},${y + h})`);
     }
-    if (op.instruction) lines.push(`Instruction: ${op.instruction}`);
+    if (op.instruction) lines.push(`${L.instruction}: ${op.instruction}`);
     return lines.join('\n');
   }
 
   // ---- Element operation ----
-  lines.push(`Target: ${op.target}`);
+  lines.push(`${L.target}: ${op.target}`);
 
   // Location 仅对含 Annotation 的操作显示
   if (op.location && op.type.includes('Annotation')) {
-    lines.push(`Location: ${op.location}`);
+    lines.push(`${L.location}: ${op.location}`);
   }
 
-  if (op.instruction) lines.push(`Instruction: ${op.instruction}`);
+  if (op.instruction) lines.push(`${L.instruction}: ${op.instruction}`);
 
   // 内容修改（在 CSS 表格之前）
   for (const cc of op.contentChanges) {
-    lines.push(renderContentChange(cc));
+    lines.push(renderContentChange(cc, L));
   }
 
   // CSS 修改表格
   if (op.cssChanges.length > 0) {
-    lines.push('Changes:');
+    lines.push(`${L.changes}:`);
     for (const c of op.cssChanges) {
       lines.push(`  | ${c.cssProp} | ${c.oldValue} | ${c.newValue} |`);
     }
@@ -298,16 +404,16 @@ function renderOp(op: Operation): string {
   // Move 块（§6.3：仅初始→最终）
   if (op.move) {
     const m = op.move;
-    lines.push('Move:');
-    lines.push(`  Source: ${op.target}`);
+    lines.push(`${L.move}:`);
+    lines.push(`  ${L.source}: ${op.target}`);
     // 嵌入（DOM 重父）：把结构关系放在坐标之前，指示 AI 按 DOM/flex 结构移动而非硬编码坐标
     if (m.reparent) {
-      lines.push(`  Into: ${m.reparent.toSelector}`);
+      lines.push(`  ${L.into}: ${m.reparent.toSelector}`);
     }
-    lines.push(`  Target: (${m.finalRect.x}, ${m.finalRect.y})`);
-    lines.push(`  Initial: ${renderVp(m.initialRect)}`);
-    lines.push(`  Final: ${renderVp(m.finalRect)}`);
-    lines.push(`  Snap: ${describeSnap(m)}`);
+    lines.push(`  ${L.target}: (${m.finalRect.x}, ${m.finalRect.y})`);
+    lines.push(`  ${L.initial}: ${renderVp(m.initialRect)}`);
+    lines.push(`  ${L.final}: ${renderVp(m.finalRect)}`);
+    lines.push(`  ${L.snap}: ${describeSnap(m, L)}`);
   }
 
   return lines.join('\n');
@@ -324,30 +430,31 @@ export function renderTaskList(
 ): string {
   const effectiveLang = normalizeLang(lang);
   const rules = GLOBAL_RULES[effectiveLang];
+  const L = LABELS[effectiveLang];
 
   const sections: string[] = [];
 
   // [Page Context]
   sections.push(
     [
-      '[Page Context]',
-      `- URL: ${ctx.url}`,
-      `- Title: ${ctx.title}`,
-      `- Viewport: ${ctx.viewportW} × ${ctx.viewportH} (px)`,
-      `- Timestamp: ${ctx.timestamp}`,
+      L.pageContext,
+      `- ${L.url}: ${ctx.url}`,
+      `- ${L.title}: ${ctx.title}`,
+      `- ${L.viewport}: ${ctx.viewportW} × ${ctx.viewportH} (px)`,
+      `- ${L.timestamp}: ${ctx.timestamp}`,
     ].join('\n')
   );
 
   // [Global Editing Rules]
   sections.push(
-    ['[Global Editing Rules]', ...rules.map((r) => `- ${r}`)].join('\n')
+    [L.globalRules, ...rules.map((r) => `- ${r}`)].join('\n')
   );
 
   // [Operations]
   if (ops.length === 0) {
-    sections.push('[Operations]\n(no operations)');
+    sections.push(`${L.operations}\n${L.noOperations}`);
   } else {
-    sections.push(['[Operations]', ops.map(renderOp).join('\n\n')].join('\n'));
+    sections.push([L.operations, ops.map((op) => renderOp(op, L)).join('\n\n')].join('\n'));
   }
 
   return sections.join('\n\n');

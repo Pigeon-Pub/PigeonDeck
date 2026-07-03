@@ -183,6 +183,10 @@ test('③ 语言快切：en 含 Do NOT hardcode → 切 zh_CN 含「不要硬编
   await expect.poll(() => readOutputBody(page)).toContain('不要硬编码');
   // note 原文不翻译
   await expect.poll(() => readOutputBody(page)).toContain('lang switch note');
+  // 逻辑7：整份输出本地化（分区标题 + 字段标签），不只是 3 条规则
+  await expect.poll(() => readOutputBody(page)).toContain('[页面上下文]');
+  await expect.poll(() => readOutputBody(page)).toContain('[操作列表]');
+  await expect.poll(() => readOutputBody(page)).toContain('说明: lang switch note');
 
   await page.close();
 });
@@ -222,6 +226,28 @@ test('④ 样式修改 → 输出含 Changes: 表', async () => {
   await waitShadowVisible(page, '[data-testid="pd-output"]');
   await expect.poll(() => readOutputBody(page)).toContain('Changes:');
   await expect.poll(() => readOutputBody(page)).toContain('background-color');
+
+  await page.close();
+});
+
+test('⑤ 取消按钮关闭复制文本弹窗（建议5）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await createAnnotation(page, '#btn-primary', 'cancel note');
+
+  await clickShadowEl(page, 'pd-btn-copy-text');
+  await waitShadowVisible(page, '[data-testid="pd-output"]');
+
+  // 点取消 → 弹窗关闭
+  await clickShadowEl(page, 'pd-copytext-cancel');
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const host = document.getElementById('pd-host');
+        return !!host?.shadowRoot?.querySelector('[data-testid="pd-output"]');
+      })
+    )
+    .toBe(false);
 
   await page.close();
 });

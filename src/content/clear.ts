@@ -141,6 +141,9 @@ export class ClearManager {
 
     const doClear = (): void => {
       for (const ann of anns) {
+        // 区域标注仅为 overlay，无 DOM 元素可回退，且 selector 为空串会让
+        // document.querySelector('') 抛 SyntaxError 中断整个清空——直接跳过。
+        if (ann.kind === 'region' || !ann.selector) continue;
         const el = document.querySelector(ann.selector);
         applyChangesTo(el, ann.changes, 'old');
         if (ann.move && el instanceof HTMLElement) {
@@ -153,6 +156,8 @@ export class ClearManager {
     const restore = (): void => {
       this.store.load(snapshot);
       for (const ann of anns) {
+        // 区域标注由 store.load 恢复即可（overlay 自动重建），无 DOM 回放。
+        if (ann.kind === 'region' || !ann.selector) continue;
         const el = document.querySelector(ann.selector);
         applyChangesTo(el, ann.changes, 'new');
         if (ann.move && el instanceof HTMLElement) {

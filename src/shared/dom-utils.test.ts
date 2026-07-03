@@ -4,7 +4,7 @@
 // @vitest-environment jsdom
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { buildSelector, classifyElement, getElementSummary, isVisible } from './dom-utils';
+import { buildSelector, classifyElement, getElementSummary, isVisible, findScrollableAncestor } from './dom-utils';
 
 function setBody(html: string): void {
   document.body.innerHTML = html;
@@ -163,5 +163,41 @@ describe('isVisible — 可见性', () => {
   it('未挂载的元素 → 不可见', () => {
     const el = document.createElement('div');
     expect(isVisible(el)).toBe(false);
+  });
+});
+
+describe('findScrollableAncestor — 最近可滚动祖先（逻辑6）', () => {
+  /** jsdom 不算布局，用 defineProperty 桩化滚动尺寸 */
+  function stubScroll(el: Element, scrollH: number, clientH: number): void {
+    Object.defineProperty(el, 'scrollHeight', { value: scrollH, configurable: true });
+    Object.defineProperty(el, 'clientHeight', { value: clientH, configurable: true });
+  }
+
+  it('命中 overflow:auto 且实际有溢出的祖先', () => {
+    setBody('<div id="scroller"><div id="mid"><span id="leaf">x</span></div></div>');
+    const scroller = document.getElementById('scroller')!;
+    (scroller as HTMLElement).style.overflowY = 'auto';
+    stubScroll(scroller, 500, 100);
+    expect(findScrollableAncestor(document.getElementById('leaf')!)).toBe(scroller);
+  });
+
+  it('overflow:auto 但无溢出（scrollHeight==clientHeight）→ 跳过', () => {
+    setBody('<div id="s"><span id="leaf">x</span></div>');
+    const s = document.getElementById('s')!;
+    (s as HTMLElement).style.overflowY = 'auto';
+    stubScroll(s, 100, 100);
+    expect(findScrollableAncestor(document.getElementById('leaf')!)).toBeNull();
+  });
+
+  it('有溢出但 overflow:visible → 跳过', () => {
+    setBody('<div id="s"><span id="leaf">x</span></div>');
+    const s = document.getElementById('s')!;
+    stubScroll(s, 500, 100); // overflow 默认 visible
+    expect(findScrollableAncestor(document.getElementById('leaf')!)).toBeNull();
+  });
+
+  it('无可滚动祖先 → null', () => {
+    setBody('<div id="wrap"><span id="leaf">x</span></div>');
+    expect(findScrollableAncestor(document.getElementById('leaf')!)).toBeNull();
   });
 });

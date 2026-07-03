@@ -348,7 +348,7 @@ describe('renderTaskList — global editing rules', () => {
 
   it('zh_CN: Chinese three rules', () => {
     const result = renderTaskList([], CTX, 'zh_CN');
-    expect(result).toContain('[Global Editing Rules]');
+    expect(result).toContain('[全局编辑规则]');
     expect(result).toContain('- 不要硬编码 top/left 绝对定位');
     expect(result).toContain('- 优先使用现有布局机制：flex、grid、gap、margin、order');
     expect(result).toContain('- 视觉坐标为定位线索，不是实施指令');
@@ -364,6 +364,97 @@ describe('renderTaskList — global editing rules', () => {
     const result = renderTaskList(ops, CTX, 'en');
     expect(result).toContain('这是中文批注');
     expect(result).toContain('Do NOT hardcode');
+  });
+});
+
+// ============================================================
+// renderTaskList — zh_CN full localization (逻辑7)
+// ============================================================
+
+describe('renderTaskList — zh_CN localizes the whole output', () => {
+  it('section headers + page-context field labels localized', () => {
+    const result = renderTaskList([], CTX, 'zh_CN');
+    expect(result).toContain('[页面上下文]');
+    expect(result).toContain('[全局编辑规则]');
+    expect(result).toContain('[操作列表]');
+    expect(result).toContain('- 网址: https://example.com/pricing');
+    expect(result).toContain('- 标题: Pricing — Acme');
+    expect(result).toContain('- 视口: 1440 × 900 (px)');
+    expect(result).toContain('- 时间: 2026-06-27 16:40');
+    // 英文标签不应出现
+    expect(result).not.toContain('[Page Context]');
+    expect(result).not.toContain('URL:');
+  });
+
+  it('empty ops line localized', () => {
+    const result = renderTaskList([], CTX, 'zh_CN');
+    expect(result).toContain('（无操作）');
+  });
+
+  it('element op field labels localized; values (selector/coords) unchanged', () => {
+    const ops = buildOperations([
+      ann({
+        number: 1,
+        selector: 'section.hero > h2',
+        summary: 'h2 "Hero Title"',
+        note: 'Make it bigger',
+        changes: [{ prop: 'bg', cssProp: 'background-color', oldValue: '#fff', newValue: '#000' }],
+      }),
+    ]);
+    const result = renderTaskList(ops, CTX, 'zh_CN');
+    expect(result).toContain('目标: section.hero > h2');
+    expect(result).toContain('位置: h2 "Hero Title"');
+    expect(result).toContain('说明: Make it bigger');
+    expect(result).toContain('修改:');
+    // 选择器/坐标等值不翻译
+    expect(result).toContain('| background-color | #fff | #000 |');
+    // Type 标识保持英文（同时是渲染逻辑判据）
+    expect(result).toContain('Annotation + Style Modification');
+  });
+
+  it('move block labels + snap phrase localized', () => {
+    const ops = buildOperations([ann({ number: 3, selector: 'div.card', move: MOVE_SNAPPED })]);
+    const result = renderTaskList(ops, CTX, 'zh_CN');
+    expect(result).toContain('移动:');
+    expect(result).toContain('源: div.card');
+    expect(result).toContain('初始: (100, 200) 300×50');
+    expect(result).toContain('最终: (200, 300) 300×50');
+    expect(result).toContain('吸附: 已吸附（X 轴居中）');
+  });
+
+  it('region labels localized', () => {
+    const region: RegionData = {
+      docRect: { x: 320, y: 180, w: 400, h: 340 },
+      elements: ['div.card', 'span.price'],
+    };
+    const ops = buildOperations([ann({ number: 4, kind: 'region', selector: '', note: '留白太挤', region })]);
+    const result = renderTaskList(ops, CTX, 'zh_CN');
+    expect(result).toContain('范围: [div.card, span.price]');
+    expect(result).toContain('坐标: (320,180)–(720,520)');
+    expect(result).toContain('说明: 留白太挤');
+  });
+
+  it('content + media change labels localized', () => {
+    const ops = buildOperations([
+      ann({
+        number: 1,
+        selector: 'p',
+        changes: [
+          { prop: 'text', cssProp: 'text', oldValue: 'Hello', newValue: 'World' },
+          { prop: 'src', cssProp: 'src', oldValue: 'https://x/old.jpg', newValue: 'https://x/new.png' },
+        ],
+      }),
+    ]);
+    const result = renderTaskList(ops, CTX, 'zh_CN');
+    expect(result).toContain('内容: "Hello" → "World"');
+    expect(result).toContain('媒体: "old.jpg" → "new.png"');
+  });
+
+  it('free move / no snap phrases localized', () => {
+    const free = renderTaskList(buildOperations([ann({ move: MOVE_FREE })]), CTX, 'zh_CN');
+    expect(free).toContain('吸附: 自由移动');
+    const none = renderTaskList(buildOperations([ann({ move: MOVE_NO_SNAP })]), CTX, 'zh_CN');
+    expect(none).toContain('吸附: 无吸附');
   });
 });
 

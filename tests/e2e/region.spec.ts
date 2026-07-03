@@ -214,3 +214,32 @@ test('③ 编号连续：元素标注 #1，区域标注 #2', async () => {
 
   await page.close();
 });
+
+test('④ 清空在存在区域标注时正常完成（交互11 回归）', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+
+  // 造一条区域标注（selector 为空串）
+  await longPressAndDrag(page, 100, 120, 420, 340);
+  await waitShadowVisible(page, '[data-testid="pd-region-panel"]');
+  await page.evaluate(() => {
+    const host = document.getElementById('pd-host');
+    const ta = host?.shadowRoot?.querySelector<HTMLTextAreaElement>('[data-testid="pd-region-note"]');
+    if (ta) {
+      ta.focus();
+      ta.value = '区域待清空';
+    }
+  });
+  await clickShadowEl(page, 'pd-region-save');
+  await waitShadowVisible(page, '[data-testid="pd-region"]');
+  await waitShadowVisible(page, '[data-testid="pd-pin"]');
+
+  // 点清空 → 确认 → 区域框 + 位号全消失（若 querySelector('') 抛错则不会清掉）
+  await clickShadowEl(page, 'pd-btn-clear');
+  await waitShadowVisible(page, '[data-testid="pd-clear-confirm"]');
+  await clickShadowEl(page, 'pd-clear-ok');
+  await waitShadowGone(page, '[data-testid="pd-pin"]');
+  await waitShadowGone(page, '[data-testid="pd-region"]');
+
+  await page.close();
+});

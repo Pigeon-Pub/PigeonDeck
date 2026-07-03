@@ -50,8 +50,17 @@ export function mergeChanges(prev: StyleChange[], next: StyleChange[]): StyleCha
 export interface RegionData {
   /** 相对文档的矩形（视口矩形 + 滚动偏移），用于跨滚动位置复现 */
   docRect: ViewportPos;
-  /** 框内可见元素 CSS 选择器列表，上限 30 */
+  /** 框内可见元素 CSS 选择器列表 */
   elements: string[];
+  /**
+   * 嵌套滚动容器跟随（可选，旧数据无此字段照常加载）：
+   * 区域落在带自身 overflow 滚动的祖先内时，记录该祖先的选择器与创建时的
+   * 滚动量；刷新时用「当前滚动 − 创建时滚动」的增量修正框位置（overlay.ts）。
+   * 无可滚动祖先时三字段缺省，区域仅随 window 滚动（与旧行为一致）。
+   */
+  scrollSelector?: string;
+  scrollLeft?: number;
+  scrollTop?: number;
 }
 
 /**
