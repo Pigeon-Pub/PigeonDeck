@@ -15,12 +15,18 @@ export interface Settings {
    * 阶段 11 再做设置 UI，本阶段只加字段 + 消费。
    */
   defaultGranularity: 'smart' | 'element';
+  /**
+   * 撤销/重做历史步数上限（默认 50，最高 9999）。
+   * 阶段 11 再做设置 UI，本阶段只加字段 + 消费。
+   */
+  historyLimit: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   hoverLabel: true,
   cardDefaultExpanded: false,
   defaultGranularity: 'smart',
+  historyLimit: 50,
 };
 
 const STORAGE_KEY = 'settings';
