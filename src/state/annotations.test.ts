@@ -311,3 +311,69 @@ describe('mergeChanges — 同属性合并', () => {
     expect(merged).toEqual([change('color', '#000', '#fff')]);
   });
 });
+
+// ============================================================
+// mergeRichText — 结构化富文本修改归并（F21）
+// ============================================================
+
+import { mergeRichText, RichTextChange } from './annotations';
+
+function rc(overrides: Partial<RichTextChange> = {}): RichTextChange {
+  return {
+    kind: 'font-size',
+    target: 'selection',
+    targetText: 'Quarterly',
+    oldValue: '16px',
+    newValue: '32px',
+    summary: 'set font-size 16px → 32px on selected text "Quarterly"',
+    ...overrides,
+  };
+}
+
+describe('mergeRichText', () => {
+  it('空旧记录直接采用新记录', () => {
+    const merged = mergeRichText([], [rc()]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].newValue).toBe('32px');
+  });
+
+  it('同 kind+targetText 的选区编辑合并：保留最早 old、取最新 new/summary', () => {
+    const first = rc({ oldValue: '16px', newValue: '32px', summary: 's1' });
+    const second = rc({ oldValue: '32px', newValue: '48px', summary: 's2' });
+    const merged = mergeRichText([first], [second]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].oldValue).toBe('16px');
+    expect(merged[0].newValue).toBe('48px');
+    expect(merged[0].summary).toBe('s2');
+  });
+
+  it('不同 targetText 的同 kind 选区编辑不合并（各自成条）', () => {
+    const a = rc({ targetText: 'Quarterly', newValue: '32px' });
+    const b = rc({ targetText: 'revenue', newValue: '24px' });
+    const merged = mergeRichText([], [a, b]);
+    expect(merged).toHaveLength(2);
+  });
+
+  it('元素级编辑按 kind 合并（忽略 targetText）', () => {
+    const a = rc({ target: 'element', targetText: undefined, kind: 'align', oldValue: 'left', newValue: 'center' });
+    const b = rc({ target: 'element', targetText: undefined, kind: 'align', oldValue: 'center', newValue: 'right' });
+    const merged = mergeRichText([a], [b]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].oldValue).toBe('left');
+    expect(merged[0].newValue).toBe('right');
+  });
+
+  it('净零操作（old===new，如加粗又取消）被剔除', () => {
+    const on = rc({ kind: 'bold', oldValue: 'off', newValue: 'on', summary: 'bold' });
+    const off = rc({ kind: 'bold', oldValue: 'on', newValue: 'off', summary: 'remove bold' });
+    const merged = mergeRichText([on], [off]);
+    expect(merged).toHaveLength(0);
+  });
+
+  it('选区编辑与元素级编辑（同 kind）不串键', () => {
+    const sel = rc({ target: 'selection', kind: 'font-size', targetText: 'x', newValue: '20px' });
+    const el = rc({ target: 'element', kind: 'font-size', targetText: undefined, newValue: '40px' });
+    const merged = mergeRichText([], [sel, el]);
+    expect(merged).toHaveLength(2);
+  });
+});

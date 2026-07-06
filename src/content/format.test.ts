@@ -5,7 +5,7 @@
    ============================================================ */
 
 import { describe, it, expect } from 'vitest';
-import { buildOperations, renderTaskList } from './format';
+import { buildOperations, renderTaskList, formatRichTextLine, richTextLabelsFor } from './format';
 import type { PageContext } from './format';
 import type { Annotation, MoveData, RegionData, ViewportPos } from '../state/annotations';
 
@@ -721,5 +721,108 @@ describe('renderTaskList — output structure', () => {
     const idx2 = result.indexOf('--- #2 Annotation ---');
     const between = result.slice(idx1, idx2);
     expect(between).toContain('\n\n');
+  });
+});
+
+// ============================================================
+// F21: 结构化富文本修改渲染（richText[]）
+// ============================================================
+
+import type { RichTextChange } from '../state/annotations';
+
+function rtc(overrides: Partial<RichTextChange> = {}): RichTextChange {
+  return {
+    kind: 'font-size',
+    target: 'selection',
+    targetText: 'Quarterly revenue',
+    oldValue: '14px',
+    newValue: '28px',
+    summary: 'precomputed',
+    ...overrides,
+  };
+}
+
+describe('buildOperations — richText threading', () => {
+  it('pure richText annotation → type "Style Modification"', () => {
+    const ops = buildOperations([ann({ richText: [rtc()] })]);
+    expect(ops).toHaveLength(1);
+    expect(ops[0].type).toBe('Style Modification');
+    expect(ops[0].richText).toHaveLength(1);
+  });
+
+  it('richText merges across same-selector annotations (earliest old, latest new)', () => {
+    const a1 = ann({ id: 'a1', number: 1, selector: 's', richText: [rtc({ oldValue: '14px', newValue: '20px' })] });
+    const a2 = ann({ id: 'a2', number: 2, selector: 's', richText: [rtc({ oldValue: '20px', newValue: '40px' })] });
+    const ops = buildOperations([a1, a2]);
+    expect(ops).toHaveLength(1);
+    expect(ops[0].richText).toHaveLength(1);
+    expect(ops[0].richText[0].oldValue).toBe('14px');
+    expect(ops[0].richText[0].newValue).toBe('40px');
+  });
+
+  it('richtext DOM carrier (cssProp="richtext") is NOT exported as a change', () => {
+    const ops = buildOperations([
+      ann({
+        changes: [{ prop: 'richtext', cssProp: 'richtext', oldValue: '{"html":"a","textAlign":""}', newValue: '{"html":"b","textAlign":""}' }],
+        richText: [rtc()],
+      }),
+    ]);
+    expect(ops[0].cssChanges).toHaveLength(0);
+    expect(ops[0].contentChanges).toHaveLength(0);
+    expect(ops[0].richText).toHaveLength(1);
+  });
+});
+
+describe('renderTaskList — rich text lines', () => {
+  it('en: value-kind line "set font-size 14px → 28px on selected text ..."', () => {
+    const ops = buildOperations([ann({ number: 1, selector: 'h2', richText: [rtc()] })]);
+    const result = renderTaskList(ops, CTX, 'en');
+    expect(result).toContain('Rich text:');
+    expect(result).toContain('- set font-size 14px → 28px on selected text "Quarterly revenue"');
+  });
+
+  it('en: toggle-kind on/off lines', () => {
+    const on = rtc({ kind: 'bold', targetText: 'Quarterly', oldValue: 'off', newValue: 'on' });
+    const off = rtc({ kind: 'italic', targetText: 'Quarterly', oldValue: 'on', newValue: 'off' });
+    const result = renderTaskList(buildOperations([ann({ richText: [on, off] })]), CTX, 'en');
+    expect(result).toContain('- bold on selected text "Quarterly"');
+    expect(result).toContain('- remove italic on selected text "Quarterly"');
+  });
+
+  it('en: align element-scope line uses (whole element)', () => {
+    const al = rtc({ kind: 'align', target: 'element', targetText: undefined, oldValue: 'left', newValue: 'center' });
+    const result = renderTaskList(buildOperations([ann({ richText: [al] })]), CTX, 'en');
+    expect(result).toContain('- align left → center (whole element)');
+  });
+
+  it('zh_CN: localized rich-text block + verbs', () => {
+    const fs = rtc({ kind: 'font-size', oldValue: '14px', newValue: '28px', targetText: '季度营收' });
+    const al = rtc({ kind: 'align', target: 'element', targetText: undefined, oldValue: 'left', newValue: 'center' });
+    const bold = rtc({ kind: 'bold', targetText: '季度营收', oldValue: 'off', newValue: 'on' });
+    const result = renderTaskList(buildOperations([ann({ richText: [fs, al, bold] })]), CTX, 'zh_CN');
+    expect(result).toContain('富文本:');
+    expect(result).toContain('- 设置字号 14px → 28px 对所选文本 "季度营收"');
+    expect(result).toContain('- 对齐 left → center （整个元素）');
+    expect(result).toContain('- 加粗 对所选文本 "季度营收"');
+  });
+
+  it('richText renders alongside a plain text-content change', () => {
+    const ops = buildOperations([
+      ann({
+        changes: [{ prop: 'text', cssProp: 'text', oldValue: 'Hello', newValue: 'World' }],
+        richText: [rtc({ kind: 'color', oldValue: 'rgb(51,51,51)', newValue: '#e00', targetText: 'Hello' })],
+      }),
+    ]);
+    const result = renderTaskList(ops, CTX, 'en');
+    expect(result).toContain('Content: "Hello" → "World"');
+    expect(result).toContain('- text color rgb(51,51,51) → #e00 on selected text "Hello"');
+  });
+});
+
+describe('formatRichTextLine / richTextLabelsFor — direct unit', () => {
+  it('truncates long targetText to 40 chars', () => {
+    const long = 'x'.repeat(60);
+    const line = formatRichTextLine(rtc({ targetText: long }), richTextLabelsFor('en'));
+    expect(line).toContain('x'.repeat(40) + '…');
   });
 });

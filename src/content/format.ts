@@ -4,8 +4,8 @@
    无 DOM、无 chrome API、无 i18n 运行时依赖，便于重度单测。
    ============================================================ */
 
-import type { Annotation, StyleChange, MoveData, RegionData, ViewportPos } from '../state/annotations';
-import { mergeChanges } from '../state/annotations';
+import type { Annotation, StyleChange, MoveData, RegionData, ViewportPos, RichTextChange } from '../state/annotations';
+import { mergeChanges, mergeRichText, RICHTEXT_DOM_CSSPROP } from '../state/annotations';
 
 // ============================================================
 // Public types
@@ -40,6 +40,8 @@ export interface Operation {
   cssChanges: StyleChange[];
   /** 内容修改（cssProp === text/html/src），渲染为可读描述 */
   contentChanges: ContentChange[];
+  /** 结构化富文本修改（F21）——渲染为「Rich text:」子块的逐行人读描述 */
+  richText: RichTextChange[];
   /** 移动数据（initialRect → finalRect，§6.3） */
   move?: MoveData;
   /** 区域数据（kind==='region' 时有效） */
@@ -59,6 +61,8 @@ function splitChanges(changes: StyleChange[]): {
   const cssChanges: StyleChange[] = [];
   const contentChanges: ContentChange[] = [];
   for (const c of changes) {
+    // 富文本 DOM 还原载体只用于撤销/删除/清空，不进导出（导出源是结构化 richText[]）
+    if (c.cssProp === RICHTEXT_DOM_CSSPROP) continue;
     if (CONTENT_PROPS.has(c.cssProp)) {
       contentChanges.push({
         kind: c.cssProp as 'text' | 'html' | 'src',
@@ -112,6 +116,7 @@ export function buildOperations(annotations: Annotation[]): Operation[] {
     const existing = bySel.get(a.selector);
     if (existing) {
       const merged = mergeChanges(existing.changes, a.changes);
+      const richText = mergeRichText(existing.richText ?? [], a.richText ?? []);
       // 最新非空 note 优先
       const note = a.note.trim() ? a.note : existing.note;
       // move：保留最初 initialRect，取最新 finalRect/dx/dy
@@ -119,7 +124,7 @@ export function buildOperations(annotations: Annotation[]): Operation[] {
       if (a.move && existing.move) {
         move = { ...a.move, initialRect: existing.move.initialRect };
       }
-      bySel.set(a.selector, { ...existing, note, changes: merged, move });
+      bySel.set(a.selector, { ...existing, note, changes: merged, richText, move });
     } else {
       bySel.set(a.selector, a);
     }
@@ -130,8 +135,9 @@ export function buildOperations(annotations: Annotation[]): Operation[] {
   // 元素操作
   for (const a of bySel.values()) {
     const { cssChanges, contentChanges } = splitChanges(a.changes);
+    const richText = a.richText ?? [];
     const hasAnnotation = a.note.trim().length > 0;
-    const hasStyle = cssChanges.length > 0 || contentChanges.length > 0;
+    const hasStyle = cssChanges.length > 0 || contentChanges.length > 0 || richText.length > 0;
     const hasMove = a.move != null;
     const type = buildTypeString(hasAnnotation, hasStyle, hasMove, false);
     if (!type) continue; // 空标注，跳过
@@ -147,6 +153,7 @@ export function buildOperations(annotations: Annotation[]): Operation[] {
       instruction: a.note.trim() || undefined,
       cssChanges,
       contentChanges,
+      richText,
       move: a.move,
     });
   }
@@ -164,6 +171,7 @@ export function buildOperations(annotations: Annotation[]): Operation[] {
       instruction: a.note.trim() || undefined,
       cssChanges: [],
       contentChanges: [],
+      richText: [],
       region: a.region,
     });
   }
@@ -232,6 +240,22 @@ interface Labels {
   typeStyle: string;
   typeMove: string;
   typeRegion: string;
+  /** 富文本子块标题 + 逐动作动词/短语（F21） */
+  richText: string;
+  rtSetFont: string;
+  rtSetFontSize: string;
+  rtTextColor: string;
+  rtHighlight: string;
+  rtAlign: string;
+  rtBold: string;
+  rtItalic: string;
+  rtUnderline: string;
+  rtStrike: string;
+  rtSuper: string;
+  rtSub: string;
+  rtRemove: string;
+  rtOnSelected: string;
+  rtWholeElement: string;
   /** `snapped (<edge>)` 包装：传入已本地化的边缘描述 */
   snapped: (edge: string) => string;
   /** 吸附边缘语义标识 → 本地化描述 */
@@ -269,6 +293,21 @@ const LABELS: Record<'en' | 'zh_CN', Labels> = {
     typeStyle: 'Style Modification',
     typeMove: 'Move',
     typeRegion: 'Region',
+    richText: 'Rich text',
+    rtSetFont: 'set font',
+    rtSetFontSize: 'set font-size',
+    rtTextColor: 'text color',
+    rtHighlight: 'highlight',
+    rtAlign: 'align',
+    rtBold: 'bold',
+    rtItalic: 'italic',
+    rtUnderline: 'underline',
+    rtStrike: 'strikethrough',
+    rtSuper: 'superscript',
+    rtSub: 'subscript',
+    rtRemove: 'remove',
+    rtOnSelected: 'on selected text',
+    rtWholeElement: '(whole element)',
     snapped: (edge) => `snapped (${edge})`,
     snapEdges: {
       'align-left': 'left edge',
@@ -311,6 +350,21 @@ const LABELS: Record<'en' | 'zh_CN', Labels> = {
     typeStyle: '样式修改',
     typeMove: '移动',
     typeRegion: '区域',
+    richText: '富文本',
+    rtSetFont: '设置字体',
+    rtSetFontSize: '设置字号',
+    rtTextColor: '文字颜色',
+    rtHighlight: '高亮',
+    rtAlign: '对齐',
+    rtBold: '加粗',
+    rtItalic: '倾斜',
+    rtUnderline: '下划线',
+    rtStrike: '删除线',
+    rtSuper: '上标',
+    rtSub: '下标',
+    rtRemove: '移除',
+    rtOnSelected: '对所选文本',
+    rtWholeElement: '（整个元素）',
     snapped: (edge) => `已吸附（${edge}）`,
     snapEdges: {
       'align-left': '左边缘',
@@ -343,6 +397,89 @@ function describeSnap(move: MoveData, L: Labels): string {
 
 function truncate(str: string, max = 60): string {
   return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+// ============================================================
+// Rich text — 结构化富文本修改的人读渲染（F21，纯函数）
+// ============================================================
+
+/** 富文本渲染所需的本地化动词/短语（供导出与卡片摘要共用同一渲染逻辑） */
+export interface RichTextLabels {
+  setFont: string;
+  setFontSize: string;
+  textColor: string;
+  highlight: string;
+  align: string;
+  bold: string;
+  italic: string;
+  underline: string;
+  strike: string;
+  superscript: string;
+  subscript: string;
+  remove: string;
+  onSelected: string;
+  wholeElement: string;
+}
+
+const RT_TOGGLE_LABEL: Record<string, keyof RichTextLabels> = {
+  bold: 'bold',
+  italic: 'italic',
+  underline: 'underline',
+  strike: 'strike',
+  superscript: 'superscript',
+  subscript: 'subscript',
+};
+
+const RT_VALUE_VERB: Record<string, keyof RichTextLabels> = {
+  'font-family': 'setFont',
+  'font-size': 'setFontSize',
+  color: 'textColor',
+  highlight: 'highlight',
+  align: 'align',
+};
+
+/** 从格式化 LABELS 抽出富文本渲染标签（导出用；lang 决定语言） */
+export function richTextLabelsFor(lang: string): RichTextLabels {
+  return richTextLabelsFrom(LABELS[normalizeLang(lang)]);
+}
+
+function richTextLabelsFrom(L: Labels): RichTextLabels {
+  return {
+    setFont: L.rtSetFont,
+    setFontSize: L.rtSetFontSize,
+    textColor: L.rtTextColor,
+    highlight: L.rtHighlight,
+    align: L.rtAlign,
+    bold: L.rtBold,
+    italic: L.rtItalic,
+    underline: L.rtUnderline,
+    strike: L.rtStrike,
+    superscript: L.rtSuper,
+    subscript: L.rtSub,
+    remove: L.rtRemove,
+    onSelected: L.rtOnSelected,
+    wholeElement: L.rtWholeElement,
+  };
+}
+
+/**
+ * 一条 RichTextChange → 一行人读描述（纯函数，供 format.ts 导出与卡片摘要共用）：
+ * - 值类（字体/字号/颜色/高亮/对齐）：`<动词> <旧> → <新> <范围>`
+ * - 开关类（粗/斜/下划线/删除线/上下标）：开=`<动词> <范围>`；关=`<移除> <动词> <范围>`
+ * - 范围：选区=`<对所选文本> "<截断文本>"`；元素=`<（整个元素）>`
+ */
+export function formatRichTextLine(c: RichTextChange, L: RichTextLabels): string {
+  const scope =
+    c.target === 'selection'
+      ? `${L.onSelected} "${truncate(c.targetText ?? '', 40)}"`
+      : L.wholeElement;
+  const toggle = RT_TOGGLE_LABEL[c.kind];
+  if (toggle) {
+    const verb = L[toggle];
+    return c.newValue === 'on' ? `${verb} ${scope}` : `${L.remove} ${verb} ${scope}`;
+  }
+  const verb = L[RT_VALUE_VERB[c.kind] ?? 'setFont'];
+  return `${verb} ${c.oldValue} → ${c.newValue} ${scope}`;
 }
 
 function stripTags(html: string): string {
@@ -427,6 +564,15 @@ function renderOp(op: Operation, L: Labels): string {
   // 内容修改（在 CSS 表格之前）
   for (const cc of op.contentChanges) {
     lines.push(renderContentChange(cc, L));
+  }
+
+  // 富文本结构化修改（F21）：逐行人读描述
+  if (op.richText.length > 0) {
+    const RTL = richTextLabelsFrom(L);
+    lines.push(`${L.richText}:`);
+    for (const rc of op.richText) {
+      lines.push(`  - ${formatRichTextLine(rc, RTL)}`);
+    }
   }
 
   // CSS 修改表格
