@@ -218,7 +218,8 @@ function buildDebugReadout(target: HTMLElement, translated: boolean): HTMLElemen
   grp.appendChild(csH);
 
   const list = document.createElement('div');
-  list.className = 'cslist pd-scroll';
+  // F17：不再是内嵌滚动框，只作列表容器（滚动交给面板主体 .pbody.pd-scroll）
+  list.className = 'cslist';
   const cs = target.ownerDocument.defaultView!.getComputedStyle(target);
   for (const item of CS_PROPS) {
     let value: string;

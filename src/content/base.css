@@ -1239,7 +1239,8 @@
 .kv .v { color: var(--ctx); font-variant-numeric: tabular-nums; text-align: right; word-break: break-all; }
 .kv .v code { font: 11px ui-monospace,Consolas,monospace; color: var(--c1); }
 .csgrp { margin-top: 11px; }
-.cslist { max-height: 150px; overflow: auto; border-top: 1px solid var(--cbd); padding-top: 6px; }
+/* F17：调试计算样式列表随面板单一滚动区（.pbody.pd-scroll）整体流动，不再内嵌独立滚动框 */
+.cslist { border-top: 1px solid var(--cbd); padding-top: 6px; }
 .csrow { display: flex; justify-content: space-between; gap: 10px; font: 11px ui-monospace,Consolas,monospace; padding: 3px 0; }
 .csrow .p { color: var(--ctx2); }
 .csrow .val { color: var(--ctx); }
