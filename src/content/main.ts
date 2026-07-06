@@ -25,6 +25,7 @@ import { CopyImageManager } from './capture';
 import { ClearManager } from './clear';
 import { SettingsManager } from './settings-panel';
 import { setupShortcuts } from './shortcuts';
+import { initEscStack } from './esc-stack';
 
 // 防重复注入标记
 const HOST_ID = 'pd-host';
@@ -46,6 +47,10 @@ function inject(settings: Settings): void {
     logger.debug('already injected, skipping');
     return;
   }
+
+  // Esc 优先级栈：最先安装其 capture keydown 监听（须早于 shortcuts 及各 manager），
+  // 使浮层/下拉的 Esc 能优先于 shortcuts 模式退出被消费。
+  initEscStack();
 
   // 宿主元素
   const host = document.createElement('div');

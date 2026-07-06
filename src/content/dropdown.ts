@@ -95,6 +95,8 @@ export interface DropdownOptions {
   onPick: (value: string) => void;
   /** 浮层被任何途径关闭时回调（供触发钮清空句柄做开关） */
   onClose?: () => void;
+  /** 紧凑模式：不渲染「智能识别 / 全部」分节标题，直接平铺 items（2 项快切菜单用） */
+  plain?: boolean;
 }
 
 function renderItem(item: DropdownItem, current: string, smart: boolean): HTMLElement {
@@ -128,7 +130,7 @@ export function openDropdown(opts: DropdownOptions): PopoverHandle {
   dd.style.width = `${Math.max(190, opts.anchor.getBoundingClientRect().width)}px`;
 
   const smartItems = opts.smartItems ?? [];
-  if (smartItems.length > 0) {
+  if (!opts.plain && smartItems.length > 0) {
     const h = document.createElement('div');
     h.className = 'pd-dd-h';
     h.textContent = t('dd_smart');
@@ -145,10 +147,12 @@ export function openDropdown(opts: DropdownOptions): PopoverHandle {
     dd.appendChild(sep);
   }
 
-  const allH = document.createElement('div');
-  allH.className = 'pd-dd-h';
-  allH.textContent = t('dd_all');
-  dd.appendChild(allH);
+  if (!opts.plain) {
+    const allH = document.createElement('div');
+    allH.className = 'pd-dd-h';
+    allH.textContent = t('dd_all');
+    dd.appendChild(allH);
+  }
 
   const allList = document.createElement('div');
   allList.className = 'pd-dd-list pd-dd-scroll pd-scroll';

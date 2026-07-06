@@ -5,6 +5,8 @@
    - data-pd-popover 标记：panel.ts 的"点外部关面板"判定放行浮层内点击
    ============================================================ */
 
+import { pushEsc } from './esc-stack';
+
 const EDGE = 8;
 const GAP = 4;
 
@@ -51,11 +53,13 @@ export function mountPopover(
   el.style.top = `${top}px`;
 
   let closed = false;
+  let popEsc: (() => void) | null = null;
   const close = (): void => {
     if (closed) return;
     closed = true;
     openClosers.delete(close);
     window.removeEventListener('mousedown', onMouseDown, true);
+    popEsc?.(); // 从 Esc 栈移除（Esc 触发时已弹出 → 幂等）
     el.remove();
     onClose?.();
   };
@@ -67,6 +71,8 @@ export function mountPopover(
   };
   window.addEventListener('mousedown', onMouseDown, true);
   openClosers.add(close);
+  // Esc 关闭（栈顶优先）：下拉/浮层先于 shortcuts 的模式退出被关掉
+  popEsc = pushEsc(close);
 
   return { el, close };
 }

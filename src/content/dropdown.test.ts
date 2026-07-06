@@ -133,6 +133,23 @@ describe('openDropdown — 浮层结构', () => {
     handle.close();
   });
 
+  it('plain 紧凑模式：不渲染任何分节标题，仅平铺 items（即便传了 smartItems 也忽略）', () => {
+    const handle = openDropdown({
+      root,
+      anchor,
+      items,
+      smartItems: [{ value: 'x', label: 'X' }],
+      current: 'a',
+      onPick: () => {},
+      plain: true,
+    });
+    expect(root.querySelector('.pd-dd-h')).toBeNull();
+    expect(root.querySelector('.pd-dd-sep')).toBeNull();
+    expect(root.querySelector('[data-testid="pd-dd-smart"]')).toBeNull();
+    expect(root.querySelectorAll('[data-testid="pd-dd-item"]')).toHaveLength(2);
+    handle.close();
+  });
+
   it('当前值行打勾高亮（.on）', () => {
     const handle = openDropdown({ root, anchor, items, current: 'b', onPick: () => {} });
     const on = root.querySelector('.pd-dd-item.on');
