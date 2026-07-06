@@ -261,6 +261,44 @@ describe('autoModbarRows — 陌生元素自动适配', () => {
   });
 });
 
+describe('autoModbarRows — SVG 非 HTMLElement 路径（F19）', () => {
+  function makeSvgRect(): SVGElement {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    svg.appendChild(rect);
+    document.body.appendChild(svg);
+    return rect;
+  }
+
+  it('SVG 形状元素浮现 fill/stroke（而非 HTML 的 background/padding）', () => {
+    const rect = makeSvgRect();
+    rect.style.fill = 'red';
+    const keys = autoModbarRows(rect as unknown as HTMLElement).flat();
+    expect(keys).toContain('fill');
+    expect(keys).toContain('stroke');
+    expect(keys).not.toContain('bgColor');
+    expect(keys).not.toContain('padding');
+  });
+
+  it('fill/stroke/strokeWidth 已注册且归入 appearance 分类', () => {
+    for (const key of ['fill', 'stroke', 'strokeWidth']) {
+      expect(FIELD_DEFS[key], key).toBeTruthy();
+      expect(FIELD_CATEGORY[key], key).toBe('appearance');
+    }
+  });
+
+  it('为 SVG 元素实例化 fill 控件不报错，set 写入 SVG inline style', () => {
+    const rect = makeSvgRect();
+    rect.style.fill = 'rgb(255, 0, 0)';
+    const session = new FieldsSession(rect as unknown as HTMLElement);
+    const row = createPropRow(session, 'fill', ctx, { auto: true });
+    expect(row.querySelector('.pd-color')).toBeTruthy();
+    session.set('fill', '#00ff00');
+    expect(session.get('fill')).toBe('#00ff00');
+    expect(rect.style.getPropertyValue('fill')).not.toBe('');
+  });
+});
+
 describe('shadow — 阴影档位与无阴影识别', () => {
   it('阴影强度随档位单调递增（轻 < 中 < 重 的模糊半径）', () => {
     const blurOf = (level: string): number => {

@@ -528,6 +528,11 @@ export const FIELD_DEFS: Record<string, FieldDef> = {
   },
   margin: numField('field_margin', 'margin', (cs) => cs.marginTop, {}),
   padding: numField('field_padding', 'padding', (cs) => cs.paddingTop, { min: 0 }),
+  // SVG 形状填充/描边（F19：SVG <rect> 等非 HTMLElement 的核心可视属性，
+  // 用 fill/stroke/stroke-width 而非 background/color）。样式操作对 SVGElement 同样有效。
+  fill: colorField('field_fill', 'fill', (cs) => cs.fill, '#000000'),
+  stroke: colorField('field_stroke', 'stroke', (cs) => cs.stroke, 'rgba(0, 0, 0, 0)'),
+  strokeWidth: numField('field_stroke_width', 'stroke-width', (cs) => cs.strokeWidth, { min: 0 }),
   replaceImg: {
     labelKey: 'field_replace_img',
     cssProp: 'src',
@@ -570,6 +575,9 @@ export const FIELD_CATEGORY: Record<string, 'typography' | 'size' | 'appearance'
   shadowColor: 'appearance',
   opacity: 'appearance',
   blur: 'appearance',
+  fill: 'appearance',
+  stroke: 'appearance',
+  strokeWidth: 'appearance',
 };
 
 /* ============================================================
@@ -1163,6 +1171,17 @@ export function modbarRows(type: ElementType): FieldRow[] {
 export function autoModbarRows(target: HTMLElement): FieldRow[] {
   const cs = computed(target);
   const num = (v: string): number => parseFloat(v) || 0;
+
+  // SVG 形状元素（rect/circle/path 等，非 HTMLElement）：HTML 的 background/color/padding
+  // 对其无意义，改以 fill/stroke/stroke-width/opacity 为核心可调项（F19）。
+  // fill/stroke 始终列出（形状最常改的两项），描边宽/不透明度按是否非默认追加。
+  if (target.namespaceURI === 'http://www.w3.org/2000/svg') {
+    const svgPicked = ['fill', 'stroke'];
+    if (num(cs.strokeWidth) > 0) svgPicked.push('strokeWidth');
+    if (num(cs.opacity || '1') < 1) svgPicked.push('opacity');
+    return packAutoRows(svgPicked.slice(0, 4));
+  }
+
   const hasText = (target.textContent ?? '').trim() !== '';
   // 逐字段按「元素确有非默认值」打分：命中越具体越靠前，只留真正相关的
   const candidates: Array<{ key: string; relevant: boolean }> = [
@@ -1182,7 +1201,11 @@ export function autoModbarRows(target: HTMLElement): FieldRow[] {
   const picked = candidates.filter((c) => c.relevant).map((c) => c.key).slice(0, 4);
   // 什么都没命中（毫无特征的裸元素）：给一组克制的合理默认，不再无差别回填 4 项
   if (picked.length === 0) picked.push('bgColor', 'padding', 'display');
-  // 打包：相邻两个数值控件并排（贴 part 35 的紧凑布局）
+  return packAutoRows(picked);
+}
+
+/** 打包：相邻两个数值控件并排（贴 part 35 的紧凑布局） */
+function packAutoRows(picked: string[]): FieldRow[] {
   const rows: FieldRow[] = [];
   for (let i = 0; i < picked.length; i++) {
     const cur = picked[i];

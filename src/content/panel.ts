@@ -108,17 +108,19 @@ function metaText(number: number, elementType: string, x: number, y: number, isR
  * oldValue 是打开面板时的 computed/inline 值，写成 inline 视觉等价。
  */
 export function applyChangesTo(target: Element | null, changes: StyleChange[], dir: 'old' | 'new'): void {
-  if (!(target instanceof HTMLElement)) return;
+  if (!(target instanceof Element)) return;
+  // SVGElement 与 HTMLElement 同样具备 .style/.textContent/.setAttribute（F19），故按 HTMLElement 处理。
+  const el = target as HTMLElement;
   for (const c of changes) {
     const value = dir === 'old' ? c.oldValue : c.newValue;
     if (c.cssProp === 'text') {
-      target.textContent = value;
+      el.textContent = value;
     } else if (c.cssProp === 'html') {
-      target.innerHTML = value;
+      el.innerHTML = value;
     } else if (c.cssProp === 'src') {
-      target.setAttribute('src', value);
+      el.setAttribute('src', value);
     } else {
-      target.style.setProperty(c.cssProp, value);
+      el.style.setProperty(c.cssProp, value);
     }
   }
 }
@@ -527,8 +529,11 @@ export class PanelManager {
     body.appendChild(textarea);
 
     // ---- 修改栏（按元素类型智能切换）+ 高级样式区 ----
-    if (target instanceof HTMLElement) {
-      this.session = new FieldsSession(target);
+    // 任意 Element 都构建修改栏 + 高级样式：SVG <rect> 等非 HTMLElement 也走此路径（F19）。
+    // getComputedStyle 与 .style 对 SVGElement 同样可用，按 HTMLElement 处理。
+    {
+      const styleTarget = target as HTMLElement;
+      this.session = new FieldsSession(styleTarget);
       this.panelCommitted = false;
       const ctx: ControlContext = {
         popoverRoot: this.root,
@@ -536,7 +541,7 @@ export class PanelManager {
       };
       // 建议7：修改栏卡片可隐藏（settings.showModbar=false）→ 仅保留说明 + 高级样式
       const modbox = this.settings.showModbar
-        ? this.buildModbox(target, elementType, ctx)
+        ? this.buildModbox(styleTarget, elementType, ctx)
         : undefined;
       if (modbox) body.appendChild(modbox);
       // 高级样式展开时隐藏普通修改栏（逻辑2，贴 preview part 12 的展开布局），收起恢复；
