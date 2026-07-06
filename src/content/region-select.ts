@@ -5,10 +5,10 @@
    ============================================================ */
 
 import { Controller } from './controller';
-import { AnnotationStore, RegionData } from '../state/annotations';
+import { AnnotationStore, RegionData, Annotation } from '../state/annotations';
 import { History } from '../state/history';
 import { Settings } from '../state/settings';
-import { PanelManager } from './panel';
+import { PanelManager, makeDraggableByHandle } from './panel';
 import { buildSelector, isVisible, findScrollableAncestor } from '../shared/dom-utils';
 import { pushEsc } from './esc-stack';
 import { t } from './i18n';
@@ -322,9 +322,27 @@ export class RegionSelectManager {
 
   // ---- 区域批注面板 ----
 
+  /**
+   * 修改已有区域批注：路由回可编辑的区域面板（预填说明），避免走 resolveBySelector('')
+   * （region 标注 selector='' 会抛错）。保存时更新原标注而非新建（F16）。
+   */
+  editRegion(annotation: Annotation): void {
+    if (annotation.kind !== 'region' || !annotation.region) return;
+    const r = annotation.region;
+    // 由文档矩形换算当前视口位置（随页面滚动），面板锚定其右下角
+    const vp = {
+      x: Math.round(r.docRect.x - window.scrollX),
+      y: Math.round(r.docRect.y - window.scrollY),
+      w: r.docRect.w,
+      h: r.docRect.h,
+    };
+    this.openRegionPanel(vp, r, annotation);
+  }
+
   private openRegionPanel(
     viewportPos: { x: number; y: number; w: number; h: number },
-    region: RegionData
+    region: RegionData,
+    existing?: Annotation
   ): void {
     this.closeRegionPanel();
 
@@ -333,11 +351,25 @@ export class RegionSelectManager {
     panel.setAttribute('data-testid', 'pd-region-panel');
     panel.style.position = 'absolute';
 
+    // 顶部拖拽把手（F14b：复用 makeDraggableByHandle，与普通批注面板一致）
+    const drag = document.createElement('div');
+    drag.className = 'pd-panel-drag';
+    drag.setAttribute('data-testid', 'pd-region-drag');
+    panel.appendChild(drag);
+
     const textarea = document.createElement('textarea');
     textarea.className = 'rin';
     textarea.setAttribute('data-testid', 'pd-region-note');
     textarea.placeholder = t('region_note_placeholder');
     textarea.rows = 1;
+    textarea.value = existing?.note ?? '';
+    // Ctrl/Cmd+Enter 保存（普通 Enter 仍换行）（F16，镜像普通面板）
+    textarea.addEventListener('keydown', (ev) => {
+      if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
+        ev.preventDefault();
+        this.saveRegionPanel(textarea.value, viewportPos, region, existing);
+      }
+    });
     panel.appendChild(textarea);
 
     const row = document.createElement('div');
@@ -356,13 +388,16 @@ export class RegionSelectManager {
     btnSave.setAttribute('data-testid', 'pd-region-save');
     btnSave.textContent = t('panel_save');
     btnSave.addEventListener('click', () => {
-      this.saveRegionPanel(textarea.value, viewportPos, region);
+      this.saveRegionPanel(textarea.value, viewportPos, region, existing);
     });
     row.appendChild(btnSave);
 
     panel.appendChild(row);
     this.panelLayer.appendChild(panel);
     this.regionPanelEl = panel;
+
+    // 顶部把手可拖动面板
+    makeDraggableByHandle(panel, drag);
 
     // 定位面板：锚定区域右下角附近，夹紧视口
     this.positionRegionPanel(viewportPos);
@@ -403,8 +438,25 @@ export class RegionSelectManager {
   private saveRegionPanel(
     note: string,
     viewportPos: { x: number; y: number; w: number; h: number },
-    region: RegionData
+    region: RegionData,
+    existing?: Annotation
   ): void {
+    if (existing) {
+      // 编辑已有区域批注：仅说明可改（区域几何固定），更新原标注不新建（F16）
+      const before = existing;
+      const trimmed = note.trim();
+      const updated = this.store.update(before.id, { note: trimmed });
+      if (updated) {
+        const after = updated;
+        this.history.push({
+          label: 'annotation:update',
+          apply: () => this.store.update(after.id, { note: after.note }),
+          revert: () => this.store.update(before.id, { note: before.note }),
+        });
+      }
+      this.closeRegionPanel();
+      return;
+    }
     const added = this.store.add({
       kind: 'region',
       selector: '',

@@ -1392,8 +1392,9 @@
    ============================================================ */
 .rpanel {
   position: absolute;
-  width: 158px;
-  padding: 10px;
+  /* F16：与普通批注面板同宽（PANEL_WIDTH=330）；顶部 padding 交给拖拽把手让位 */
+  width: 330px;
+  padding: 0 12px 12px;
 }
 .rpanel .rin {
   width: 100%;

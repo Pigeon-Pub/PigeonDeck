@@ -170,6 +170,8 @@ export class PanelManager {
   private shadowHost: Element;
   private toast: Toast;
   private resolver: SelectionResolver | null = null;
+  /** 区域批注编辑委派（main.ts 注入 → RegionSelectManager.editRegion）。 */
+  private regionEditor: ((annotation: Annotation) => void) | null = null;
   /**
    * 交互式选中框（八向句柄缩放）：批注模式单击元素时随面板一同出现，
    * 句柄缩放并入该元素标注 + 撤销历史（与移动模式同一 SelectionBox 组件）。
@@ -440,6 +442,14 @@ export class PanelManager {
   /** 注入 SelectionResolver（main.ts 在实例化后调用） */
   setResolver(resolver: SelectionResolver): void {
     this.resolver = resolver;
+  }
+
+  /**
+   * 注入区域批注编辑器（main.ts 在 RegionSelectManager 实例化后调用）。
+   * 卡片/位号圆菜单编辑一条 region 标注时委派它打开可编辑的区域面板（F16）。
+   */
+  setRegionEditor(fn: (annotation: Annotation) => void): void {
+    this.regionEditor = fn;
   }
 
   /** 批注模式当前选中元素（Overlay F6 用：hover 命中它时跳过高亮）。无选中返回 null。 */
@@ -1238,6 +1248,12 @@ export class PanelManager {
 
   /** 修改批注：重新定位目标元素后打开预填面板 */
   private editAnnotation(annotation: Annotation): void {
+    // 区域批注（selector=''）不走 resolveBySelector，改路由回可编辑的区域面板（F16）
+    if (annotation.kind === 'region') {
+      this.closeMenu();
+      this.regionEditor?.(annotation);
+      return;
+    }
     const target = this.resolveBySelector(annotation.selector);
     if (!target) return;
     // 编辑打开：以该标注目标作为粒度会话原始命中元素（+/- 从它起算）

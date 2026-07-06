@@ -153,7 +153,7 @@ function inject(settings: Settings): void {
   });
 
   // 阶段 5：区域框选（长按 ≥300ms → 拖拽框选 → 区域批注面板）
-  new RegionSelectManager({
+  const regionManager = new RegionSelectManager({
     controller,
     store,
     history,
@@ -164,6 +164,8 @@ function inject(settings: Settings): void {
     // 内联富文本编辑中屏蔽区域框选（长按拖拽 = 选字，不建区域）
     isInlineEditing: () => panelManager.isInlineEditing(),
   });
+  // 区域批注的卡片/菜单「修改」委派回区域面板（F16：region 标注 selector='' 无法走元素解析）
+  panelManager.setRegionEditor((a) => regionManager.editRegion(a));
 
   // 阶段 6a：移动模式（单击选中 + 选择粒度 + 八向句柄缩放）
   const selectionResolver = new SelectionResolver(settings.defaultGranularity);
