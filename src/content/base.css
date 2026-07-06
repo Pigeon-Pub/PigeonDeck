@@ -344,7 +344,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 0 2px;
+  padding: 6px 0 0;
   cursor: grab;
   flex: none;
   touch-action: none;
@@ -360,7 +360,8 @@
 .pd-panel-drag:hover::before { background: var(--ctx2); }
 .pd-panel-drag:active { cursor: grabbing; }
 .pbody {
-  padding: 12px 12px 11px;
+  /* 把手下方留白与其上方对齐（F14a）：顶 6 = 把手上方 6 */
+  padding: 6px 12px 11px;
   /* 修改栏/高级样式加入后内容可能超视口：主体滚动，底栏常驻 */
   max-height: calc(100vh - 120px);
   overflow-y: auto;
@@ -616,7 +617,18 @@
 /* ============================================================
    批注卡片（来源：preview/parts/07-annotation-card.html）
    ============================================================ */
-.acard { position: absolute; width: 252px; }
+.acard {
+  position: absolute;
+  width: 252px;
+  /* F20：内容变长/变短走高度过渡（interpolate-size），出现时淡入（与 .pd-ball 一致）；
+     overflow:hidden 让高度动画期间内容不外溢 */
+  overflow: hidden;
+  transition: height var(--t-mid) var(--ease), opacity var(--t-mid) var(--ease);
+}
+/* 卡片出现淡入（含首帧渲染） */
+@starting-style {
+  .acard { opacity: 0; }
+}
 .acard .note { padding: 13px 14px 10px; font-size: 13px; line-height: 1.55; color: var(--ctx); }
 .acard .hr { height: 1px; background: var(--cbd); margin: 0 14px; }
 .acard .mods { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -670,6 +682,18 @@
 /* panel 层的浮层可交互 */
 [data-layer="panel"] > * { pointer-events: auto; }
 /* overlay 层默认穿透，仅位号圆可交互（.pd-pin 单独恢复） */
+
+/* F20：浮层（下拉/调色盘/清空确认/替换弹层等，mountPopover 标记 data-pd-popover）
+   出现时淡入 + 从锚点方向轻微下移，复用 --t-mid/--ease，与 .pd-toolbar 进入一致 */
+[data-pd-popover] {
+  transition: opacity var(--t-mid) var(--ease), transform var(--t-mid) var(--ease);
+}
+@starting-style {
+  [data-pd-popover] {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
 
 /* ============================================================
    阶段 3b：修改栏 / 高级样式 / 属性控件配方

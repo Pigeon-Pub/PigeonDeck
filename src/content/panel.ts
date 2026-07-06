@@ -160,6 +160,65 @@ interface OpenCard {
   connector: SVGSVGElement | null;
 }
 
+/**
+ * 元素高度柔和过渡（design-system §1.5 例外条款）：
+ * 快照旧高 → 变更内容 → 设回旧高强制回流 → height:auto，
+ * 由 interpolate-size: allow-keywords 完成 px→auto 的过渡（面板与卡片共用）。
+ * after 在设回 auto 后回调（用于重定位）。
+ */
+function animateHeight(el: HTMLElement, mutate: () => void, after?: () => void): void {
+  const h0 = el.offsetHeight;
+  mutate();
+  el.style.height = `${h0}px`;
+  void el.offsetHeight; // 强制回流，确保过渡起点生效
+  el.style.height = 'auto';
+  after?.();
+}
+
+/**
+ * 让 panelEl 可通过 handleEl 拖拽（改 absolute left/top）。可复用：
+ * 批注面板 / 区域面板顶部把手，以及后续设置面板 .shead、导出面板顶栏（Groups B/D）共用。
+ * 落在交互子元素（button/input/textarea/select/a）上的按下不起拖，只从空白抓杆区域起拖。
+ * onDrag 每次移动后回调当前 left/top（供调用方记录相对锚点的偏移等）。返回解绑函数。
+ */
+export function makeDraggableByHandle(
+  panelEl: HTMLElement,
+  handleEl: HTMLElement,
+  onDrag?: (left: number, top: number) => void
+): () => void {
+  let start: { mx: number; my: number; left: number; top: number } | null = null;
+  const onDown = (ev: PointerEvent): void => {
+    // 落在交互子元素上的按下交给该控件（不起拖）
+    if ((ev.target as Element | null)?.closest('button, input, textarea, select, a')) return;
+    ev.preventDefault();
+    handleEl.setPointerCapture(ev.pointerId);
+    start = { mx: ev.clientX, my: ev.clientY, left: panelEl.offsetLeft, top: panelEl.offsetTop };
+  };
+  const onMove = (ev: PointerEvent): void => {
+    if (!start) return;
+    const left = start.left + (ev.clientX - start.mx);
+    const top = start.top + (ev.clientY - start.my);
+    panelEl.style.left = `${left}px`;
+    panelEl.style.top = `${top}px`;
+    onDrag?.(left, top);
+  };
+  const end = (ev: PointerEvent): void => {
+    if (!start) return;
+    start = null;
+    if (handleEl.hasPointerCapture(ev.pointerId)) handleEl.releasePointerCapture(ev.pointerId);
+  };
+  handleEl.addEventListener('pointerdown', onDown);
+  handleEl.addEventListener('pointermove', onMove);
+  handleEl.addEventListener('pointerup', end);
+  handleEl.addEventListener('pointercancel', end);
+  return () => {
+    handleEl.removeEventListener('pointerdown', onDown);
+    handleEl.removeEventListener('pointermove', onMove);
+    handleEl.removeEventListener('pointerup', end);
+    handleEl.removeEventListener('pointercancel', end);
+  };
+}
+
 export class PanelManager {
   private controller: Controller;
   private store: AnnotationStore;
@@ -695,19 +754,9 @@ export class PanelManager {
     handle.className = 'pd-panel-drag';
     handle.setAttribute('data-testid', 'pd-panel-drag');
 
-    let start: { mx: number; my: number; left: number; top: number } | null = null;
-    handle.addEventListener('pointerdown', (ev) => {
-      ev.preventDefault();
-      handle.setPointerCapture(ev.pointerId);
-      start = { mx: ev.clientX, my: ev.clientY, left: panel.offsetLeft, top: panel.offsetTop };
-    });
-    handle.addEventListener('pointermove', (ev) => {
-      if (!start || !this.panelTarget) return;
-      const left = start.left + (ev.clientX - start.mx);
-      const top = start.top + (ev.clientY - start.my);
-      panel.style.left = `${left}px`;
-      panel.style.top = `${top}px`;
-      // 记录相对锚点基准的偏移，供后续 scroll/resize 保持
+    // 复用通用拖拽助手；onDrag 记录相对锚点自动放置基准的偏移，供 scroll/resize 重定位保持
+    makeDraggableByHandle(panel, handle, (left, top) => {
+      if (!this.panelTarget) return;
       const base = placeNear(
         this.panelTarget.getBoundingClientRect(),
         panel.offsetWidth,
@@ -715,13 +764,6 @@ export class PanelManager {
       );
       this.panelDragOffset = { dx: left - base.left, dy: top - base.top };
     });
-    const end = (ev: PointerEvent): void => {
-      if (!start) return;
-      start = null;
-      if (handle.hasPointerCapture(ev.pointerId)) handle.releasePointerCapture(ev.pointerId);
-    };
-    handle.addEventListener('pointerup', end);
-    handle.addEventListener('pointercancel', end);
     return handle;
   }
 
@@ -825,12 +867,7 @@ export class PanelManager {
       mutate();
       return;
     }
-    const h0 = panel.offsetHeight;
-    mutate();
-    panel.style.height = `${h0}px`;
-    void panel.offsetHeight; // 强制回流，确保过渡起点生效
-    panel.style.height = 'auto';
-    this.positionPanel();
+    animateHeight(panel, mutate, () => this.positionPanel());
   }
 
   private savePanel(): void {
@@ -1181,8 +1218,12 @@ export class PanelManager {
       }
       if (current !== open.annotation) {
         open.annotation = current;
-        this.renderCardContent(open.el, current);
-        this.positionCard(open);
+        // F20：内容变更引起卡片长度变化时走高度过渡（与面板一致），随后重定位
+        animateHeight(
+          open.el,
+          () => this.renderCardContent(open.el, current),
+          () => this.positionCard(open)
+        );
       }
     }
   }
