@@ -408,8 +408,8 @@ describe('renderTaskList — zh_CN localizes the whole output', () => {
     expect(result).toContain('修改:');
     // 选择器/坐标等值不翻译
     expect(result).toContain('| background-color | #fff | #000 |');
-    // Type 标识保持英文（同时是渲染逻辑判据）
-    expect(result).toContain('Annotation + Style Modification');
+    // F24：分隔线 Type 标识本地化显示（op.type 内部判据仍为英文）
+    expect(result).toContain('--- #1 批注 + 样式修改 ---');
   });
 
   it('move block labels + snap phrase localized', () => {
@@ -455,6 +455,56 @@ describe('renderTaskList — zh_CN localizes the whole output', () => {
     expect(free).toContain('吸附: 自由移动');
     const none = renderTaskList(buildOperations([ann({ move: MOVE_NO_SNAP })]), CTX, 'zh_CN');
     expect(none).toContain('吸附: 无吸附');
+  });
+});
+
+// ============================================================
+// F24: 操作分隔线 Type 标识本地化显示（op.type 内部判据仍英文）
+// ============================================================
+
+describe('renderTaskList — F24 localized operation separators', () => {
+  it('zh_CN separator localizes each type component', () => {
+    const single = renderTaskList(buildOperations([ann({ note: '批注一' })]), CTX, 'zh_CN');
+    expect(single).toContain('--- #1 批注 ---');
+
+    const combo = renderTaskList(
+      buildOperations([
+        ann({
+          note: '改色并移动',
+          changes: [{ prop: 'bg', cssProp: 'background-color', oldValue: '#fff', newValue: '#000' }],
+          move: MOVE_SNAPPED,
+        }),
+      ]),
+      CTX,
+      'zh_CN'
+    );
+    expect(combo).toContain('--- #1 批注 + 样式修改 + 移动 ---');
+
+    const region: RegionData = { docRect: { x: 0, y: 0, w: 100, h: 100 }, elements: ['div.a'] };
+    const reg = renderTaskList(
+      buildOperations([ann({ number: 2, kind: 'region', selector: '', note: '太挤', region })]),
+      CTX,
+      'zh_CN'
+    );
+    expect(reg).toContain('--- #2 区域 ---');
+    // 内部判据 op.type 仍为英文标识
+    const ops = buildOperations([ann({ number: 2, kind: 'region', selector: '', note: '太挤', region })]);
+    expect(ops[0].type).toBe('Region');
+  });
+
+  it('en separator stays English', () => {
+    const combo = renderTaskList(
+      buildOperations([
+        ann({
+          note: 'Recolor and move',
+          changes: [{ prop: 'bg', cssProp: 'background-color', oldValue: '#fff', newValue: '#000' }],
+          move: MOVE_SNAPPED,
+        }),
+      ]),
+      CTX,
+      'en'
+    );
+    expect(combo).toContain('--- #1 Annotation + Style Modification + Move ---');
   });
 });
 

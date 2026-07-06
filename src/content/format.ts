@@ -182,11 +182,17 @@ const GLOBAL_RULES: Record<'en' | 'zh_CN', readonly string[]> = {
     'Do NOT hardcode top/left absolute positions.',
     'Prefer existing layout: flex, grid, gap, margin, order.',
     'Visual coordinates are location hints, not implementation.',
+    'Apply ONLY the changes listed in the operations below.',
+    'Do NOT touch unrelated code, files or areas.',
+    'When something is unclear, ask the user instead of guessing.',
   ],
   zh_CN: [
     '不要硬编码 top/left 绝对定位',
     '优先使用现有布局机制：flex、grid、gap、margin、order',
     '视觉坐标为定位线索，不是实施指令',
+    '只执行下方操作列表中列出的修改',
+    '不要改动无关的代码、文件或区域',
+    '遇到不明确的地方，先向用户确认，不要臆测',
   ],
 };
 
@@ -221,6 +227,11 @@ interface Labels {
   snapEmbedded: string;
   snapFree: string;
   snapNone: string;
+  /** 操作 Type 各组件的本地化显示标签（op.type 内部判据仍为英文，仅显示翻译） */
+  typeAnnotation: string;
+  typeStyle: string;
+  typeMove: string;
+  typeRegion: string;
   /** `snapped (<edge>)` 包装：传入已本地化的边缘描述 */
   snapped: (edge: string) => string;
   /** 吸附边缘语义标识 → 本地化描述 */
@@ -254,6 +265,10 @@ const LABELS: Record<'en' | 'zh_CN', Labels> = {
     snapEmbedded: 'embedded into container',
     snapFree: 'free move',
     snapNone: 'no snap',
+    typeAnnotation: 'Annotation',
+    typeStyle: 'Style Modification',
+    typeMove: 'Move',
+    typeRegion: 'Region',
     snapped: (edge) => `snapped (${edge})`,
     snapEdges: {
       'align-left': 'left edge',
@@ -292,6 +307,10 @@ const LABELS: Record<'en' | 'zh_CN', Labels> = {
     snapEmbedded: '嵌入容器',
     snapFree: '自由移动',
     snapNone: '无吸附',
+    typeAnnotation: '批注',
+    typeStyle: '样式修改',
+    typeMove: '移动',
+    typeRegion: '区域',
     snapped: (edge) => `已吸附（${edge}）`,
     snapEdges: {
       'align-left': '左边缘',
@@ -363,9 +382,26 @@ function renderVp(vp: ViewportPos): string {
   return `(${vp.x}, ${vp.y}) ${vp.w}×${vp.h}`;
 }
 
+/**
+ * op.type（英文，同时是渲染逻辑判据）→ 本地化显示串：
+ * 按 ' + ' 拆分逐段翻译再重接。未知段原样保留（防御）。
+ */
+function localizeType(type: string, L: Labels): string {
+  const map: Record<string, string> = {
+    Annotation: L.typeAnnotation,
+    'Style Modification': L.typeStyle,
+    Move: L.typeMove,
+    Region: L.typeRegion,
+  };
+  return type
+    .split(' + ')
+    .map((part) => map[part] ?? part)
+    .join(' + ');
+}
+
 function renderOp(op: Operation, L: Labels): string {
   const lines: string[] = [];
-  lines.push(`--- #${op.number} ${op.type} ---`);
+  lines.push(`--- #${op.number} ${localizeType(op.type, L)} ---`);
 
   // ---- Region ----
   if (op.type === 'Region') {
