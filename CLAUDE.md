@@ -6,7 +6,9 @@
 
 **🎉 V1 全 15 阶段代码闭环完成，全部合并 main。** 设计系统已就绪（[preview/](preview/) 画廊 + [docs/design-system.md](docs/design-system.md)），按 [docs/v1-plan.md](docs/v1-plan.md) 的 15 个阶段逐阶段实施完毕。**剩余为用户手动冒烟（[docs/manual-smoke-checklist.md](docs/manual-smoke-checklist.md)，71 项）+ 打包上架。**
 
-> **2026-07-04：已完成「7.3.1 用户反馈第一轮」修复**（约 50 条真机反馈，拆 7 组顺序实施，含 docs 共 12 个提交在本地 main）。用户拍板：批注模式右键拦截系统菜单、移动吸附=真实 DOM 重父嵌入、快捷键完整重绑、批注模式单击出可交互八句柄框（与移动模式统一）。终态 vitest 351 / 全量 E2E 101/101 ×2。详见 [CHANGELOG](CHANGELOG.md) Bugfix 段与 [HANDOFF §8](HANDOFF.md)。**待网络恢复 push（领先约 19 提交）+ 真机复冒烟。**
+> **2026-07-04：已完成「7.3.1 用户反馈第一轮」修复**（约 50 条真机反馈，拆 7 组顺序实施，含 docs 共 12 个提交在本地 main）。用户拍板：批注模式右键拦截系统菜单、移动吸附=真实 DOM 重父嵌入、快捷键完整重绑、批注模式单击出可交互八句柄框（与移动模式统一）。终态 vitest 351 / 全量 E2E 101/101 ×2。详见 [CHANGELOG](CHANGELOG.md) Bugfix 段与 [HANDOFF §8](HANDOFF.md)。
+
+> **2026-07-07：已完成「7.6.1 用户反馈第二轮」修复**（约 25 条真机反馈，16 个提交在本地 main：`26c63a1`…`8970d03`）。用户拍板：图片单击预览=页内灯箱、富文本=彻底重做（结构化可导出变更 `RichTextChange`）、跨页面/刷新保留=彻底删除（改仅会话内存）。要点：取色器卡死修复（挂起 annotate 拦截）、新建共享 `esc-stack.ts` Esc 优先级栈 + `makeDraggableByHandle`、hover 高亮改挂 overlay 层、系统原生 tooltip、SVG/非标元素出智能样式、导出面板改页内选择（顶栏+X+拖拽+可编辑预览+图片灯箱）、图片导出叠加互不重叠批注卡片、prompt 全局规则补词+操作分隔线本地化、富文本弃 execCommand 全改结构化捕获（提交仅经保存对勾/Ctrl+Enter，Esc 丢弃）。终态 vitest 374 / 全量 E2E 102 passed（`copy-text②`/`full-flow` 剪贴板读 2 例已知环境失败非回归）。详见 [CHANGELOG](CHANGELOG.md) Bugfix 段与 [HANDOFF §8](HANDOFF.md)。**16 提交叠加上轮共领先 origin 约 36 提交，待网络恢复 push + 真机复冒烟本轮 25 项。**
 
 各阶段要点：
 - **阶段 1 工程骨架**：Vite 双配置构建（content IIFE + background ES）、Shadow DOM 四层宿主、pigeonlib 设计令牌、i18n 框架、logger。

@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Bugfix — 7.6.1 用户反馈第二轮（2026-07-07）
+
+真机第二轮反馈（约 25 条）。先并行 3 个 Explore 子代理映射到 file:line + 1 个子代理对富文本做第一性原理对抗式审查，再拆组实施（关键路径/删除先行 → 共享件 → 工具盘/面板/设置/导出顺序推进 → 富文本重写 → 图标）。**用户拍板决策（AskUserQuestion）**：图片单击预览=页内灯箱；富文本=彻底重做（结构化可导出变更）；跨页面/刷新保留=彻底删除。基线：build ✓ / typecheck ✓ / vitest 374 ✓ / 全量 E2E 102 passed ✓ / i18n ✓（`copy-text②`、`full-flow` 剪贴板**读**断言本机 headed 环境失败，与上轮同为已知环境限制，非回归）。
+
+- **CRIT 取色器卡死 F18（26c63a1）**：根因—annotate 模式全页 capture 级 mousedown/click 拦截吞掉了原生 EyeDropper 的取点点击致遮罩悬挂。打开 EyeDropper 前挂起页面拦截、settle 后恢复；无 `window.EyeDropper` 时隐藏取色按钮。（原生取色器需真机冒烟。）
+- **图标品牌更新 F1（68e1939）**：从鸽矢量重新光栅化 icon16/32/48/128 为金底(`#b8842c` 邮政金)白鸽圆角方牌（对齐悬浮球观感），替换过时的铅笔圆图标；`scripts/gen-icons.mjs` 复用脚本（sharp，无新依赖）。
+- **移除批注保留 F22（81b3eae）**：删除跨页面/刷新保留（删 `state/session.ts` 持久化 + `content/restore-replay.ts`），改为仅当前 tab 会话内存，刷新即清空；受影响 E2E 断言翻转为「刷新后不恢复」；连带清理 `toast_media_unpersisted`/`toast_restore_missing`。
+- **共享件（60228a7）**：新增 `content/esc-stack.ts` Esc 优先级栈（LIFO push/pop，capture 早注册；栈非空则拦截并阻断 shortcuts、栈空则回落模式退出）并接入 `popover.ts`（弹层普遍获得 Esc 关闭且正确分层）；`dropdown.ts` 加 `plain` 紧凑模式（无 ALL/智能分组头）。
+- **工具盘/覆盖层 F3–F8b（e0b5822）**：hover 高亮/标签改挂 overlay 层（不再遮挡工具盘 z4/面板 z3）；已选中元素单击同元素不再重复出 hover 框；工具盘按钮改**系统原生 `title` tooltip**（删自制 `.pd-tip`）；去撤销/重做禁用态红叉 `not-allowed` 光标；向下展开时按住 Logo 拖拽按当前方向锚定（不再整体上抬）；`.pd-tbtn:focus-visible{outline:none}` 去 Esc 退移动模式的黑色焦点环；**Esc 先取消选中**（批注面板/移动/区域经 esc-stack push），无选中再退模式。
+- **面板/卡片/样式 F14/F16/F17/F19/F20（35bc9eb, 7ae6d73, 6616a16, 2f9a371）**：SVG/非标元素放宽 `instanceof HTMLElement→Element` 门 → 也出智能+高级样式入口，`autoModbarRows` 加 SVG `fill/stroke/stroke-width` 识别（智能样式本就真实、此前被门挡住）；高级样式调试列表并入面板单一滚动（去嵌套双滚动）；批注面板把手上下留白对称 + 抽出可复用 `makeDraggableByHandle`（按住上边栏空白拖动，忽略按钮/输入）；区域批注面板宽度对齐正常面板 330 + Ctrl+Enter 保存 + 修复展开后不可编辑（`selector:''` 致 `resolveBySelector` 抛错 → `kind==='region'` 特判回可编辑区域面板，更新而非新建）；卡片长度变化与浮层弹出统一动画。
+- **设置/语言 F2/F11/F12/F14/F15（dff8f55, 1a812e5）**：导出语言由巨型全量选择器改**紧凑 2 项下拉**（英文/跟随界面；Esc 分层——先关下拉、再 Esc 关设置）+ 删语言选择器 `export` 死分支；文案「显示修改栏」→「显示快捷修改栏」；设置各 tab 固定滚动区高度（切换不再突然变高）+ 滚动条居中留隙 + 顶栏可拖。
+- **导出面板/格式 F9/F23/F24/F25（d56fe63, 851a52c）**：复制文本/图片**不再自动复制/导出**——页内面板由用户选「复制」或「下载」；两面板加顶栏（标题 + 右上 X）去「取消」按钮 + 顶栏可拖；文本预览可编辑（`contentEditable`，退出不保留）；图片面板宽度对齐文本 452 + 缩略图**单击出页内灯箱**（可缩放/Esc 关/blob 新标签页打开）；prompt 弹窗语言切换同紧凑 2 项下拉；`[全局编辑规则]` 补「仅按列表改 / 勿动无关处 / 不明白问用户」；操作分隔线 `--- #N 类型 ---` 本地化（内部谓词仍用英文键）。
+- **图片导出批注卡片 F10（e7c4317）**：复制图片叠加**展开、互不重叠**的批注卡片（编号徽标 + 本地化类型 + 批注 + 变更摘要 + 回连线），纯函数 `computeCardLayout`/`wrapText`（含 CJK 逐字断行），画布尺寸纳入卡片矩形，超 14000px 告警而非静默裁剪；复用 `panel.ts` 卡片文案助手使 UI 卡与图片卡一致。
+- **富文本彻底重写 F21（a9b17f4, 8970d03）**：对抗式审查定缺陷（对齐写在根 style 不被 innerHTML diff 记录且被 `restoreEditingStyles` 抹掉；字号/颜色 collapsed 选区直接 bail；导出经 `stripTags` 丢弃全部格式；退出条件杂乱）。重写：`RichTextChange` 结构化模型（`kind/target/oldValue/newValue/summary`，首类存 `annotation.richText[]`，弃 `cssProp:'html'` blob 承载导出，DOM 还原另用快照 carrier）；**弃 execCommand** 全改标记 span 应用+即时记录；**光标态（无选区）字号/对齐作用整元素并记录**；仅精确清理编辑期附加的 chrome 样式（不再整体 `style` 存/还原，修复对齐被抹）；**提交仅经保存对勾或 Ctrl+Enter**，Esc 丢弃，blur/外部点击/双击他元素不再退出；撤销粒度按本次会话前后快照；`format.ts` 结构化逐条本地化描述（如「设置字号 14px → 28px 对所选文本 "…"」）；UI 卡与图片导出卡渲染新模型；右下角无序列表按钮改**保存对勾**。
+
 ### Bugfix — 7.3.1 用户反馈第一轮（2026-07-04）
 
 真机使用反馈修复，按 7 组分批实施（每组独立提交、逐组五道门禁 + 关键路径 diff 通读 + E2E ×2 复核）。基线：build ✓ / typecheck ✓ / vitest 351 ✓ / 全量 E2E 101 passed ×2 ✓ / i18n ✓（`copy-text②`、`full-flow` 依赖剪贴板**读**权限，本机 headed 环境偶发失败，已 bisect 确认 pre-W1 同样失败，属已知环境限制，非回归）。
