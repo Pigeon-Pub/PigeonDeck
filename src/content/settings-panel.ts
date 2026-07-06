@@ -15,6 +15,8 @@ import { Toast } from './toast';
 import { setTheme } from './main';
 import { t, getLocale, setLocale } from './i18n';
 import { openLanguagePicker } from './language-picker';
+import { openDropdown } from './dropdown';
+import { makeDraggableByHandle } from './panel';
 import { BCP47_LANGUAGES } from '../shared/languages';
 import { LOGO_SVG } from './logo';
 import { formatCombo, setShortcutRecording } from './shortcuts';
@@ -85,6 +87,8 @@ export class SettingsManager {
   private sconEl: HTMLElement | null = null;
   private section: Section = 'general';
   private navButtons: Record<Section, HTMLButtonElement> | null = null;
+  /** 用户是否已拖动过面板：拖过后 renderSection 不再用 positionBeside 重定位（保持拖到的位置）。 */
+  private dragged = false;
   private unsubscribe: () => void;
 
   /** 当前正在录制的快捷键动作（null = 未录制）+ 卸载录制监听器的函数。 */
@@ -186,6 +190,12 @@ export class SettingsManager {
     this.renderSection();
     this.positionBeside(surface);
 
+    // 顶栏可拖：抓住 .shead 空白区拖动整面板（X 按钮是 <button>，助手已忽略）。
+    // positionBeside 只做初始放置；拖过后 dragged=true → renderSection 不再重定位（建议F14）。
+    makeDraggableByHandle(surface, head, () => {
+      this.dragged = true;
+    });
+
     window.addEventListener('mousedown', this.onOutside, true);
   }
 
@@ -197,6 +207,7 @@ export class SettingsManager {
     this.panelEl = null;
     this.sconEl = null;
     this.navButtons = null;
+    this.dragged = false;
   }
 
   /** 点面板/自身 UI 之外 → 退出设置模式（回 annotate，sync 关闭面板） */
@@ -270,8 +281,8 @@ export class SettingsManager {
         this.renderHelp(this.sconEl);
         break;
     }
-    // 内容变化后可能高度变化，重新夹紧定位
-    if (this.panelEl) this.positionBeside(this.panelEl);
+    // 内容变化后可能高度变化，重新夹紧定位（用户拖过后保持其位置，不回弹）
+    if (this.panelEl && !this.dragged) this.positionBeside(this.panelEl);
   }
 
   // ---- 各分区 ----
@@ -287,7 +298,6 @@ export class SettingsManager {
           openLanguagePicker({
             root: this.panelLayer,
             anchor,
-            mode: 'ui',
             current: getLocale(),
             onSelect: async (code) => {
               await setLocale(code);
@@ -534,18 +544,22 @@ export class SettingsManager {
   }
 
   private renderOutput(root: HTMLElement): void {
-    // 导出语言：搜索式全量选择器（钉住 英文 / 跟随界面）
+    // 导出语言：紧凑 2 项下拉（英文 / 跟随界面）；exportLangLabel 兼容旧存值渲染当前显示
     root.appendChild(
       this.srow(
         t('set_export_language'),
         t('set_export_lang_sub'),
         this.selectDisplay(this.exportLangLabel(this.settings.exportLang), 'pd-set-export-lang', (anchor) => {
-          openLanguagePicker({
+          openDropdown({
             root: this.panelLayer,
             anchor,
-            mode: 'export',
+            plain: true,
             current: this.settings.exportLang,
-            onSelect: (code) => {
+            items: [
+              { value: 'en', label: t('opt_export_en') },
+              { value: 'auto', label: t('opt_export_auto') },
+            ],
+            onPick: (code) => {
               this.settings.exportLang = code;
               saveSettings({ exportLang: code });
               this.renderSection();

@@ -1,13 +1,13 @@
 /* ============================================================
    language-picker.ts — 搜索式语言浮层（阶段 11b）
-   蓝图 §8.1：界面语言=可搜索胶囊列表；导出语言=同款全量选择器，
-   顶部钉住「英文 / 跟随界面」。视觉逐值照搬 preview/parts/29 + /39。
-   界面语言选项来源 AVAILABLE_LANGUAGES.json；导出全量来源 BCP47_LANGUAGES。
+   蓝图 §8.1：界面语言=可搜索胶囊列表。视觉逐值照搬 preview/parts/29。
+   界面语言选项来源 AVAILABLE_LANGUAGES.json。
+   （导出语言已改用紧凑 2 项下拉，见 settings-panel.renderOutput / dropdown.ts。）
    ============================================================ */
 
 import { mountPopover, PopoverHandle } from './popover';
-import { t, getLocale } from './i18n';
-import { BCP47_LANGUAGES, LangEntry, LangMatch, matchLanguages, isoSubtag } from '../shared/languages';
+import { t } from './i18n';
+import { LangEntry, LangMatch, matchLanguages, isoSubtag } from '../shared/languages';
 import availableLanguages from '../../public/_locales/AVAILABLE_LANGUAGES.json';
 
 /** 界面语言可选项（AVAILABLE_LANGUAGES.json → LangEntry） */
@@ -19,14 +19,11 @@ const ICON_SEARCH =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
 const ICON_CHECK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-const ICON_TRANSLATE =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>';
 
 export interface LanguagePickerOptions {
   root: HTMLElement;
   anchor: HTMLElement;
-  mode: 'ui' | 'export';
-  /** 当前选中 code（ui: 'en'/'zh_CN'；export: BCP47 code 或 'auto'） */
+  /** 当前选中 code（界面语言：'en'/'zh_CN'） */
   current: string;
   onSelect: (code: string) => void;
 }
@@ -112,7 +109,7 @@ export function openLanguagePicker(opts: LanguagePickerOptions): PopoverHandle {
   const dd = document.createElement('div');
   dd.className = 'pd-surface dd';
   dd.setAttribute('data-testid', 'pd-lang-picker');
-  dd.style.width = opts.mode === 'ui' ? '228px' : '238px';
+  dd.style.width = '228px';
 
   // 搜索框
   const srch = document.createElement('div');
@@ -122,12 +119,9 @@ export function openLanguagePicker(opts: LanguagePickerOptions): PopoverHandle {
   input.setAttribute('data-testid', 'pd-lang-search');
   input.placeholder = t('lang_search_ph');
   srch.appendChild(input);
-  let cnt: HTMLElement | null = null;
-  if (opts.mode === 'ui') {
-    cnt = document.createElement('span');
-    cnt.className = 'cnt';
-    srch.appendChild(cnt);
-  }
+  const cnt = document.createElement('span');
+  cnt.className = 'cnt';
+  srch.appendChild(cnt);
   dd.appendChild(srch);
 
   const listWrap = document.createElement('div');
@@ -141,69 +135,13 @@ export function openLanguagePicker(opts: LanguagePickerOptions): PopoverHandle {
 
   const renderUi = (query: string): void => {
     const matches = matchLanguages(query, UI_ENTRIES);
-    if (cnt) cnt.textContent = t('lang_count').replace('{n}', String(matches.length));
+    cnt.textContent = t('lang_count').replace('{n}', String(matches.length));
     for (const m of matches) listWrap.appendChild(buildEntryOpt(m, opts.current, pick));
-  };
-
-  const renderExport = (query: string): void => {
-    const q = query.trim().toLowerCase();
-
-    // 钉住组「常用」：英文 + 跟随界面
-    const uiEntry = UI_ENTRIES.find((e) => e.code === getLocale());
-    const followNative = uiEntry ? uiEntry.nativeName : getLocale();
-    const enHit = !q || 'en'.includes(q) || t('opt_export_en').toLowerCase().includes(q);
-    const autoHit =
-      !q ||
-      'auto'.includes(q) ||
-      'follow'.includes(q) ||
-      t('export_follow').toLowerCase().includes(q);
-
-    if (enHit || autoHit) {
-      const h = document.createElement('div');
-      h.className = 'grp-h';
-      h.textContent = t('export_pinned');
-      listWrap.appendChild(h);
-      const list = document.createElement('div');
-      list.className = 'list';
-      if (enHit) {
-        list.appendChild(
-          buildOpt('en', escapeHtml('en'), false, escapeHtml(t('opt_export_en')), null, opts.current === 'en', pick)
-        );
-      }
-      if (autoHit) {
-        const subEq = t('export_follow_eq').replace('{lang}', followNative);
-        list.appendChild(
-          buildOpt('auto', ICON_TRANSLATE, true, escapeHtml(t('export_follow')), subEq, opts.current === 'auto', pick)
-        );
-      }
-      listWrap.appendChild(list);
-    }
-
-    // 分隔线
-    const allMatches = matchLanguages(query, BCP47_LANGUAGES);
-    if ((enHit || autoHit) && allMatches.length > 0) {
-      const sep = document.createElement('div');
-      sep.className = 'sep';
-      listWrap.appendChild(sep);
-    }
-
-    // 全部语言组
-    if (allMatches.length > 0) {
-      const h = document.createElement('div');
-      h.className = 'grp-h';
-      h.textContent = t('export_all');
-      listWrap.appendChild(h);
-      const list = document.createElement('div');
-      list.className = 'list';
-      for (const m of allMatches) list.appendChild(buildEntryOpt(m, opts.current, pick));
-      listWrap.appendChild(list);
-    }
   };
 
   const render = (): void => {
     listWrap.innerHTML = '';
-    if (opts.mode === 'ui') renderUi(input.value);
-    else renderExport(input.value);
+    renderUi(input.value);
   };
 
   render();

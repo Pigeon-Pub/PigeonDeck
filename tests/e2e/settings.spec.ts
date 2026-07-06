@@ -334,7 +334,7 @@ test('⑨ 选 English → 面板标题变英文（默认中文起步）', async 
   await page.close();
 });
 
-test('⑩ 点导出语言 → picker 含「常用」钉住组（英文/跟随）', async () => {
+test('⑩ 点导出语言 → 紧凑 2 项下拉（英文 / 跟随界面），不含全量语言', async () => {
   const page = await openFixturePage();
   await expandToolbar(page);
   await openSettings(page);
@@ -342,11 +342,11 @@ test('⑩ 点导出语言 → picker 含「常用」钉住组（英文/跟随）
   await waitShadowVisible(page, '[data-testid="pd-set-export-lang"]');
 
   await clickShadowEl(page, 'pd-set-export-lang');
-  await waitShadowVisible(page, '[data-testid="pd-lang-picker"]');
-  expect(await shadowExists(page, '[data-testid="pd-lang-opt-en"]')).toBe(true);
-  expect(await shadowExists(page, '[data-testid="pd-lang-opt-auto"]')).toBe(true);
-  // 全部语言组含中文
-  expect(await shadowExists(page, '[data-testid="pd-lang-opt-zh_CN"]')).toBe(true);
+  await waitShadowVisible(page, '[data-testid="pd-dropdown"]');
+  expect(await shadowExists(page, '[data-testid="pd-dd-item"][data-value="en"]')).toBe(true);
+  expect(await shadowExists(page, '[data-testid="pd-dd-item"][data-value="auto"]')).toBe(true);
+  // 紧凑 2 项菜单不含中文/全量语言项
+  expect(await shadowExists(page, '[data-testid="pd-dd-item"][data-value="zh_CN"]')).toBe(false);
 
   await page.close();
 });
