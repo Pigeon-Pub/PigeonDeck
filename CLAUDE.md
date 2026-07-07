@@ -96,6 +96,7 @@ npm run i18n:check  # validate language files
 ## 关键工作约定
 
 - **规范颗粒化、需自更新**：项目规范在 [docs/conventions/](docs/conventions/INDEX.md)，每条规则一个文件 + INDEX.md 索引。新增/变更规范时必须同步更新索引。
+- **改任何页面内 UI 前，先读 [docs/conventions/interaction-invariants.md](docs/conventions/interaction-invariants.md)**：浮层再点即关、拖面板关派生浮层、拖工具盘只关其派生面、编辑面统一 Ctrl+Enter 保存 / Esc 不保存退出、选中已标注元素隐藏持久框出八句柄框、原生 tooltip、打印隐藏 UI、长度/弹出动画等交互不变量已固化于此，不要让用户逐条重复提醒。
 - **重大分叉用选择式提问**：遇到重要取舍，用 AskUserQuestion 而不是纯文本提问。
 - **以 v1-plan.md 为实施准则**：编码阶段以 [docs/v1-plan.md](docs/v1-plan.md) 和 [context/构想蓝图2.md](context/构想蓝图2.md) 为准。设计细节见 [docs/design-system.md](docs/design-system.md)。
 - **Git 提交**：每完成一个细分功能提交一次。提交信息用中文。
