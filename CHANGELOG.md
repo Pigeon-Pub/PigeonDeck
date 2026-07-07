@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 第二轮后的复冒烟反馈：几处上一轮未真正落地（取色器仍卡死、动画未生效、高级样式改错）+ 一批交互约定要求固化，勿再逐条提醒。基线：build ✓ / typecheck ✓ / vitest 385 ✓ / 全量 E2E 105 passed ✓ / i18n ✓。**并把交互不变量固化到 [docs/conventions/interaction-invariants.md](docs/conventions/interaction-invariants.md)（INDEX + CLAUDE 指针）。**
 
-- **CRIT 取色器仍卡死·硬加固 R1（844d8f7）**：上轮 F18 判断错向（挂起拦截无用——症状「颜色变了再卡死」说明取点成功、原生遮罩已关一次）。真因锁定：挂起期取点的落点点击**穿透**到 6 个取色按钮之一 → 二次 `EyeDropper.open()` → 原生遮罩重新占据全屏输入（连浏览器关闭键都点不了）。加固：**模块级再入守卫**（同一时刻只允许一个 EyeDropper 挂起）+ 挂起期**禁用所有取色按钮指针命中** + `open()` 构造 try/catch；并把 `FieldsSession.notify` 改为**遍历监听器快照**（消除「通知中增删监听器致重入死循环」的顽固隐患）。⚠️ 原生取色器无法自动化，须真机复验。
+- **CRIT 取色器·彻底弃用原生 EyeDropper（F18c，9f04f89）**：R1 的硬加固（下方 844d8f7）**仍未根治**——真机反馈取色后整屏乃至浏览器窗口仍点不动（说明并非「二次 open()」，而是原生 EyeDropper 的系统级输入捕获在拾取落定后不释放，脚本层无法解救）。改为**页内截图取色**：请求一帧 `captureVisibleTab` → feedback 层全视口覆盖层冻结显示当前画面 → 放大镜跟随光标 → 单击读像素返回 hex（`viewportToImage` 吸收 devicePixelRatio）→ Esc/右键取消。覆盖层是自有 DOM，关闭即消失，**不存在系统捕获态**。非扩展环境（无 `chrome.runtime`）移除取色按钮。新增 `src/content/eyedropper.ts`（`pickColor` + 纯函数），复用 `capture.ts` 的 `requestCapture`/`loadImage`。⚠️ 原生/截图取色器仍须真机复验最终无冻结。
+- **CRIT 取色器仍卡死·硬加固 R1（844d8f7，后被 F18c 取代）**：上轮 F18 判断错向（挂起拦截无用——症状「颜色变了再卡死」说明取点成功、原生遮罩已关一次）。当时推断真因=挂起期取点点击穿透到取色按钮触发二次 `EyeDropper.open()`，加固：模块级再入守卫 + 挂起期禁用取色按钮指针命中 + `open()` try/catch + `FieldsSession.notify` 遍历监听器快照（消「通知中增删监听器致重入」隐患，此项保留）。**该推断经真机证伪**（仍卡死）→ 见上 F18c 彻底弃用原生 API。
 - **交互不变量 1–4 R3+R4（ce8a4c3, e866af2, 8c31f34）**：① 浮层触发钮统一 `bindPopoverToggle`——**再点即关，杜绝叠开**（原设置语言选择器可叠开多层）；② **拖拽面板即 `closeAllPopovers`** 关其派生浮层；③ **拖拽工具盘**（越阈值）关设置/复制文本/复制图片/清空确认 + 所有浮层，**但不关**批注/移动/区域内容面板；④ 全部编辑面 **Ctrl/Cmd+Enter 保存 · Esc 不保存退出**（补齐复制文本可编辑预览的提交键）。
 - **重新选中已标注元素 R5（494e133）**：选中已标注元素时**隐藏其持久标注框/位号**（改出八句柄框 + 预填卡片，避免双框重叠），关闭时恢复；`Overlay.setSuppressedMark()` 强制（先前预填已工作，本次补掉双框）。
 - **高级样式回退重做 R7（635e787）**：回退上轮把调试计算样式并入单滚动的错误改动——**恢复调试页计算样式内层滚动 + 原尺寸**；各高级样式子分类面板**统一等高**（对齐调试页长度 300px，切页不跳高）；滚动条留隙。
