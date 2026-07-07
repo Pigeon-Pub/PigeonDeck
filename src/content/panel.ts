@@ -15,10 +15,8 @@ import { Controller } from './controller';
 import {
   AnnotationStore,
   Annotation,
-  StyleChange,
   mergeChanges,
   RICHTEXT_DOM_CSSPROP,
-  RichTextDomSnapshot,
 } from '../state/annotations';
 import { History } from '../state/history';
 import { Settings } from '../state/settings';
@@ -45,6 +43,9 @@ import { pushEsc } from './esc-stack';
 import { SelectionResolver } from './selection';
 import { SelectionBox } from './selection-box';
 import { Toast } from './toast';
+import { applyChangesTo } from './change-apply';
+import { htmlToText, srcSummary, truncateValue } from './annotation-summary';
+import { makeDraggableByHandle } from './floating-drag';
 
 /* ---- SVG 图标（Lucide 风格，与 preview parts 07/11/26/35 一致） ---- */
 const ICONS = {
@@ -110,106 +111,9 @@ function metaText(number: number, elementType: string, x: number, y: number, isR
   return `#${number} · ${typeLabel} · ${x},${y}px`;
 }
 
-/**
- * 按修改记录把元素样式切到旧值/新值（撤销/重做/删除回退用）。
- * oldValue 是打开面板时的 computed/inline 值，写成 inline 视觉等价。
- * 富文本 DOM 还原载体（cssProp==='richtext'）压轴应用：它整段还原 innerHTML +
- * editEl 自身 text-align，会覆盖 text/内联样式，故须在其余修改之后执行（F21）。
- */
-export function applyChangesTo(target: Element | null, changes: StyleChange[], dir: 'old' | 'new'): void {
-  if (!(target instanceof Element)) return;
-  // SVGElement 与 HTMLElement 同样具备 .style/.textContent/.setAttribute（F19），故按 HTMLElement 处理。
-  const el = target as HTMLElement;
-  const deferred: StyleChange[] = [];
-  for (const c of changes) {
-    if (c.cssProp === RICHTEXT_DOM_CSSPROP) {
-      deferred.push(c);
-      continue;
-    }
-    const value = dir === 'old' ? c.oldValue : c.newValue;
-    if (c.cssProp === 'text') {
-      el.textContent = value;
-    } else if (c.cssProp === 'html') {
-      el.innerHTML = value;
-    } else if (c.cssProp === 'src') {
-      el.setAttribute('src', value);
-    } else {
-      el.style.setProperty(c.cssProp, value);
-    }
-  }
-  for (const c of deferred) {
-    const value = dir === 'old' ? c.oldValue : c.newValue;
-    try {
-      const snap = JSON.parse(value) as RichTextDomSnapshot;
-      el.innerHTML = snap.html;
-      el.style.textAlign = snap.textAlign;
-    } catch {
-      // 损坏快照静默跳过（不乱改页面）
-    }
-  }
-}
 
-/** 卡片调整项展示值截断（文字内容修改可能很长） */
-function truncateValue(value: string, max = 24): string {
-  return value.length > max ? value.slice(0, max) + '…' : value;
-}
 
-/** HTML 片段 → 纯文本（富文本内容修改的卡片展示用，剥离标签只留可读文字） */
-function htmlToText(html: string): string {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  return (div.textContent ?? '').replace(/\s+/g, ' ').trim();
-}
 
-/** 媒体 src 精简展示：dataURL 显示 MIME 摘要，普通 URL 显示文件名/尾段 */
-function srcSummary(src: string): string {
-  if (!src) return '—';
-  if (src.startsWith('data:')) {
-    const mime = src.slice(5, src.indexOf(';') >= 0 ? src.indexOf(';') : src.indexOf(','));
-    return `data:${mime || 'media'}`;
-  }
-  try {
-    const u = new URL(src, location.href);
-    const last = u.pathname.split('/').filter(Boolean).pop();
-    return last || u.hostname;
-  } catch {
-    return src;
-  }
-}
-
-/**
- * 组装一条标注的卡片变更摘要行（纯文本，F10 导出图叠加卡片复用）：
- * 每行 = 「字段标签: 原值 → 新值」，标签/精简值逻辑与 renderCardContent 完全一致
- * （富文本→纯文本、媒体→摘要、超长截断），供 canvas 逐行绘制。
- * F21：跳过富文本 DOM 还原载体（cssProp==='richtext'，非展示项）；
- * 富文本格式修改改由 annotation.richText[] 的预生成 summary 逐行呈现。
- */
-export function composeCardChangeLines(annotation: Annotation): string[] {
-  const lines: string[] = [];
-  for (const change of annotation.changes) {
-    if (change.cssProp === RICHTEXT_DOM_CSSPROP) continue;
-    const def = FIELD_DEFS[change.prop];
-    const isHtml = change.cssProp === 'html';
-    const isText = change.cssProp === 'text';
-    const isSrc = change.cssProp === 'src';
-    const label =
-      isHtml || isText
-        ? t('rt_content_change')
-        : isSrc
-          ? t('replace_media_change')
-          : def
-            ? t(def.labelKey)
-            : change.prop;
-    const fmt = (v: string): string => (isHtml ? htmlToText(v) : isSrc ? srcSummary(v) : v);
-    lines.push(`${label}: ${truncateValue(fmt(change.oldValue))} → ${truncateValue(fmt(change.newValue))}`);
-  }
-  for (const rc of annotation.richText ?? []) {
-    lines.push(rc.summary);
-  }
-  return lines;
-}
-
-/** 打开的卡片记录 */
 interface OpenCard {
   annotation: Annotation;
   el: HTMLElement;
@@ -261,57 +165,6 @@ function animateHeight(el: HTMLElement, mutate: () => void, after?: () => void):
   });
 }
 
-/**
- * 让 panelEl 可通过 handleEl 拖拽（改 absolute left/top）。可复用：
- * 批注面板 / 区域面板顶部把手，以及后续设置面板 .shead、导出面板顶栏（Groups B/D）共用。
- * 落在交互子元素（button/input/textarea/select/a）上的按下不起拖，只从空白抓杆区域起拖。
- * onDrag 每次移动后回调当前 left/top（供调用方记录相对锚点的偏移等）。返回解绑函数。
- */
-export function makeDraggableByHandle(
-  panelEl: HTMLElement,
-  handleEl: HTMLElement,
-  onDrag?: (left: number, top: number) => void
-): () => void {
-  let start: { mx: number; my: number; left: number; top: number } | null = null;
-  let dragged = false;
-  const onDown = (ev: PointerEvent): void => {
-    // 落在交互子元素上的按下交给该控件（不起拖）
-    if ((ev.target as Element | null)?.closest('button, input, textarea, select, a')) return;
-    ev.preventDefault();
-    handleEl.setPointerCapture(ev.pointerId);
-    dragged = false;
-    start = { mx: ev.clientX, my: ev.clientY, left: panelEl.offsetLeft, top: panelEl.offsetTop };
-  };
-  const onMove = (ev: PointerEvent): void => {
-    if (!start) return;
-    // 拖拽真正开始（首次移动）：关闭本面板派生的浮层（下拉/调色盘/语言选择器）——
-    // 拖动面板时它们仍锚在旧位置会错位/悬空（INVARIANT 2）。面板本身非浮层，不受影响。
-    if (!dragged) {
-      dragged = true;
-      closeAllPopovers();
-    }
-    const left = start.left + (ev.clientX - start.mx);
-    const top = start.top + (ev.clientY - start.my);
-    panelEl.style.left = `${left}px`;
-    panelEl.style.top = `${top}px`;
-    onDrag?.(left, top);
-  };
-  const end = (ev: PointerEvent): void => {
-    if (!start) return;
-    start = null;
-    if (handleEl.hasPointerCapture(ev.pointerId)) handleEl.releasePointerCapture(ev.pointerId);
-  };
-  handleEl.addEventListener('pointerdown', onDown);
-  handleEl.addEventListener('pointermove', onMove);
-  handleEl.addEventListener('pointerup', end);
-  handleEl.addEventListener('pointercancel', end);
-  return () => {
-    handleEl.removeEventListener('pointerdown', onDown);
-    handleEl.removeEventListener('pointermove', onMove);
-    handleEl.removeEventListener('pointerup', end);
-    handleEl.removeEventListener('pointercancel', end);
-  };
-}
 
 export class PanelManager {
   private controller: Controller;

@@ -8,7 +8,7 @@ import { Controller } from './controller';
 import { AnnotationStore, RegionData, Annotation } from '../state/annotations';
 import { History } from '../state/history';
 import { Settings } from '../state/settings';
-import { PanelManager } from './panel';
+import type { PanelManager } from './panel';
 import { makeDraggableByHandle } from './floating-drag';
 import { buildSelector, isVisible, findScrollableAncestor } from '../shared/dom-utils';
 import { pushEsc } from './esc-stack';
