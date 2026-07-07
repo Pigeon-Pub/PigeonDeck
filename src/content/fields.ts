@@ -13,6 +13,7 @@ import type { ElementType } from '../shared/dom-utils';
 import { openDropdown, sampleAncestorValues, primaryFontFamily, DropdownItem } from './dropdown';
 import { openColorPicker, parseCssColor, formatCssColor } from './color-picker';
 import { bindPopoverToggle } from './popover';
+import { pickColor } from './eyedropper';
 
 /* ---- 图标（Lucide，与 preview/pigeon-components.js 单一真相源一致） ---- */
 const I = {
@@ -718,10 +719,15 @@ export interface ControlContext {
   /** 浮层挂载容器（panel 层根，下拉/调色盘用） */
   popoverRoot: HTMLElement;
   /**
-   * 打开原生取色器等系统级浮层前挂起批注模式的全页事件拦截，返回恢复函数。
+   * 打开页内取色器等全页浮层前挂起批注模式的全页事件拦截，返回恢复函数。
    * 未提供时控件仍可用，只是不挂起（测试/无拦截宿主）。
    */
   suspendInterception?: () => () => void;
+  /**
+   * 页内取色器覆盖层挂载容器（feedback 层根，覆盖视口，压过面板/覆盖层）。
+   * 未提供时退回 popoverRoot（测试/无 feedback 层宿主）。
+   */
+  feedbackRoot?: HTMLElement;
 }
 
 function stepAdjust(session: FieldsSession, key: string, def: FieldDef, dir: 1 | -1): void {
@@ -781,11 +787,10 @@ function buildNum(session: FieldsSession, key: string, def: FieldDef): HTMLEleme
 }
 
 /**
- * 模块级原生取色器再入守卫（F18b）：全局任一时刻只允许一个 EyeDropper 挂起。
+ * 模块级取色器再入守卫（F18b/F18c）：全局任一时刻只允许一个取色会话挂起。
  * 跨所有取色控件（color/bgColor/borderColor/shadowColor/fill/stroke）与修改栏/高级样式
- * 两个入口共享——故必须是模块作用域：闭包级守卫拦不住「拾取点击穿透落到另一个字段取色
- * 按钮」触发的第二次 open()，而正是那个二次 open() 让原生覆盖层重新进入系统级捕获、整页
- * 乃至浏览器窗口都点不动（真机反馈的冻结 signature）。
+ * 两个入口共享——故必须是模块作用域。截图请求是异步的（后台限速下最多再等 ~600ms），
+ * 覆盖层出现前的重复点击由本守卫拦截，杜绝叠开第二层取色会话。
  */
 let eyedropperPending = false;
 
@@ -827,52 +832,33 @@ function buildColor(session: FieldsSession, key: string, ctx: ControlContext): H
     }
     session.set(key, formatCssColor(parsed));
   });
-  // 原生取色器（EyeDropper API）。Firefox / 旧内核无此 API → 移除取色按钮（优雅降级，不留死按钮）。
-  interface EyeDropperResult {
-    sRGBHex: string;
-  }
-  const EyeDropperCtor = (
-    window as unknown as { EyeDropper?: new () => { open(): Promise<EyeDropperResult> } }
-  ).EyeDropper;
-  if (!EyeDropperCtor) {
+  // 页内取色器（F18c）：彻底弃用原生 EyeDropper API——其系统级输入捕获在部分真机上拾取
+  // 落定后不释放（颜色已变但整屏乃至浏览器窗口都点不动），脚本层无法解救，两轮防御性修复
+  // 均未根治。改为 captureVisibleTab 截一帧 + 页内覆盖层拾取（见 eyedropper.ts）：覆盖层
+  // 是自有 DOM，关闭即消失，不存在系统捕获态。非扩展环境（单测/无 chrome.runtime）→
+  // 移除取色按钮（优雅降级，不留死按钮）。
+  if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
     eye.remove();
   } else {
     eye.addEventListener('click', () => {
-      // F18b 顽固冻结硬加固。真机反馈：「点击取色后颜色会变，然后整页乃至浏览器窗口都点不动」。
-      // 该 signature 只可能来自原生取色器覆盖层再次进入系统级捕获——即第一次拾取落定（颜色已变）后，
-      // 又有第二次 open() 被触发（拾取点击穿透落回取色按钮 / 落到另一字段的取色按钮 / 同步重入等）。
-      // 原生覆盖层无法被脚本自动化，正确性来自两道纯防御硬闸，叠加使「第二个覆盖层」不可能出现：
-      //   1) 模块级再入守卫 eyedropperPending —— 任何时刻只允许一个取色器挂起，二次点击直接返回；
-      //   2) 挂起期间禁用当前面板内所有取色按钮的指针命中（pointer-events:none）—— 穿透点击打不到。
+      // 模块级再入守卫：截图与解码是异步的（后台限速下最多再等 ~600ms），覆盖层出现前的
+      // 重复点击不得叠开第二层取色会话。
       if (eyedropperPending) return;
-      // 同步构造放进 try：极端环境下构造抛出也不得跳过守卫复位（否则 eyedropperPending 永久卡死）。
-      let picker: { open(): Promise<EyeDropperResult> };
-      try {
-        picker = new EyeDropperCtor();
-      } catch {
-        return;
-      }
       eyedropperPending = true;
-      // 禁用本面板内全部取色按钮的指针命中（穿透的拾取点击无法再次触发）；无 .panel 祖先（单测）退回本控件。
-      const scope = (eye.closest('.panel') as HTMLElement | null) ?? box;
-      const eyeButtons = [...scope.querySelectorAll<HTMLButtonElement>('button.eye')];
-      for (const b of eyeButtons) b.style.pointerEvents = 'none';
-      // F18：打开取色器前挂起批注模式的全页事件拦截。否则用户在页面上拾取像素的那次点击会被
-      // panel 的 capture 段 preventDefault/stopPropagation 吞掉，取色器悬挂不返回、页面看似卡死。
+      // F18：挂起批注模式的全页事件拦截。覆盖层上的拾取点击不得被 panel 的 capture 段
+      // preventDefault/stopPropagation 吞掉或误判为「面板外点击」而关闭面板。
       const resume = ctx.suspendInterception?.();
-      // 落定（拾取/取消/异常）后统一复位：解守卫 + 恢复指针命中 + 恢复全页拦截。
-      const cleanup = (): void => {
-        eyedropperPending = false;
-        for (const b of eyeButtons) b.style.pointerEvents = '';
-        resume?.();
-      };
-      picker
-        .open()
-        .then((result) => session.set(key, result.sRGBHex))
-        .catch(() => {
-          /* 用户取消 */
+      pickColor(ctx.feedbackRoot ?? ctx.popoverRoot)
+        .then((hex) => {
+          if (hex) session.set(key, hex); // null = 用户 Esc/右键取消
         })
-        .finally(cleanup);
+        .catch(() => {
+          /* 截图/解码失败（受限页等）：静默放弃本次取色 */
+        })
+        .finally(() => {
+          eyedropperPending = false;
+          resume?.();
+        });
     });
   }
   session.subscribe(key, render);

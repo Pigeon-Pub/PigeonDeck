@@ -155,7 +155,7 @@ function inject(settings: Settings): void {
     onPinClick: (a) => hooks.onPinClick?.(a),
     onPinContextMenu: (a, pinEl) => hooks.onPinContextMenu?.(a, pinEl),
   });
-  const panelManager = new PanelManager(controller, store, overlay, panelLayer, settings, history, toast, overlayLayer);
+  const panelManager = new PanelManager(controller, store, overlay, panelLayer, settings, history, toast, overlayLayer, feedbackLayer);
   hooks.onPinClick = panelManager.togglePinCard;
   hooks.onPinContextMenu = panelManager.openPinMenu;
   // F6：hover 跳过批注模式已选中的元素（Overlay 在页面 hover 时查询它）

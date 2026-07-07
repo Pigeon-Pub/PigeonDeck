@@ -351,83 +351,53 @@ describe('shadow — 阴影档位与无阴影识别', () => {
   });
 });
 
-describe('color — 取色器（F18）', () => {
-  it('无 EyeDropper API 时移除取色按钮（优雅降级）', () => {
-    // jsdom 默认无 window.EyeDropper
-    expect('EyeDropper' in window).toBe(false);
+describe('color — 页内取色器（F18c）', () => {
+  it('无 chrome.runtime 时移除取色按钮（优雅降级）', () => {
+    // jsdom 默认无 chrome（非扩展环境）→ 取色不可用，移除按钮不留死按钮
+    delete (globalThis as unknown as { chrome?: unknown }).chrome;
     const box = createControl(new FieldsSession(target), 'color', ctx);
     expect(box.querySelector('.eye')).toBeNull();
     expect(box.querySelector('.sw')).toBeTruthy(); // 色块仍在
   });
 
-  it('取色前挂起页面拦截、promise 落定后恢复，并写入拾取色', async () => {
+  it('取色前挂起页面拦截 + 请求截图；挂起期再次点击被再入守卫拦截；落定后恢复', async () => {
     let resumed = false;
-    const suspend = (): (() => void) => () => {
+    const suspendSpy = vi.fn(() => () => {
       resumed = true;
-    };
-    const suspendSpy = vi.fn(suspend);
+    });
+    // 受控截图请求：手动 reject 收尾，避免 pickColor 挂起污染模块级守卫
+    let rejectCapture: (e: unknown) => void = () => {};
+    const sendMessage = vi.fn(
+      () => new Promise((_res, rej) => { rejectCapture = rej; })
+    );
+    (globalThis as unknown as { chrome: unknown }).chrome = { runtime: { sendMessage } };
     const eyeCtx: ControlContext = { popoverRoot: ctx.popoverRoot, suspendInterception: suspendSpy };
-
-    (window as unknown as { EyeDropper: unknown }).EyeDropper = class {
-      open(): Promise<{ sRGBHex: string }> {
-        return Promise.resolve({ sRGBHex: '#abcdef' });
-      }
-    };
     try {
-      const session = new FieldsSession(target);
-      const box = createControl(session, 'color', eyeCtx);
+      const box = createControl(new FieldsSession(target), 'color', eyeCtx);
       const eye = box.querySelector<HTMLButtonElement>('.eye')!;
       expect(eye).toBeTruthy();
 
       eye.click();
       expect(suspendSpy).toHaveBeenCalledTimes(1); // 打开前已挂起
+      expect(sendMessage).toHaveBeenCalledTimes(1); // 请求了一帧截图
       expect(resumed).toBe(false);
 
-      await new Promise((r) => setTimeout(r, 0)); // 冲刷 open() 的 then/catch/finally 微任务链
+      eye.click(); // 挂起期再次点击：模块级守卫拦截，不再请求第二帧
+      expect(sendMessage).toHaveBeenCalledTimes(1);
 
-      expect(resumed).toBe(true); // 落定后恢复拦截
-      expect(session.get('color')).toBe('#abcdef');
-    } finally {
-      delete (window as unknown as { EyeDropper?: unknown }).EyeDropper;
-    }
-  });
-
-  it('再入守卫：取色器挂起期间再次点击不再新建第二个 EyeDropper（杜绝覆盖层二次捕获冻结）', async () => {
-    // 真机冻结 signature：颜色已变（首个 open 已落定）后整页/浏览器窗口点不动 = 第二个原生
-    // 覆盖层重新进入系统级捕获。模块级守卫使任一时刻只允许一个取色器挂起 → 第二次 open 不可能发生。
-    let created = 0;
-    let resolveOpen: ((r: { sRGBHex: string }) => void) | null = null;
-    (window as unknown as { EyeDropper: unknown }).EyeDropper = class {
-      constructor() {
-        created++;
-      }
-      open(): Promise<{ sRGBHex: string }> {
-        // 永不自行落定：模拟原生覆盖层挂起态；由测试显式 resolve 收尾（避免污染其余用例）
-        return new Promise<{ sRGBHex: string }>((res) => {
-          resolveOpen = res;
-        });
-      }
-    };
-    try {
-      const session = new FieldsSession(target);
-      const box = createControl(session, 'color', ctx);
-      const eye = box.querySelector<HTMLButtonElement>('.eye')!;
-
-      eye.click(); // 首个取色器：挂起
-      eye.click(); // 挂起期间再次点击：守卫拦截，不得新建/打开第二个
-      expect(created).toBe(1);
-
-      // 收尾：落定首个取色器 → finally 复位守卫（否则模块级挂起态会污染后续用例）
-      resolveOpen!({ sRGBHex: '#123456' });
+      // 收尾：截图失败 → catch → finally 复位守卫 + 恢复拦截（不污染后续用例）
+      rejectCapture(new Error('test cleanup'));
       await new Promise((r) => setTimeout(r, 0));
+      expect(resumed).toBe(true);
 
-      // 复位后可再次正常打开
+      // 复位后可再次触发
       eye.click();
-      expect(created).toBe(2);
-      resolveOpen!({ sRGBHex: '#654321' });
+      expect(sendMessage).toHaveBeenCalledTimes(2);
+      rejectCapture(new Error('test cleanup'));
       await new Promise((r) => setTimeout(r, 0));
     } finally {
-      delete (window as unknown as { EyeDropper?: unknown }).EyeDropper;
+      delete (globalThis as unknown as { chrome?: unknown }).chrome;
     }
   });
 });
+

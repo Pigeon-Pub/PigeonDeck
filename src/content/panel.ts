@@ -322,6 +322,7 @@ export class PanelManager {
   private history: History;
   private shadowHost: Element;
   private toast: Toast;
+  private feedbackLayer: HTMLElement; // feedback 层根（页内取色器覆盖层挂载点）
   private resolver: SelectionResolver | null = null;
   /** 区域批注编辑委派（main.ts 注入 → RegionSelectManager.editRegion）。 */
   private regionEditor: ((annotation: Annotation) => void) | null = null;
@@ -387,7 +388,8 @@ export class PanelManager {
     settings: Settings,
     history: History,
     toast: Toast,
-    overlayLayer: HTMLElement
+    overlayLayer: HTMLElement,
+    feedbackLayer: HTMLElement
   ) {
     this.controller = controller;
     this.store = store;
@@ -396,6 +398,7 @@ export class PanelManager {
     this.settings = settings;
     this.history = history;
     this.toast = toast;
+    this.feedbackLayer = feedbackLayer;
     this.shadowHost = (panelLayer.getRootNode() as ShadowRoot).host;
 
     // 选中框挂在 overlay 层（与移动模式一致；句柄 pointer-events:auto 可拖，边框穿透）。
@@ -625,9 +628,9 @@ export class PanelManager {
   }
 
   /**
-   * 挂起批注模式的全页事件拦截（打开原生取色器等系统级浮层前调用），返回恢复函数。
-   * 挂起期间 capture 段 mousedown/click/contextmenu 全部放行，避免用户在页面上拾取像素的点击被
-   * preventDefault/stopPropagation 吞掉导致取色器悬挂、页面看似卡死（F18）。
+   * 挂起批注模式的全页事件拦截（打开页内取色器覆盖层等全页浮层前调用），返回恢复函数。
+   * 挂起期间 capture 段 mousedown/click/contextmenu 全部放行，避免用户在覆盖层上拾取像素的
+   * 点击被 preventDefault/stopPropagation 吞掉或被误判为「面板外点击」而关闭面板（F18）。
    */
   private suspendInterception(): () => void {
     this.suspended = true;
@@ -701,6 +704,7 @@ export class PanelManager {
       const ctx: ControlContext = {
         popoverRoot: this.root,
         suspendInterception: () => this.suspendInterception(),
+        feedbackRoot: this.feedbackLayer,
       };
       // 建议7：修改栏卡片可隐藏（settings.showModbar=false）→ 仅保留说明 + 高级样式
       const modbox = this.settings.showModbar

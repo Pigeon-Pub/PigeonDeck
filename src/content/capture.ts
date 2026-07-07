@@ -730,8 +730,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** 加载 dataUrl 为 HTMLImageElement */
-function loadImage(dataUrl: string): Promise<HTMLImageElement> {
+/** 加载 dataUrl 为 HTMLImageElement（eyedropper.ts 复用） */
+export function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
@@ -740,8 +740,8 @@ function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
-/** 向 background service worker 发送截图请求 */
-async function requestCapture(): Promise<string> {
+/** 向 background service worker 发送截图请求（eyedropper.ts 复用） */
+export async function requestCapture(): Promise<string> {
   const resp = (await chrome.runtime.sendMessage({ type: 'pd-capture' })) as
     | { dataUrl?: string; error?: string }
     | undefined;

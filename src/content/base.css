@@ -1611,6 +1611,34 @@
 }
 .pd-lightbox .lb-open:hover { background: #fff; }
 
+/* 页内取色器（feedback 层，覆盖视口；替换原生 EyeDropper，F18c） */
+.pd-eyedropper {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  cursor: crosshair;
+}
+.pd-eyedropper .shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.pd-eyedropper .loupe {
+  position: fixed;
+  pointer-events: none;
+  padding: 4px;
+  background: rgba(20, 16, 10, 0.82);
+  border-radius: 8px;
+  box-shadow: var(--sh-up);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.pd-eyedropper .loupe canvas { display: block; border-radius: 4px; }
+.pd-eyedropper .loupe .hex { font-size: 11px; line-height: 1; color: #fff; }
+
 /* ============================================================
    阶段 10：清空确认弹层
    来源：preview/parts/14-clear-confirm.html（.confirm + 清空按钮危险态）
