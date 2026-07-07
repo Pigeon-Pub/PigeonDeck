@@ -1619,10 +1619,11 @@
   cursor: crosshair;
 }
 .pd-eyedropper .shot {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  object-fit: fill;
 }
 .pd-eyedropper .loupe {
   position: fixed;
