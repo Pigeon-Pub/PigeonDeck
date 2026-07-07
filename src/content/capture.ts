@@ -14,136 +14,25 @@ import { makeDraggableByHandle } from './floating-drag';
 import { composeCardChangeLines } from './annotation-summary';
 import { pushEsc } from './esc-stack';
 import { loadImage, requestCapture } from './capture-client';
+import {
+  computeCaptureRange,
+  MAX_CAPTURE_HEIGHT,
+  planScreens,
+  type CaptureRange,
+  type DocRect,
+} from './capture-range';
+import {
+  layoutOverlay,
+  MARK_INSET,
+  PIN_DIAMETER,
+  PIN_OFFSET,
+  type OverlayLayout,
+} from './capture-overlay-layout';
 
-// ============================================================
-// 纯函数 + 数据类型（可单测）
-// ============================================================
-
-/** 文档坐标矩形（x/y 相对文档左上角，px） */
-export interface DocRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-/** 计算出的截图范围（文档坐标） */
-export interface CaptureRange {
-  /** 范围顶端 y（文档坐标，已 clamp ≥0） */
-  top: number;
-  /** 范围高度（px，已 clamp ≤maxHeight） */
-  height: number;
-  /** 范围宽度（px，通常等于文档宽或视口宽） */
-  width: number;
-  /** 是否因 maxHeight 截断 */
-  truncated: boolean;
-}
-
-/** 单张截图拼接的最大高度（超出截断） */
-export const MAX_CAPTURE_HEIGHT = 14000;
-
-/**
- * 纯函数：由文档坐标矩形列表计算长图截图范围。
- * @param rects     所有标注元素的文档坐标矩形（空数组时返回 height:0）
- * @param padding   上下额外留白（px）
- * @param maxHeight 最大允许高度（默认 MAX_CAPTURE_HEIGHT）
- * @param docWidth  文档/视口宽度（由调用方传入，保持函数纯净）
- */
-export function computeCaptureRange(
-  rects: DocRect[],
-  padding: number,
-  maxHeight: number,
-  docWidth: number
-): CaptureRange {
-  if (rects.length === 0) {
-    return { top: 0, height: 0, width: docWidth, truncated: false };
-  }
-  const minY = Math.min(...rects.map((r) => r.y)) - padding;
-  const maxY = Math.max(...rects.map((r) => r.y + r.h)) + padding;
-  const top = Math.max(0, minY);
-  let height = Math.max(0, maxY - top);
-  let truncated = false;
-  if (height > maxHeight) {
-    height = maxHeight;
-    truncated = true;
-  }
-  return { top, height, width: docWidth, truncated };
-}
-
-/**
- * 纯函数：由截图范围和视口高度计算需要滚动到的 scrollY 序列。
- * 末屏 scrollY 对齐范围底（使最后一张截图的底部恰好覆盖 rangeBottom）。
- * @param rangeTop   截图范围顶端（文档 Y）
- * @param rangeHeight 截图范围高度
- * @param viewportH  当前视口高度
- * @returns scrollY 数组（从上到下）
- */
-export function planScreens(
-  rangeTop: number,
-  rangeHeight: number,
-  viewportH: number
-): number[] {
-  if (rangeHeight <= 0 || viewportH <= 0) return [];
-  if (rangeHeight <= viewportH) {
-    // 单屏：滚到范围顶部
-    return [Math.max(0, rangeTop)];
-  }
-  const rangeBottom = rangeTop + rangeHeight;
-  const screens: number[] = [];
-  let y = rangeTop;
-  // 逐屏向下，直到剩余部分不足一屏
-  while (y + viewportH < rangeBottom) {
-    screens.push(y);
-    y += viewportH;
-  }
-  // 末屏：对齐范围底
-  const lastY = Math.max(0, rangeBottom - viewportH);
-  if (screens.length === 0 || screens[screens.length - 1] !== lastY) {
-    screens.push(lastY);
-  }
-  return screens;
-}
-
-// ============================================================
-// 叠加绘制坐标（阶段 9b，纯函数可单测）
-// ============================================================
-
-/** 标注框相对目标元素外扩（overlay.ts MARK_INSET） */
-export const MARK_INSET = 3;
-/** 位号圆相对标注框左上角偏移（overlay.ts PIN_OFFSET） */
-export const PIN_OFFSET = 11;
-/** 位号圆直径（pigeonlib .pd-pin 22px） */
-export const PIN_DIAMETER = 22;
-
-/** 叠加元素在拼接 canvas 上的布局（canvas 坐标 = CSS px） */
-export interface OverlayLayout {
-  /** 标注框/区域框矩形（canvas 坐标） */
-  box: { x: number; y: number; w: number; h: number };
-  /** 位号圆左上角 + 直径（canvas 坐标） */
-  pin: { x: number; y: number; d: number };
-}
-
-/**
- * 纯函数：把标注的文档坐标矩形换算到拼接 canvas 坐标。
- * canvas 与截图同为 CSS px，坐标 = 文档坐标 − range.top（Y 方向）。
- * @param docRect 文档坐标矩形
- * @param range   截图范围（提供 top 偏移）
- * @param inset   框相对元素外扩量（元素=MARK_INSET，区域=0）
- */
-export function layoutOverlay(
-  docRect: DocRect,
-  range: CaptureRange,
-  inset: number
-): OverlayLayout {
-  const bx = docRect.x - inset;
-  const by = docRect.y - range.top - inset;
-  const bw = docRect.w + inset * 2;
-  const bh = docRect.h + inset * 2;
-  return {
-    box: { x: bx, y: by, w: bw, h: bh },
-    pin: { x: bx - PIN_OFFSET, y: by - PIN_OFFSET, d: PIN_DIAMETER },
-  };
-}
+export { computeCaptureRange, MAX_CAPTURE_HEIGHT, planScreens } from './capture-range';
+export type { CaptureRange, DocRect } from './capture-range';
+export { layoutOverlay, MARK_INSET, PIN_DIAMETER, PIN_OFFSET } from './capture-overlay-layout';
+export type { OverlayLayout } from './capture-overlay-layout';
 
 // ============================================================
 // 展开批注卡片布局（阶段 F10，纯函数可单测）
