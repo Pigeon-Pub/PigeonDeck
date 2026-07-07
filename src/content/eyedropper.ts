@@ -8,7 +8,7 @@
    ============================================================ */
 
 import { pushEsc } from './esc-stack';
-import { loadImage, requestCapture } from './capture';
+import { loadImage, requestCapture } from './capture-client';
 
 /** 放大镜采样格数（奇数，中心格 = 即将拾取的像素） */
 const LOUPE_CELLS = 11;

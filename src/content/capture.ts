@@ -13,6 +13,7 @@ import { t } from './i18n';
 import { makeDraggableByHandle } from './floating-drag';
 import { composeCardChangeLines } from './annotation-summary';
 import { pushEsc } from './esc-stack';
+import { loadImage, requestCapture } from './capture-client';
 
 // ============================================================
 // 纯函数 + 数据类型（可单测）
@@ -732,25 +733,8 @@ function sleep(ms: number): Promise<void> {
 }
 
 /** 加载 dataUrl 为 HTMLImageElement（eyedropper.ts 复用） */
-export function loadImage(dataUrl: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = dataUrl;
-  });
-}
 
 /** 向 background service worker 发送截图请求（eyedropper.ts 复用） */
-export async function requestCapture(): Promise<string> {
-  const resp = (await chrome.runtime.sendMessage({ type: 'pd-capture' })) as
-    | { dataUrl?: string; error?: string }
-    | undefined;
-  if (!resp?.dataUrl) {
-    throw new Error(resp?.error ?? 'captureVisibleTab returned no dataUrl');
-  }
-  return resp.dataUrl;
-}
 
 /**
  * 拼接长图截图（有 DOM + chrome 依赖，不单测）。
