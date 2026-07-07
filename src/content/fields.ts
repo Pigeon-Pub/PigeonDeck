@@ -11,9 +11,19 @@ import { t } from './i18n';
 import type { StyleChange } from '../state/annotations';
 import type { ElementType } from '../shared/dom-utils';
 import { openDropdown, sampleAncestorValues, primaryFontFamily, DropdownItem } from './dropdown';
-import { openColorPicker, parseCssColor, formatCssColor } from './color-picker';
+import { formatCssColor, openColorPicker, parseCssColor } from './color-picker';
 import { bindPopoverToggle } from './popover';
 import { pickColor } from './eyedropper';
+import {
+  FONT_LIST,
+  WEIGHTS,
+  colorOf,
+  isShadowlessValue,
+  normalizeWeight,
+  numOf,
+  shadowColorOf,
+  shadowCss,
+} from './field-values';
 
 /* ---- 图标（Lucide，与 preview/pigeon-components.js 单一真相源一致） ---- */
 const I = {
@@ -95,18 +105,6 @@ function computed(el: HTMLElement): CSSStyleDeclaration {
   return el.ownerDocument.defaultView!.getComputedStyle(el);
 }
 
-function numOf(value: string, fallback: number, decimals = 0): string {
-  const n = parseFloat(value);
-  if (Number.isNaN(n)) return String(fallback);
-  const f = Math.pow(10, decimals);
-  return String(Math.round(n * f) / f);
-}
-
-function colorOf(value: string, fallback: string): string {
-  const parsed = parseCssColor(value);
-  return parsed ? formatCssColor(parsed) : fallback;
-}
-
 function optionLabel(opt: SelectOption): string {
   if (opt.label !== undefined) return opt.label;
   if (opt.labelKey) return t(opt.labelKey);
@@ -146,49 +144,6 @@ function colorField(labelKey: string, cssProp: string, readRaw: (cs: CSSStyleDec
     cssValue: (v) => colorOf(v, fallback),
   };
 }
-
-/* ---- 阴影档位 ---- */
-
-const SHADOW_GEOM: Record<string, string> = {
-  light: '0 1px 3px',
-  mid: '0 4px 10px',
-  heavy: '0 10px 24px',
-};
-
-function shadowCss(level: string, color: string): string {
-  const geom = SHADOW_GEOM[level];
-  return geom ? `${geom} ${color}` : 'none';
-}
-
-/**
- * 判断 computed box-shadow 是否等价「无阴影」：
- * 空/none，或所有偏移·模糊·扩散均为 0，或阴影色全透明（如 Tailwind reset 的
- * `0 0 #0000` → `rgba(0, 0, 0, 0) 0px 0px 0px 0px`）。
- */
-function isShadowlessValue(boxShadow: string): boolean {
-  const bs = (boxShadow ?? '').trim();
-  if (!bs || bs === 'none') return true;
-  const colorMatch = bs.match(/rgba?\([^)]*\)/i);
-  if (colorMatch) {
-    const parsed = parseCssColor(colorMatch[0]);
-    if (parsed && parsed.a === 0) return true;
-  }
-  const nums = bs.match(/-?[\d.]+px/g);
-  if (nums && nums.length > 0 && nums.every((n) => parseFloat(n) === 0)) return true;
-  return false;
-}
-
-/** 从 computed box-shadow 提取颜色（提不到用默认阴影色） */
-function shadowColorOf(boxShadow: string): string {
-  const m = boxShadow.match(/rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}/);
-  return m ? colorOf(m[0], 'rgba(60, 46, 18, 0.22)') : 'rgba(60, 46, 18, 0.22)';
-}
-
-/* ---- 选项集 ---- */
-
-const FONT_LIST = ['Inter', 'Roboto', 'Helvetica Neue', 'Arial', 'Georgia', 'Times New Roman', 'Menlo'];
-const WEIGHTS = ['100', '200', '300', '400', '500', '600', '700', '800', '900'];
-
 function fontOptions(): SelectOption[] {
   return [
     { value: 'system-ui', labelKey: 'opt_font_system' },
@@ -200,11 +155,7 @@ function weightOptions(): SelectOption[] {
   return WEIGHTS.map((w) => ({ value: w, labelKey: `opt_w${w}` }));
 }
 
-function normalizeWeight(value: string): string {
-  if (value === 'normal') return '400';
-  if (value === 'bold') return '700';
-  return numOf(value, 400);
-}
+
 
 /* ---- 注册表（全集） ---- */
 
