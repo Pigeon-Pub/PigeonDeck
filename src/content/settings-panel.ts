@@ -17,7 +17,7 @@ import { t, getLocale, setLocale } from './i18n';
 import { openLanguagePicker } from './language-picker';
 import { openDropdown } from './dropdown';
 import { bindPopoverToggle, PopoverHandle } from './popover';
-import { makeDraggableByHandle } from './panel';
+import { makeDraggableByHandle } from './floating-drag';
 import { BCP47_LANGUAGES } from '../shared/languages';
 import { LOGO_SVG } from './logo';
 import { formatCombo, setShortcutRecording } from './shortcuts';

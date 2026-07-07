@@ -12,7 +12,7 @@ import { History } from '../state/history';
 import { Toast } from './toast';
 import { t } from './i18n';
 import { mountPopover, PopoverHandle } from './popover';
-import { applyChangesTo } from './panel';
+import { applyChangesTo } from './change-apply';
 
 export class ClearManager {
   private controller: Controller;

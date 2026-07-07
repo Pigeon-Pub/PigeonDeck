@@ -5,13 +5,17 @@
    而是路由回可编辑的区域面板，且保存更新原标注而非新建。
    ============================================================ */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { RegionSelectManager } from './region-select';
 import { Controller } from './controller';
 import { AnnotationStore, Annotation } from '../state/annotations';
 import { History } from '../state/history';
 import { DEFAULT_SETTINGS } from '../state/settings';
 import type { PanelManager } from './panel';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function setup(): { mgr: RegionSelectManager; store: AnnotationStore; panelLayer: HTMLElement } {
   document.body.innerHTML = '';
@@ -92,5 +96,25 @@ describe('RegionSelectManager.editRegion — 区域批注编辑（F16）', () =>
     });
     mgr.editRegion(store.getAll()[0]);
     expect(panelLayer.querySelector('[data-testid="pd-region-panel"]')).toBeNull();
+  });
+
+  it('反复打开关闭区域面板时外部点击监听成对解绑', () => {
+    const { mgr, store, panelLayer } = setup();
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    addRegion(store, '监听清理');
+    const annotation = store.getAll()[0];
+
+    for (let i = 0; i < 3; i++) {
+      mgr.editRegion(annotation);
+      expect(panelLayer.querySelector('[data-testid="pd-region-panel"]')).not.toBeNull();
+      mgr.closeRegionPanel();
+      expect(panelLayer.querySelector('[data-testid="pd-region-panel"]')).toBeNull();
+    }
+
+    const added = addSpy.mock.calls.filter(([type]) => type === 'mousedown');
+    const removed = removeSpy.mock.calls.filter(([type]) => type === 'mousedown');
+    expect(added).toHaveLength(3);
+    expect(removed).toHaveLength(3);
   });
 });

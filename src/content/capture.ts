@@ -10,7 +10,8 @@ import { AnnotationStore, Annotation } from '../state/annotations';
 import { Settings } from '../state/settings';
 import { Toast } from './toast';
 import { t } from './i18n';
-import { makeDraggableByHandle, composeCardChangeLines } from './panel';
+import { makeDraggableByHandle } from './floating-drag';
+import { composeCardChangeLines } from './annotation-summary';
 import { pushEsc } from './esc-stack';
 
 // ============================================================

@@ -255,3 +255,46 @@ test('⑤ 关闭按钮关闭复制文本弹窗（F9 顶栏 X）', async () => {
 
   await page.close();
 });
+
+test('⑥ 点击复制文本入口只打开面板，不自动复制或下载', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await createAnnotation(page, '#btn-primary', 'manual export only');
+
+  const sentinel = `pd-sentinel-${Date.now()}`;
+  let canAssertClipboard = clipboardGranted;
+  if (canAssertClipboard) {
+    try {
+      await page.evaluate((text) => navigator.clipboard.writeText(text), sentinel);
+    } catch {
+      canAssertClipboard = false;
+    }
+  }
+
+  const downloadStarted = page
+    .waitForEvent('download', { timeout: 1000 })
+    .then(() => true)
+    .catch(() => false);
+
+  await clickShadowEl(page, 'pd-btn-copy-text');
+  await waitShadowVisible(page, '[data-testid="pd-output"]');
+
+  const bodyBeforeCopy = await readOutputBody(page);
+  expect(bodyBeforeCopy).toContain('[Page Context]');
+  expect(bodyBeforeCopy).toContain('[Operations]');
+  expect(bodyBeforeCopy).toContain('manual export only');
+  expect(await downloadStarted).toBe(false);
+
+  if (canAssertClipboard) {
+    await expect.poll(() => readClipboard(page), { timeout: 3000 }).toBe(sentinel);
+  }
+
+  await clickShadowEl(page, 'pd-output-copy');
+  await expect.poll(() => readOutputBody(page), { timeout: 3000 }).toBe(bodyBeforeCopy);
+
+  if (canAssertClipboard) {
+    await expect.poll(() => readClipboard(page), { timeout: 5000 }).toContain('manual export only');
+  }
+
+  await page.close();
+});

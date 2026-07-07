@@ -106,6 +106,13 @@ async function waitForImagePanel(page: Page, timeoutMs: number): Promise<boolean
   return Promise.race([panelWait, timer]);
 }
 
+function shadowExists(page: Page, selector: string): Promise<boolean> {
+  return page.evaluate((sel: string) => {
+    const host = document.getElementById('pd-host');
+    return !!host?.shadowRoot?.querySelector(sel);
+  }, selector);
+}
+
 // ============================================================
 // 用例
 // ============================================================
@@ -212,4 +219,42 @@ test('③ 已有弹窗时点外部 → 弹窗关闭', async () => {
     .toBe(false);
 
   await page.close();
+});
+
+test('④ 图片灯箱打开时 Esc 先关灯箱，再关图片导出面板', async () => {
+  test.setTimeout(120000);
+
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await createAnnotation(page, '#btn-primary', 'lightbox esc layering');
+
+  await clickShadowEl(page, 'pd-btn-copy-image');
+
+  const panelAppeared = await waitForImagePanel(page, 12000);
+
+  if (!panelAppeared) {
+    console.warn(
+      '[copy-image.spec] DEVIATION ④: skipped Esc layering E2E — captureVisibleTab ' +
+        'did not produce pd-image-output in this Playwright environment. The stable unit ' +
+        'coverage in capture.test.ts protects the same lightbox-vs-panel Esc ordering.'
+    );
+    await page.close().catch(() => {});
+    return;
+  }
+
+  await clickShadowEl(page, 'pd-image-shot');
+  await waitShadowVisible(page, '[data-testid="pd-image-lightbox"]');
+
+  await page.keyboard.press('Escape');
+  await expect
+    .poll(() => shadowExists(page, '[data-testid="pd-image-lightbox"]'), { timeout: 5000 })
+    .toBe(false);
+  expect(await shadowExists(page, '[data-testid="pd-image-output"]')).toBe(true);
+
+  await page.keyboard.press('Escape');
+  await expect
+    .poll(() => shadowExists(page, '[data-testid="pd-image-output"]'), { timeout: 5000 })
+    .toBe(false);
+
+  await page.close().catch(() => {});
 });

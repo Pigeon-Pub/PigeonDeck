@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /* ============================================================
    capture.test.ts — computeCaptureRange / planScreens / layoutOverlay 纯函数单测
    ============================================================ */
@@ -9,6 +10,7 @@ import {
   layoutOverlay,
   computeCardLayout,
   wrapText,
+  CopyImageManager,
   DocRect,
   MAX_CAPTURE_HEIGHT,
   MARK_INSET,
@@ -20,9 +22,63 @@ import {
   CARD_MAX_WIDTH,
   CARD_MIN_WIDTH,
 } from './capture';
+import { Controller } from './controller';
+import { initEscStack } from './esc-stack';
+import { Toast } from './toast';
+import { AnnotationStore } from '../state/annotations';
+import { DEFAULT_SETTINGS } from '../state/settings';
 
 /** 测量桩：每字符固定 7px（忽略字体），使换行/尺寸可确定性断言 */
 const measure7: MeasureFn = (text) => Array.from(text).length * 7;
+
+type CopyImageInternals = {
+  currentCanvas: HTMLCanvasElement | null;
+  openPanel(canvas: HTMLCanvasElement): void;
+  close(): void;
+};
+
+function fakeCanvas(): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  Object.defineProperty(canvas, 'toDataURL', {
+    value: () =>
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADElEQVR42mP8z8AARQABywH+q5QhAAAAAElFTkSuQmCC',
+  });
+  Object.defineProperty(canvas, 'toBlob', {
+    value: (cb: BlobCallback) => cb(new Blob(['x'], { type: 'image/png' })),
+  });
+  return canvas;
+}
+
+function setupCopyImagePanel(): {
+  manager: CopyImageInternals;
+  panelLayer: HTMLElement;
+  feedbackLayer: HTMLElement;
+} {
+  initEscStack();
+  document.body.innerHTML = '';
+  const panelLayer = document.createElement('div');
+  const feedbackLayer = document.createElement('div');
+  document.body.append(panelLayer, feedbackLayer);
+
+  const manager = new CopyImageManager({
+    controller: new Controller(),
+    store: new AnnotationStore(),
+    settings: { ...DEFAULT_SETTINGS },
+    toast: new Toast(feedbackLayer),
+    panelLayer,
+    feedbackLayer,
+  }) as unknown as CopyImageInternals;
+  const canvas = fakeCanvas();
+  manager.currentCanvas = canvas;
+  manager.openPanel(canvas);
+  return { manager, panelLayer, feedbackLayer };
+}
+
+function dispatchEsc(): KeyboardEvent {
+  const ev = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true, bubbles: true });
+  window.dispatchEvent(ev);
+  return ev;
+}
 
 // ============================================================
 // computeCaptureRange
@@ -181,6 +237,30 @@ describe('layoutOverlay', () => {
     const docRect: DocRect = { x: 10, y: 20, w: 40, h: 40 };
     const layout = layoutOverlay(docRect, zeroRange, 0);
     expect(layout.box).toEqual({ x: 10, y: 20, w: 40, h: 40 });
+  });
+});
+
+// ============================================================
+// CopyImageManager Esc 分层（F18c：灯箱先于面板关闭）
+// ============================================================
+
+describe('CopyImageManager — 图片灯箱 Esc 分层', () => {
+  it('第一次 Esc 只关灯箱，第二次 Esc 才关图片导出面板', () => {
+    const { manager, panelLayer, feedbackLayer } = setupCopyImagePanel();
+
+    const shot = panelLayer.querySelector<HTMLImageElement>('[data-testid="pd-image-shot"]')!;
+    shot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(feedbackLayer.querySelector('[data-testid="pd-image-lightbox"]')).not.toBeNull();
+
+    const first = dispatchEsc();
+    expect(first.defaultPrevented).toBe(true);
+    expect(feedbackLayer.querySelector('[data-testid="pd-image-lightbox"]')).toBeNull();
+    expect(panelLayer.querySelector('[data-testid="pd-image-output"]')).not.toBeNull();
+
+    dispatchEsc();
+    expect(panelLayer.querySelector('[data-testid="pd-image-output"]')).toBeNull();
+
+    manager.close();
   });
 });
 

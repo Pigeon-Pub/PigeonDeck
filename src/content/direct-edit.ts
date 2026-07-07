@@ -24,7 +24,8 @@ import {
 import { History } from '../state/history';
 import { Overlay } from './overlay';
 import { Settings } from '../state/settings';
-import { PanelManager, applyChangesTo } from './panel';
+import { PanelManager } from './panel';
+import { applyChangesTo } from './change-apply';
 import { RichTextBar } from './inline-richtext';
 import { openReplaceMedia } from './replace-media';
 import { buildSelector, classifyElement, getElementSummary } from '../shared/dom-utils';

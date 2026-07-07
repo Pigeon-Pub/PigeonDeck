@@ -15,7 +15,7 @@ import { getLocale, t } from './i18n';
 import { buildOperations, renderTaskList, PageContext } from './format';
 import { PopoverHandle } from './popover';
 import { openDropdown } from './dropdown';
-import { makeDraggableByHandle } from './panel';
+import { makeDraggableByHandle } from './floating-drag';
 
 /** 结果弹窗宽度（part 37 .opanel） */
 const PANEL_WIDTH = 452;

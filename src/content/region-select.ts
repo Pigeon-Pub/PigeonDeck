@@ -8,7 +8,8 @@ import { Controller } from './controller';
 import { AnnotationStore, RegionData, Annotation } from '../state/annotations';
 import { History } from '../state/history';
 import { Settings } from '../state/settings';
-import { PanelManager, makeDraggableByHandle } from './panel';
+import { PanelManager } from './panel';
+import { makeDraggableByHandle } from './floating-drag';
 import { buildSelector, isVisible, findScrollableAncestor } from '../shared/dom-utils';
 import { pushEsc } from './esc-stack';
 import { t } from './i18n';
@@ -59,6 +60,7 @@ export class RegionSelectManager {
   private regionPanelEl: HTMLElement | null = null;
   /** 区域面板打开期间压入 Esc 栈的弹出函数（F8b：Esc 取消这次区域批注）。 */
   private escPop: (() => void) | undefined;
+  private outsidePop: (() => void) | undefined;
 
   private unsubscribeController: () => void;
   private active = false;
@@ -408,8 +410,12 @@ export class RegionSelectManager {
     const onOutside = (ev: MouseEvent): void => {
       const path = ev.composedPath();
       if (path.includes(panel) || path.includes(this.shadowHost as EventTarget)) return;
-      window.removeEventListener('mousedown', onOutside, true);
       this.closeRegionPanel();
+    };
+    this.outsidePop?.();
+    this.outsidePop = () => {
+      window.removeEventListener('mousedown', onOutside, true);
+      this.outsidePop = undefined;
     };
     window.addEventListener('mousedown', onOutside, true);
 
@@ -476,6 +482,7 @@ export class RegionSelectManager {
   }
 
   closeRegionPanel(): void {
+    this.outsidePop?.();
     this.escPop?.();
     this.escPop = undefined;
     if (this.regionPanelEl) {

@@ -474,6 +474,7 @@ export class PanelManager {
     const inSelbox = path.some(
       (n) => n instanceof HTMLElement && n.classList.contains('pd-selbox')
     );
+    const inOwnUi = this.isOwnUi(ev);
 
     // 菜单外点击 → 关菜单
     if (this.menuEl && !path.includes(this.menuEl)) {
@@ -481,11 +482,11 @@ export class PanelManager {
     }
 
     // 面板外点击 → 关面板（放弃未保存内容，回滚本次会话预览）
-    if (this.panelEl && !path.includes(this.panelEl) && !inPopover && !inSelbox) {
+    if (this.panelEl && !path.includes(this.panelEl) && !inPopover && !inSelbox && !inOwnUi) {
       this.closePanel();
     }
 
-    if (!this.active || this.isOwnUi(ev)) return;
+    if (!this.active || inOwnUi) return;
 
     // 内联编辑豁免：落在正在编辑元素上的事件直接放行
     if (this.inlineEditEl && path.includes(this.inlineEditEl)) return;

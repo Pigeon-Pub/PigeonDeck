@@ -9,7 +9,7 @@
  * 6. Drag ball near viewport bottom, expand toolbar stays in bounds
  */
 
-import { test, expect, BrowserContext } from '@playwright/test';
+import { test, expect, BrowserContext, Page } from '@playwright/test';
 import {
   launchExtensionBrowser,
   startFixtureServer,
@@ -43,6 +43,40 @@ async function openFixturePage() {
   await page.reload();
   await waitForExtensionInjected(page);
   return page;
+}
+
+async function waitShadowVisible(page: Page, selector: string): Promise<void> {
+  await page.waitForFunction((sel: string) => {
+    const host = document.getElementById('pd-host');
+    const el = host?.shadowRoot?.querySelector<HTMLElement>(sel);
+    if (!el) return false;
+    const style = getComputedStyle(el);
+    return style.display !== 'none' && style.visibility !== 'hidden';
+  }, selector);
+}
+
+function shadowExists(page: Page, selector: string): Promise<boolean> {
+  return page.evaluate((sel: string) => {
+    const host = document.getElementById('pd-host');
+    return !!host?.shadowRoot?.querySelector(sel);
+  }, selector);
+}
+
+async function clickPageEl(page: Page, cssSelector: string): Promise<void> {
+  const box = await page.locator(cssSelector).first().boundingBox();
+  if (!box) throw new Error(`Page element not found: ${cssSelector}`);
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+}
+
+async function dragShadowEl(page: Page, testId: string, dx: number, dy: number): Promise<void> {
+  const rect = await getShadowElementRect(page, testId);
+  if (!rect) throw new Error(`Shadow element not found: ${testId}`);
+  const cx = rect.x + rect.width / 2;
+  const cy = rect.y + rect.height / 2;
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + dx, cy + dy, { steps: 12 });
+  await page.mouse.up();
 }
 
 // ============================================================
@@ -333,6 +367,42 @@ test('⑧ click-to-drag needs no long-press; a real drag does not toggle expand'
   // 反证：一次普通点击（无位移）仍能展开
   await clickShadowEl(page, 'pd-ball');
   await page.waitForTimeout(250);
+  expect(await isShadowElVisible(page, 'pd-toolbar')).toBe(true);
+
+  await page.close();
+});
+
+test('⑨ dragging the expanded toolbar closes the settings-derived panel', async () => {
+  const page = await openFixturePage();
+
+  await clickShadowEl(page, 'pd-ball');
+  await waitShadowVisible(page, '[data-testid="pd-toolbar"]');
+  await clickShadowEl(page, 'pd-btn-settings');
+  await waitShadowVisible(page, '[data-testid="pd-settings"]');
+
+  await dragShadowEl(page, 'pd-btn-logo', -90, -50);
+
+  await expect
+    .poll(() => shadowExists(page, '[data-testid="pd-settings"]'), { timeout: 5000 })
+    .toBe(false);
+  expect(await isShadowElVisible(page, 'pd-toolbar')).toBe(true);
+
+  await page.close();
+});
+
+test('⑩ dragging the expanded toolbar does not close an annotation panel', async () => {
+  const page = await openFixturePage();
+
+  await clickShadowEl(page, 'pd-ball');
+  await waitShadowVisible(page, '[data-testid="pd-toolbar"]');
+  await clickPageEl(page, '#btn-primary');
+  await waitShadowVisible(page, '[data-testid="pd-panel"]');
+
+  await dragShadowEl(page, 'pd-btn-logo', -90, -50);
+
+  await expect
+    .poll(() => shadowExists(page, '[data-testid="pd-panel"]'), { timeout: 5000 })
+    .toBe(true);
   expect(await isShadowElVisible(page, 'pd-toolbar')).toBe(true);
 
   await page.close();
