@@ -12,7 +12,7 @@ import type { StyleChange } from '../state/annotations';
 import type { ElementType } from '../shared/dom-utils';
 import { openDropdown, sampleAncestorValues, primaryFontFamily, DropdownItem } from './dropdown';
 import { openColorPicker, parseCssColor, formatCssColor } from './color-picker';
-import type { PopoverHandle } from './popover';
+import { bindPopoverToggle } from './popover';
 
 /* ---- 图标（Lucide，与 preview/pigeon-components.js 单一真相源一致） ---- */
 const I = {
@@ -807,25 +807,18 @@ function buildColor(session: FieldsSession, key: string, ctx: ControlContext): H
   };
   render(session.get(key));
 
-  // 色块开关：追踪已开浮层句柄，再次点同一色块 = 关闭（逻辑11 切换）；
-  // 点别的色块由 mountPopover 的点外部逻辑关掉旧的，这里开新的。
-  let picker: PopoverHandle | null = null;
-  sw.addEventListener('click', () => {
-    if (picker) {
-      picker.close(); // onClose 同步清空 picker
-      return;
-    }
-    picker = openColorPicker({
+  // 色块开关：统一 bindPopoverToggle（再次点同一色块 = 关闭；点别的色块由 mountPopover
+  // 的点外部逻辑关掉旧的，这里开新的）。
+  bindPopoverToggle(sw, (onClose) =>
+    openColorPicker({
       root: ctx.popoverRoot,
       anchor: sw,
       target: session.target,
       value: session.get(key),
       onChange: (color) => session.set(key, color),
-      onClose: () => {
-        picker = null;
-      },
-    });
-  });
+      onClose,
+    })
+  );
   val.addEventListener('change', () => {
     const parsed = parseCssColor(val.value);
     if (!parsed) {
@@ -929,13 +922,9 @@ function buildSelect(session: FieldsSession, key: string, def: FieldDef, ctx: Co
   };
   render(session.get(key));
 
-  // 下拉开关：追踪已开浮层句柄，再次点触发钮 = 关闭（与色块一致的切换语义）
-  let dropdown: PopoverHandle | null = null;
-  trigger.addEventListener('click', () => {
-    if (dropdown) {
-      dropdown.close(); // onClose 同步清空 dropdown
-      return;
-    }
+  // 下拉开关：统一 bindPopoverToggle（再次点触发钮 = 关闭；与色块一致的切换语义）。
+  // items/smartItems 在每次打开时惰性构建（智能识别栏按当前 target 实时采样）。
+  bindPopoverToggle(trigger, (onClose) => {
     const items: DropdownItem[] = (def.options?.() ?? []).map((o) => ({
       value: o.value,
       label: optionLabel(o),
@@ -947,16 +936,14 @@ function buildSelect(session: FieldsSession, key: string, def: FieldDef, ctx: Co
       label: displayFor(v),
       fontFamily: key === 'font' ? v : undefined,
     }));
-    dropdown = openDropdown({
+    return openDropdown({
       root: ctx.popoverRoot,
       anchor: trigger,
       items,
       smartItems,
       current: session.get(key),
       onPick: (v) => session.set(key, v),
-      onClose: () => {
-        dropdown = null;
-      },
+      onClose,
     });
   });
   session.subscribe(key, render);

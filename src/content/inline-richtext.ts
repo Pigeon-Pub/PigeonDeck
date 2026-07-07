@@ -15,6 +15,7 @@
 import { t, getLocale } from './i18n';
 import { openColorPicker } from './color-picker';
 import { openDropdown, sampleAncestorValues, primaryFontFamily } from './dropdown';
+import { bindPopoverToggle } from './popover';
 import type { RichTextChange, RichTextKind } from '../state/annotations';
 import { mergeRichText } from '../state/annotations';
 import { formatRichTextLine, richTextLabelsFor } from './format';
@@ -353,16 +354,17 @@ export class RichTextBar {
 
     // 字体下拉触发钮
     const fontSel = this.makeDropdownTrigger('selfont', t('rt_font'), 'System UI');
-    fontSel.querySelector('button')!.addEventListener('click', () => {
+    const fontBtn = fontSel.querySelector('button') as HTMLElement;
+    bindPopoverToggle(fontBtn, (onClose) => {
       this.saveSelection();
       const anchorEl = this.selectionAnchorElement();
       const smartValues = sampleAncestorValues(anchorEl, (node) => {
         const ff = node.ownerDocument.defaultView?.getComputedStyle(node).fontFamily;
         return ff ? primaryFontFamily(ff) : null;
       });
-      openDropdown({
+      return openDropdown({
         root: this.panelLayer,
-        anchor: fontSel.querySelector('button') as HTMLElement,
+        anchor: fontBtn,
         items: FONT_LIST.map((f) => ({ value: f.value, label: f.label, fontFamily: f.stack })),
         smartItems: smartValues.map((v) => ({ value: v, label: v, fontFamily: resolveFontStack(v) })),
         current: primaryFontFamily(this.getComputedProp('fontFamily')),
@@ -370,13 +372,15 @@ export class RichTextBar {
           this.restoreSelection();
           this.applyFontFamily(v);
         },
+        onClose,
       });
     });
     row1.appendChild(fontSel);
 
     // 字号下拉触发钮
     const sizeSel = this.makeDropdownTrigger('selsz', t('rt_size'), '16', 'pd-rt-size');
-    sizeSel.querySelector('button')!.addEventListener('click', () => {
+    const sizeBtn = sizeSel.querySelector('button') as HTMLElement;
+    bindPopoverToggle(sizeBtn, (onClose) => {
       this.saveSelection();
       const anchorEl = this.selectionAnchorElement();
       const smartValues = sampleAncestorValues(anchorEl, (node) => {
@@ -385,9 +389,9 @@ export class RichTextBar {
         const n = Math.round(parseFloat(fs));
         return Number.isFinite(n) ? String(n) : null;
       });
-      openDropdown({
+      return openDropdown({
         root: this.panelLayer,
-        anchor: sizeSel.querySelector('button') as HTMLElement,
+        anchor: sizeBtn,
         items: SIZE_LIST.map((s) => ({ value: s, label: s + 'px' })),
         smartItems: smartValues.map((v) => ({ value: v, label: v + 'px' })),
         current: Math.round(parseFloat(this.getComputedProp('fontSize'))).toString(),
@@ -395,6 +399,7 @@ export class RichTextBar {
           this.restoreSelection();
           this.applyFontSize(v);
         },
+        onClose,
       });
     });
     row1.appendChild(sizeSel);
@@ -415,9 +420,9 @@ export class RichTextBar {
     colorBtn.appendChild(colorA);
     colorBtn.appendChild(colorBar);
     colorBtn.addEventListener('mousedown', (ev) => ev.preventDefault());
-    colorBtn.addEventListener('click', () => {
+    bindPopoverToggle(colorBtn, (onClose) => {
       this.saveSelection();
-      openColorPicker({
+      return openColorPicker({
         root: this.panelLayer,
         anchor: colorBtn,
         target: this.editEl,
@@ -427,6 +432,7 @@ export class RichTextBar {
           this.applyColor(css);
           colorBar.style.background = css;
         },
+        onClose,
       });
     });
     row1.appendChild(colorBtn);
@@ -438,9 +444,9 @@ export class RichTextBar {
     hlBtn.setAttribute('data-testid', 'pd-rt-highlight');
     hlBtn.innerHTML = highlightIcon + `<svg class="car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
     hlBtn.addEventListener('mousedown', (ev) => ev.preventDefault());
-    hlBtn.addEventListener('click', () => {
+    bindPopoverToggle(hlBtn, (onClose) => {
       this.saveSelection();
-      openColorPicker({
+      return openColorPicker({
         root: this.panelLayer,
         anchor: hlBtn,
         target: this.editEl,
@@ -449,6 +455,7 @@ export class RichTextBar {
           this.restoreSelection();
           this.applyHighlight(css);
         },
+        onClose,
       });
     });
     row1.appendChild(hlBtn);
@@ -498,7 +505,7 @@ export class RichTextBar {
     alignBtn.setAttribute('data-testid', 'pd-rt-align');
     alignBtn.innerHTML = alignIcon + `<svg class="car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
     alignBtn.addEventListener('mousedown', (ev) => ev.preventDefault());
-    alignBtn.addEventListener('click', () => {
+    bindPopoverToggle(alignBtn, (onClose) =>
       openDropdown({
         root: this.panelLayer,
         anchor: alignBtn,
@@ -512,8 +519,9 @@ export class RichTextBar {
           this.editEl.focus();
           this.applyAlign(v as 'left' | 'center' | 'right');
         },
-      });
-    });
+        onClose,
+      })
+    );
     row2.appendChild(alignBtn);
 
     // 保存对勾（F21#1：底部原「列表」钮改为提交编辑）

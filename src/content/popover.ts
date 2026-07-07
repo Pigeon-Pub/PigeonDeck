@@ -76,3 +76,30 @@ export function mountPopover(
 
   return { el, close };
 }
+
+/**
+ * 触发钮「点击开关」语义（逻辑11，全站统一）：绑一次即可——
+ * - 浮层未开：调 open(onClose) 打开，并把返回句柄记在闭包里；
+ * - 浮层已开（同一触发钮再次点击）：关闭并返回，绝不叠开第二个（修复 Settings 语言选择器
+ *   等触发钮反复点击层层堆叠的 bug）。
+ * open 必须把收到的 onClose 接到浮层（mountPopover / openDropdown / openColorPicker /
+ * openLanguagePicker 的 onClose 参数），使浮层被任何途径关闭（点外部/Esc/内部选择/
+ * closeAllPopovers）时本地句柄归零，下次点击重新打开。
+ * 点「别的」触发钮切换：mountPopover 的点外部逻辑会关掉旧浮层（其 onClose 归零对应句柄），
+ * 新触发钮再开自己的——不会双开。
+ */
+export function bindPopoverToggle(
+  trigger: HTMLElement,
+  open: (onClose: () => void) => PopoverHandle
+): void {
+  let handle: PopoverHandle | null = null;
+  trigger.addEventListener('click', () => {
+    if (handle) {
+      handle.close(); // onClose 同步归零 handle
+      return;
+    }
+    handle = open(() => {
+      handle = null;
+    });
+  });
+}

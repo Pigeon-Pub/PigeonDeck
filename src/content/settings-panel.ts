@@ -16,6 +16,7 @@ import { setTheme } from './main';
 import { t, getLocale, setLocale } from './i18n';
 import { openLanguagePicker } from './language-picker';
 import { openDropdown } from './dropdown';
+import { bindPopoverToggle, PopoverHandle } from './popover';
 import { makeDraggableByHandle } from './panel';
 import { BCP47_LANGUAGES } from '../shared/languages';
 import { LOGO_SVG } from './logo';
@@ -294,7 +295,7 @@ export class SettingsManager {
       this.srow(
         t('set_ui_language'),
         null,
-        this.selectDisplay(langName, 'pd-set-ui-lang', (anchor) => {
+        this.selectDisplay(langName, 'pd-set-ui-lang', (anchor, onClose) =>
           openLanguagePicker({
             root: this.panelLayer,
             anchor,
@@ -304,8 +305,9 @@ export class SettingsManager {
               this.rebuild();
               this.toast.show(t('toast_lang_switched'), 'ok');
             },
-          });
-        })
+            onClose,
+          })
+        )
       )
     );
 
@@ -549,7 +551,7 @@ export class SettingsManager {
       this.srow(
         t('set_export_language'),
         t('set_export_lang_sub'),
-        this.selectDisplay(this.exportLangLabel(this.settings.exportLang), 'pd-set-export-lang', (anchor) => {
+        this.selectDisplay(this.exportLangLabel(this.settings.exportLang), 'pd-set-export-lang', (anchor, onClose) =>
           openDropdown({
             root: this.panelLayer,
             anchor,
@@ -564,8 +566,9 @@ export class SettingsManager {
               saveSettings({ exportLang: code });
               this.renderSection();
             },
-          });
-        })
+            onClose,
+          })
+        )
       )
     );
 
@@ -664,11 +667,14 @@ export class SettingsManager {
     return row;
   }
 
-  /** 语言选择器行：显示当前值 + 箭头，点击打开搜索式浮层 */
+  /**
+   * 语言选择器行：显示当前值 + 箭头，点击开关搜索式浮层（逻辑11：再次点触发钮 = 关闭，
+   * 不叠开）。open 收 onClose，须接到浮层的 onClose，浮层关闭时归零本地句柄。
+   */
   private selectDisplay(
     value: string,
     testid: string,
-    onOpen?: (anchor: HTMLElement) => void
+    open?: (anchor: HTMLElement, onClose: () => void) => PopoverHandle
   ): HTMLElement {
     const wrap = document.createElement('span');
     wrap.className = 'pd-sel';
@@ -683,11 +689,8 @@ export class SettingsManager {
     arrow.innerHTML = svg('<path d="m6 9 6 6 6-6"/>', 2);
     wrap.appendChild(btn);
     wrap.appendChild(arrow);
-    if (onOpen) {
-      btn.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        onOpen(wrap);
-      });
+    if (open) {
+      bindPopoverToggle(btn, (onClose) => open(wrap, onClose));
     }
     return wrap;
   }

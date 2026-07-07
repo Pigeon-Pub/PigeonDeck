@@ -26,6 +26,8 @@ export interface LanguagePickerOptions {
   /** 当前选中 code（界面语言：'en'/'zh_CN'） */
   current: string;
   onSelect: (code: string) => void;
+  /** 浮层被任何途径关闭时回调（供触发钮清空句柄做开关，逻辑11） */
+  onClose?: () => void;
 }
 
 function escapeHtml(s: string): string {
@@ -145,7 +147,7 @@ export function openLanguagePicker(opts: LanguagePickerOptions): PopoverHandle {
   };
 
   render();
-  handle = mountPopover(opts.root, dd, opts.anchor);
+  handle = mountPopover(opts.root, dd, opts.anchor, opts.onClose);
   input.focus();
   input.addEventListener('input', render);
 
