@@ -26,6 +26,7 @@ import { ClearManager } from './clear';
 import { SettingsManager } from './settings-panel';
 import { setupShortcuts } from './shortcuts';
 import { initEscStack } from './esc-stack';
+import { closeAllPopovers } from './popover';
 
 // 防重复注入标记
 const HOST_ID = 'pd-host';
@@ -111,9 +112,21 @@ function inject(settings: Settings): void {
   // 撤销/重做历史栈（先建，Toolbar 需引用）
   const history = new History(settings.historyLimit);
 
+  // 复制文本/复制图片管理器引用（Toolbar 拖拽回调 INVARIANT 3 需在拖拽开始时关闭它们的结果弹窗；
+  // 二者在下方实例化后赋值，回调只在运行时真实拖拽时触发，届时已就绪）。
+  let copyTextManager: CopyTextManager | null = null;
+  let copyImageManager: CopyImageManager | null = null;
 
   // Toolbar（接受 history，用于按钮禁用态订阅）
-  const toolbar = new Toolbar(controller, controlLayer, history);
+  // onDragStart（INVARIANT 3）：拖动工具盘/悬浮球时关闭「工具盘派生」的面板/浮层——
+  // 设置面板（退设置模式）、复制文本/复制图片结果弹窗、清空确认（经 closeAllPopovers）+ 全部浮层；
+  // 内容面板（批注面板/卡片、移动选中、区域面板）不动。
+  const toolbar = new Toolbar(controller, controlLayer, history, () => {
+    closeAllPopovers();
+    copyTextManager?.close();
+    copyImageManager?.close();
+    if (controller.getState().mode === 'settings') controller.toggleMode('settings');
+  });
 
   // 接线撤销/重做瞬时动作
   controller.setCallbacks({
@@ -180,7 +193,7 @@ function inject(settings: Settings): void {
   });
 
   // 阶段 8b：复制文本（生成任务清单 → 剪贴板 + 结果弹窗 + 语言快切 + 下载）
-  new CopyTextManager({
+  copyTextManager = new CopyTextManager({
     controller,
     store,
     settings,
@@ -189,7 +202,7 @@ function inject(settings: Settings): void {
   });
 
   // 阶段 9a/9b：复制图片（截图拼接 + 叠加绘制 + 剪贴板/下载 + 水印）
-  new CopyImageManager({
+  copyImageManager = new CopyImageManager({
     controller,
     store,
     settings,

@@ -111,6 +111,11 @@ export class CopyTextManager {
 
   // ---- 结果弹窗 ----
 
+  /** 供工具盘拖拽时关闭结果弹窗（INVARIANT 3）。幂等（未开时 closePanel 直接返回）。 */
+  close(): void {
+    this.closePanel();
+  }
+
   private openPanel(): void {
     this.closePanel();
 
@@ -232,6 +237,13 @@ export class CopyTextManager {
       if (ev.key === 'Escape') {
         ev.stopPropagation();
         this.closePanel();
+        return;
+      }
+      // INVARIANT 4：Ctrl/Cmd+Enter = 提交（可编辑预览的「提交」= 复制到剪贴板，与编辑面板统一）
+      if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this.writeClipboard(this.liveText());
       }
     };
     window.addEventListener('mousedown', this.outsideHandler, true);

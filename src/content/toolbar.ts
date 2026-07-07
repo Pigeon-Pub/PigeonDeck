@@ -76,6 +76,8 @@ export class Toolbar {
   private controller: Controller;
   private history: History;
   private root: HTMLElement; // control 层根容器
+  /** 拖拽真正开始时的回调（INVARIANT 3：关闭工具盘派生的面板/浮层，不动内容面板）。 */
+  private onDragStart?: () => void;
   private wrapper: HTMLElement; // 位置容器（fixed，right/bottom）
   private ball: HTMLElement;
   private toolbar: HTMLElement;
@@ -94,10 +96,11 @@ export class Toolbar {
   private dragStartPos: Pos = { right: 0, bottom: 0 };
   private dragMoved = false;
 
-  constructor(controller: Controller, controlLayer: HTMLElement, history: History) {
+  constructor(controller: Controller, controlLayer: HTMLElement, history: History, onDragStart?: () => void) {
     this.controller = controller;
     this.history = history;
     this.root = controlLayer;
+    this.onDragStart = onDragStart;
     this.pos = loadPos();
 
     this.wrapper = document.createElement('div');
@@ -383,6 +386,9 @@ export class Toolbar {
       if (Math.abs(dx) <= DRAG_THRESHOLD_PX && Math.abs(dy) <= DRAG_THRESHOLD_PX) return;
       this.dragActive = true;
       this.dragMoved = true;
+      // INVARIANT 3：真实拖拽开始（过阈值，非单击）→ 关闭工具盘派生的面板/浮层
+      // （设置/复制文本/复制图片/清空确认 + 全部浮层），内容面板不动。
+      this.onDragStart?.();
     }
 
     const rect = this.wrapper.getBoundingClientRect();

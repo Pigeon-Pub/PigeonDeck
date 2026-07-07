@@ -931,6 +931,11 @@ export class CopyImageManager {
 
   // ---- 结果弹窗 ----
 
+  /** 供工具盘拖拽时关闭结果弹窗（INVARIANT 3）。幂等（未开时 closePanel 直接返回）。 */
+  close(): void {
+    this.closePanel();
+  }
+
   private openPanel(canvas: HTMLCanvasElement): void {
     this.closePanel();
 
