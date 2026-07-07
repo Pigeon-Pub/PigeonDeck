@@ -181,6 +181,22 @@ describe('FieldsSession — 双入口单源同步', () => {
     expect(called).toBe(2);
     expect(session.changedKeys()).toEqual(new Set(['fontSize', 'color']));
   });
+
+  it('notify 快照迭代：某监听在通知过程中退订自己也不影响其余监听被调用（顽固隐患加固）', () => {
+    const session = new FieldsSession(target);
+    const calls: string[] = [];
+    let unsubB: (() => void) | null = null;
+    session.subscribe('color', () => {
+      calls.push('a');
+      unsubB?.(); // A 在通知过程中退订 B —— 迭代中改动监听集合
+    });
+    unsubB = session.subscribe('color', () => {
+      calls.push('b');
+    });
+    // 不抛错，且本轮进入快照的两个监听都被调用（活动 Set 迭代会漏调 B；快照保证不漏）
+    expect(() => session.set('color', '#ff0000')).not.toThrow();
+    expect(calls).toEqual(['a', 'b']);
+  });
 });
 
 describe('FieldsSession — 未保存回滚', () => {
@@ -371,6 +387,45 @@ describe('color — 取色器（F18）', () => {
 
       expect(resumed).toBe(true); // 落定后恢复拦截
       expect(session.get('color')).toBe('#abcdef');
+    } finally {
+      delete (window as unknown as { EyeDropper?: unknown }).EyeDropper;
+    }
+  });
+
+  it('再入守卫：取色器挂起期间再次点击不再新建第二个 EyeDropper（杜绝覆盖层二次捕获冻结）', async () => {
+    // 真机冻结 signature：颜色已变（首个 open 已落定）后整页/浏览器窗口点不动 = 第二个原生
+    // 覆盖层重新进入系统级捕获。模块级守卫使任一时刻只允许一个取色器挂起 → 第二次 open 不可能发生。
+    let created = 0;
+    let resolveOpen: ((r: { sRGBHex: string }) => void) | null = null;
+    (window as unknown as { EyeDropper: unknown }).EyeDropper = class {
+      constructor() {
+        created++;
+      }
+      open(): Promise<{ sRGBHex: string }> {
+        // 永不自行落定：模拟原生覆盖层挂起态；由测试显式 resolve 收尾（避免污染其余用例）
+        return new Promise<{ sRGBHex: string }>((res) => {
+          resolveOpen = res;
+        });
+      }
+    };
+    try {
+      const session = new FieldsSession(target);
+      const box = createControl(session, 'color', ctx);
+      const eye = box.querySelector<HTMLButtonElement>('.eye')!;
+
+      eye.click(); // 首个取色器：挂起
+      eye.click(); // 挂起期间再次点击：守卫拦截，不得新建/打开第二个
+      expect(created).toBe(1);
+
+      // 收尾：落定首个取色器 → finally 复位守卫（否则模块级挂起态会污染后续用例）
+      resolveOpen!({ sRGBHex: '#123456' });
+      await new Promise((r) => setTimeout(r, 0));
+
+      // 复位后可再次正常打开
+      eye.click();
+      expect(created).toBe(2);
+      resolveOpen!({ sRGBHex: '#654321' });
+      await new Promise((r) => setTimeout(r, 0));
     } finally {
       delete (window as unknown as { EyeDropper?: unknown }).EyeDropper;
     }
