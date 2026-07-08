@@ -224,6 +224,13 @@ export class PanelManager {
   private suppressClick = false;
 
   /**
+   * N5 toggle 检测：mousedown 时若关闭了面板，记录被关闭面板的目标元素。
+   * onClick → openFromHit 若解析出同一目标则不重开（实现“第二次单击同元素关闭”语义）。
+   * 每次 mousedown 开头重置，cancelPendingOpen 时也清空（避免 dblclick 误抑制）。
+   */
+  private _mousedownClosedTarget: Element | null = null;
+
+  /**
    * 替换媒体回调（N8）：由 DirectEditManager 在其构造阶段通过 setReplaceMediaCallback 注入，
    * 点击 replaceImg 控件按钮时经 ControlContext.onReplaceMedia 调用。
    * 未注入时按钮静默无响应（测试/独立渲染场景）。
@@ -335,6 +342,8 @@ export class PanelManager {
 
   private onMouseDown = (ev: MouseEvent): void => {
     if (this.suspended) return; // 取色器等系统浮层期间不干预页面事件（F18）
+    // N5：每次 mousedown 重置 toggle 检测状态（只对当前 mousedown→click 对有效）
+    this._mousedownClosedTarget = null;
     const path = ev.composedPath();
     // 浮层（下拉/调色盘）内点击不算"面板外部"（浮层自身管理关闭）
     const inPopover = path.some(
@@ -355,6 +364,8 @@ export class PanelManager {
 
     // 面板外点击 → 关面板（放弃未保存内容，回滚本次会话预览）
     if (this.panelEl && !path.includes(this.panelEl) && !inPopover && !inSelbox && !isToolbarDragStart) {
+      // N5：记录被关闭面板的目标元素，onClick → openFromHit 检测到同一目标时不重开（toggle）
+      this._mousedownClosedTarget = this.panelTarget;
       this.closePanel();
     }
 
@@ -445,6 +456,15 @@ export class PanelManager {
         panelTarget = this.resolver.resolve(hit);
       }
     }
+
+    // N5 toggle：若解析出的目标与 mousedown 时关闭的面板目标相同，保持关闭（不重开）。
+    // 使单击已开面板的目标元素成为“关闭”操作；点击不同元素则照常开新面板。
+    const closedTarget = this._mousedownClosedTarget;
+    this._mousedownClosedTarget = null;
+    if (closedTarget !== null && panelTarget === closedTarget) {
+      return; // toggle off — 保持关闭
+    }
+
     const existing = this.store.getBySelector(buildSelector(panelTarget));
     this.openPanel(panelTarget, existing ?? null, granHit);
   }
@@ -493,6 +513,8 @@ export class PanelManager {
       this.pendingOpenTimer = null;
     }
     this.pendingOpenTarget = null;
+    // N5：dblclick / 模式切换取消延迟时清空 toggle 状态，避免后续点击被误抑制
+    this._mousedownClosedTarget = null;
   }
 
   /** 区域框选松手后抑制一次 click，避免误开元素批注面板 */
@@ -845,7 +867,10 @@ export class PanelManager {
   /**
    * 面板长度柔和动画（design-system §1.5 例外条款）：
    * 快照旧高 → 变更内容 → 设回旧高强制回流 → height:auto，
-   * 由 interpolate-size: allow-keywords 完成 px→auto 的 190ms 过渡。
+   * 走 animateHeight px→px 的 190ms 过渡。
+   * N3/N4：不在动画结束后重新定位面板——面板在 openPanel 时已固定位置，
+   * 内容高度变化只让面板就地伸缩，避免展开高级样式时面板跳到另一侧（顿挫感的根因）。
+   * scroll/resize 触发的重定位仍走 scheduleReposition → positionPanel。
    */
   private animatePanelHeight(mutate: () => void): void {
     const panel = this.panelEl;
@@ -853,7 +878,7 @@ export class PanelManager {
       mutate();
       return;
     }
-    animateHeight(panel, mutate, () => this.positionPanel());
+    animateHeight(panel, mutate);
   }
 
   private savePanel(): void {
