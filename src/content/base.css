@@ -85,8 +85,10 @@
   background: var(--csf);
   border: 1px solid var(--cbd);
   box-shadow: var(--sh-up);
-  /* 显隐由 .pd-wrapper.pd-open 驱动：默认隐藏 */
+  /* 显隐由 .pd-wrapper.pd-open 驱动：默认隐藏；收起态目标值（opacity/transform）同时作为进出动画端点 */
   display: none;
+  opacity: 0;
+  transform: scale(0.85);
   flex-direction: column;
   align-items: center;
   gap: 3px;
@@ -95,23 +97,27 @@
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* 展开进入动画：淡入 + 从锚点（球）方向轻微放大 */
+  /* 展开/收起动画：淡入淡出 + 从锚点（球）方向轻微放大/缩小（对称）；
+     display allow-discrete 让收起时维持渲染直到过渡结束（Chrome 117+，与 @starting-style 同代） */
   transform-origin: top center; /* 向下展开（默认）：从顶部＝球位置生长 */
   transition:
     opacity var(--t-mid) var(--ease),
-    transform var(--t-mid) var(--ease);
+    transform var(--t-mid) var(--ease),
+    display var(--t-mid) allow-discrete;
 }
 
 .pd-toolbar::-webkit-scrollbar {
   display: none;
 }
 
-/* 展开态：球隐藏、工具盘显示（display 瞬时切换，可见性由 opacity 动画柔化） */
+/* 展开态：球隐藏、工具盘显示；opacity/transform 明确覆写收起态目标值 */
 .pd-wrapper.pd-open .pd-ball {
   display: none;
 }
 .pd-wrapper.pd-open .pd-toolbar {
   display: inline-flex;
+  opacity: 1;
+  transform: none;
 }
 
 /* 工具盘进入动画起始态（@starting-style 提供淡入/缩放的“从”值） */
@@ -1251,7 +1257,8 @@
 .kv .v { color: var(--ctx); font-variant-numeric: tabular-nums; text-align: right; word-break: break-all; }
 .kv .v code { font: 11px ui-monospace,Consolas,monospace; color: var(--c1); }
 .csgrp { margin-top: 11px; }
-.cslist { max-height: 150px; overflow: auto; border-top: 1px solid var(--cbd); padding-top: 6px; }
+/* N1：移除内层滚动；外层 .scon 已是 overflow:auto，列表自然高展开后随外层滚动 */
+.cslist { border-top: 1px solid var(--cbd); padding-top: 6px; }
 .csrow { display: flex; justify-content: space-between; gap: 10px; font: 11px ui-monospace,Consolas,monospace; padding: 3px 0; }
 .csrow .p { color: var(--ctx2); }
 .csrow .val { color: var(--ctx); }

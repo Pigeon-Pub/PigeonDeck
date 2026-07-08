@@ -218,7 +218,7 @@ function buildDebugReadout(target: HTMLElement, translated: boolean): HTMLElemen
   grp.appendChild(csH);
 
   const list = document.createElement('div');
-  list.className = 'cslist pd-scroll';
+  list.className = 'cslist';
   const cs = target.ownerDocument.defaultView!.getComputedStyle(target);
   for (const item of CS_PROPS) {
     let value: string;
