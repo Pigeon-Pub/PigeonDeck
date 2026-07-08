@@ -644,6 +644,12 @@ export interface ControlContext {
    * 未提供时退回 popoverRoot（测试/无 feedback 层宿主）。
    */
   feedbackRoot?: HTMLElement;
+  /**
+   * 点击「替换图片/视频」按钮（replaceImg 字段）时调用，传入被标注的目标元素。
+   * 负责打开替换弹层并将结果写入 store + 历史（由 DirectEditManager 提供）。
+   * 未提供时按钮静默无响应（测试/无 DirectEditManager 宿主）。
+   */
+  onReplaceMedia?: (el: HTMLElement) => void;
 }
 
 function stepAdjust(session: FieldsSession, key: string, def: FieldDef, dir: 1 | -1): void {
@@ -955,14 +961,17 @@ function buildRange(session: FieldsSession, key: string, def: FieldDef): HTMLEle
   return wrap;
 }
 
-function buildButton(def: FieldDef): HTMLElement {
+function buildButton(session: FieldsSession, key: string, def: FieldDef, ctx: ControlContext): HTMLElement {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'pd-btn';
   btn.style.width = '100%';
   btn.innerHTML = `${svg(I.image)}${t(def.buttonLabelKey ?? '')}`;
   btn.addEventListener('click', () => {
-    /* 替换流程在阶段 4 落地（回调 stub） */
+    if (key === 'replaceImg') {
+      ctx.onReplaceMedia?.(session.target);
+    }
+    // bgImage: 替换流程在阶段 4 落地（回调 stub）
   });
   return btn;
 }
@@ -987,7 +996,7 @@ export function createControl(session: FieldsSession, key: string, ctx: ControlC
     case 'range':
       return buildRange(session, key, def);
     case 'button':
-      return buildButton(def);
+      return buildButton(session, key, def, ctx);
     default:
       throw new Error(`field ${key} is not instantiable`);
   }

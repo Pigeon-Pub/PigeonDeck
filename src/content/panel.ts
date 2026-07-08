@@ -223,6 +223,18 @@ export class PanelManager {
   // 区域框选完成后抑制一次 click（避免松手触发元素面板）
   private suppressClick = false;
 
+  /**
+   * 替换媒体回调（N8）：由 DirectEditManager 在其构造阶段通过 setReplaceMediaCallback 注入，
+   * 点击 replaceImg 控件按钮时经 ControlContext.onReplaceMedia 调用。
+   * 未注入时按钮静默无响应（测试/独立渲染场景）。
+   */
+  private replaceMediaFn: ((el: HTMLElement) => void) | null = null;
+
+  /** 供 DirectEditManager 注入替换媒体处理器（N8） */
+  setReplaceMediaCallback(fn: (el: HTMLElement) => void): void {
+    this.replaceMediaFn = fn;
+  }
+
   private active = false;
   // 挂起全页事件拦截（打开原生取色器等系统级浮层期间）：capture 段一律放行，见 suspendInterception。
   private suspended = false;
@@ -566,6 +578,7 @@ export class PanelManager {
         popoverRoot: this.root,
         suspendInterception: () => this.suspendInterception(),
         feedbackRoot: this.feedbackLayer,
+        onReplaceMedia: (el) => this.replaceMediaFn?.(el),
       };
       // 建议7：修改栏卡片可隐藏（settings.showModbar=false）→ 仅保留说明 + 高级样式
       const modbox = this.settings.showModbar

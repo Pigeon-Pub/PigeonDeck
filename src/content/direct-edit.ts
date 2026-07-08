@@ -97,6 +97,13 @@ export class DirectEditManager {
     this.panel = opts.panel;
     this.shadowHost = (opts.panelLayer.getRootNode() as ShadowRoot).host;
 
+    // N8：把「替换图片/视频」入口注册到 PanelManager，供批注面板 replaceImg 控件按钮调用。
+    // 点击替换按钮 → PanelManager.ctx.onReplaceMedia(el) → this.replaceMediaFn(el) → openReplace。
+    this.panel.setReplaceMediaCallback((el) => {
+      const kind = classifyElement(el) === 'video' ? 'video' : 'image';
+      this.openReplace(el, kind);
+    });
+
     window.addEventListener('dblclick', this.onDblClick, true);
     window.addEventListener('keydown', this.onKeyDown, true);
   }
@@ -374,15 +381,15 @@ export class DirectEditManager {
       root: this.panelLayer,
       anchor: el,
       kind,
-      onReplace: (newSrc) => {
+      onReplace: (newSrc, srcLabel) => {
         this.replaceHandle = null;
-        this.applyReplace(el, newSrc);
+        this.applyReplace(el, newSrc, srcLabel);
       },
     });
   }
 
   /** 执行替换：即时预览 + 记 replaceMedia StyleChange + 撤销历史 */
-  private applyReplace(el: HTMLElement, newSrc: string): void {
+  private applyReplace(el: HTMLElement, newSrc: string, srcLabel?: string): void {
     const oldSrc = el.getAttribute('src') ?? '';
     if (newSrc === oldSrc) return;
 
@@ -396,6 +403,7 @@ export class DirectEditManager {
       cssProp: 'src',
       oldValue: oldSrc,
       newValue: newSrc,
+      ...(srcLabel !== undefined ? { srcLabel } : {}),
     };
 
     const resolveEl = (): HTMLElement | null => {

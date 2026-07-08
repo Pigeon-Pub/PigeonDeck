@@ -24,6 +24,8 @@ export interface ContentChange {
   kind: 'text' | 'html' | 'src';
   oldValue: string;
   newValue: string;
+  /** 上传文件替换时的文件名（仅 kind==='src' 且来自本地上传时存在，用于替代 data:… 摘要） */
+  srcLabel?: string;
 }
 
 export interface Operation {
@@ -64,11 +66,15 @@ function splitChanges(changes: StyleChange[]): {
     // 富文本 DOM 还原载体只用于撤销/删除/清空，不进导出（导出源是结构化 richText[]）
     if (c.cssProp === RICHTEXT_DOM_CSSPROP) continue;
     if (CONTENT_PROPS.has(c.cssProp)) {
-      contentChanges.push({
+      const cc: ContentChange = {
         kind: c.cssProp as 'text' | 'html' | 'src',
         oldValue: c.oldValue,
         newValue: c.newValue,
-      });
+      };
+      if (c.cssProp === 'src' && c.srcLabel !== undefined) {
+        cc.srcLabel = c.srcLabel;
+      }
+      contentChanges.push(cc);
     } else {
       cssChanges.push(c);
     }
@@ -508,7 +514,9 @@ function describeMediaUrl(url: string): string {
 
 function renderContentChange(c: ContentChange, L: Labels): string {
   if (c.kind === 'src') {
-    return `${L.media}: "${describeMediaUrl(c.oldValue)}" → "${describeMediaUrl(c.newValue)}"`;
+    // 上传本地文件时用文件名（srcLabel）替代 data:… 摘要；粘贴 URL 走 describeMediaUrl（保留文件名尾）
+    const newDesc = c.srcLabel ?? describeMediaUrl(c.newValue);
+    return `${L.media}: "${describeMediaUrl(c.oldValue)}" → "${newDesc}"`;
   }
   const oldText = c.kind === 'html' ? stripTags(c.oldValue) : c.oldValue;
   const newText = c.kind === 'html' ? stripTags(c.newValue) : c.newValue;

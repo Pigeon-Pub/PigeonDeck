@@ -18,8 +18,8 @@ export interface ReplaceMediaOptions {
   anchor: HTMLElement;
   /** 媒体类型（决定标题与 accept） */
   kind: 'image' | 'video';
-  /** 选定新 src（dataURL 或 URL）回调 */
-  onReplace: (newSrc: string) => void;
+  /** 选定新 src（dataURL 或 URL）回调；上传本地文件时额外传入文件名（用于导出展示） */
+  onReplace: (newSrc: string, srcLabel?: string) => void;
 }
 
 /** 打开替换弹层。返回句柄（选定/点外部自动关闭）。 */
@@ -71,7 +71,7 @@ export function openReplaceMedia(opts: ReplaceMediaOptions): PopoverHandle {
       const dataUrl = typeof reader.result === 'string' ? reader.result : '';
       if (dataUrl) {
         handle.close();
-        opts.onReplace(dataUrl);
+        opts.onReplace(dataUrl, file.name);
       }
     };
     reader.readAsDataURL(file);

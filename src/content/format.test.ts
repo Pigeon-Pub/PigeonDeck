@@ -826,3 +826,58 @@ describe('formatRichTextLine / richTextLabelsFor — direct unit', () => {
     expect(line).toContain('x'.repeat(40) + '…');
   });
 });
+
+// ============================================================
+// D4: src 变更导出 — 上传文件显示文件名，粘贴 URL 显示文件名尾
+// ============================================================
+
+describe('renderTaskList — D4 src srcLabel rendering', () => {
+  it('上传本地文件（data URL + srcLabel）→ 显示文件名，不显示 data:image/png', () => {
+    const ops = buildOperations([
+      ann({
+        changes: [{
+          prop: 'replaceMedia',
+          cssProp: 'src',
+          oldValue: 'https://example.com/old.jpg',
+          newValue: 'data:image/png;base64,abc123longdata',
+          srcLabel: 'photo.png',
+        }],
+      }),
+    ]);
+    const result = renderTaskList(ops, CTX, 'en');
+    expect(result).toContain('Media: "old.jpg" → "photo.png"');
+    expect(result).not.toContain('data:image/png');
+  });
+
+  it('粘贴 URL（无 srcLabel）→ 显示 URL 文件名尾（现有行为不变）', () => {
+    const ops = buildOperations([
+      ann({
+        changes: [{
+          prop: 'replaceMedia',
+          cssProp: 'src',
+          oldValue: 'https://example.com/old.jpg',
+          newValue: 'https://cdn.example.com/banner.png',
+        }],
+      }),
+    ]);
+    const result = renderTaskList(ops, CTX, 'en');
+    expect(result).toContain('Media: "old.jpg" → "banner.png"');
+  });
+
+  it('data URL 无 srcLabel（兜底）→ 显示 data:image/png（现有行为保留）', () => {
+    const ops = buildOperations([
+      ann({
+        changes: [{
+          prop: 'replaceMedia',
+          cssProp: 'src',
+          oldValue: 'https://example.com/img.jpg',
+          newValue: 'data:image/png;base64,abc123',
+        }],
+      }),
+    ]);
+    const result = renderTaskList(ops, CTX, 'en');
+    expect(result).toContain('data:image/png');
+    expect(result).not.toContain('base64,abc123');
+  });
+});
+
