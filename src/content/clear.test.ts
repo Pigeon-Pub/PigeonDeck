@@ -176,3 +176,176 @@ describe('ClearManager — 清空复合命令', () => {
     expect(regionAnn?.region?.elements).toEqual(['div.card']);
   });
 });
+
+// ============================================================
+// D3 — 移动操作被清空还原
+// ============================================================
+describe('ClearManager — 移动操作清空还原 (D3)', () => {
+  it('transform 移动：清空后 el.style.transform 还原为空串', () => {
+    const h = setup();
+
+    // 在 DOM 中创建有 id 的元素，模拟移动后的状态
+    const el = document.createElement('div');
+    el.id = 'moved-el';
+    el.style.transform = 'translate(50px, 0px)';
+    document.body.appendChild(el);
+
+    h.store.add({
+      selector: '#moved-el',
+      elementType: 'container',
+      summary: 'div',
+      note: '',
+      changes: [],
+      viewportPos: { x: 0, y: 0, w: 100, h: 50 },
+      move: {
+        dx: 50, dy: 0,
+        initialRect: { x: 0, y: 0, w: 100, h: 50 },
+        finalRect: { x: 50, y: 0, w: 100, h: 50 },
+        snap: null, freeMove: false,
+      },
+    });
+
+    triggerAndConfirm(h);
+
+    expect(el.style.transform).toBe('');
+
+    el.remove();
+  });
+
+  it('transform 移动：撤销清空后 transform 重设为移动后的值', () => {
+    const h = setup();
+
+    const el = document.createElement('div');
+    el.id = 'moved-el-2';
+    el.style.transform = '';
+    document.body.appendChild(el);
+
+    h.store.add({
+      selector: '#moved-el-2',
+      elementType: 'container',
+      summary: 'div',
+      note: '',
+      changes: [],
+      viewportPos: { x: 0, y: 0, w: 100, h: 50 },
+      move: {
+        dx: 30, dy: 10,
+        initialRect: { x: 0, y: 0, w: 100, h: 50 },
+        finalRect: { x: 30, y: 10, w: 100, h: 50 },
+        snap: null, freeMove: false,
+      },
+    });
+
+    triggerAndConfirm(h);
+    expect(el.style.transform).toBe('');
+
+    h.history.undo();
+    expect(el.style.transform).toBe('translate(30px, 10px)');
+
+    el.remove();
+  });
+
+  it('DOM 重父移动：清空后元素还原到原始父容器', () => {
+    const h = setup();
+
+    // 建立 DOM：origParent → moved + sibling；container（空）
+    const origParent = document.createElement('div');
+    origParent.id = 'orig-parent';
+    const sibling = document.createElement('div');
+    sibling.id = 'orig-sibling';
+    const container = document.createElement('div');
+    container.id = 'drop-container';
+    const moved = document.createElement('div');
+    moved.id = 'reparented-el';
+
+    origParent.appendChild(moved);
+    origParent.appendChild(sibling);
+    document.body.appendChild(origParent);
+    document.body.appendChild(container);
+
+    // 模拟拖放重父：将 moved 移到 container
+    container.appendChild(moved);
+
+    h.store.add({
+      selector: '#reparented-el',
+      elementType: 'container',
+      summary: 'div',
+      note: '',
+      changes: [],
+      viewportPos: { x: 0, y: 0, w: 50, h: 50 },
+      move: {
+        dx: 0, dy: 0,
+        initialRect: { x: 0, y: 0, w: 50, h: 50 },
+        finalRect: { x: 100, y: 0, w: 50, h: 50 },
+        snap: null, freeMove: false,
+        reparent: {
+          fromSelector: '#reparented-el',
+          toSelector: '#drop-container',
+          origParentSelector: '#orig-parent',
+          origNextSibSelector: '#orig-sibling',
+          embedInsertBeforeSelector: null,
+        },
+      },
+    });
+
+    triggerAndConfirm(h);
+
+    // 清空后：元素应回到原始父
+    expect(moved.parentElement).toBe(origParent);
+    // 应插在 sibling 前（next sib = sibling）
+    expect(moved.nextElementSibling).toBe(sibling);
+    expect(moved.style.transform).toBe('');
+
+    origParent.remove();
+    container.remove();
+  });
+
+  it('DOM 重父移动：撤销清空后元素重回目标容器', () => {
+    const h = setup();
+
+    const origParent = document.createElement('div');
+    origParent.id = 'orig-parent-b';
+    const container = document.createElement('div');
+    container.id = 'drop-container-b';
+    const moved = document.createElement('div');
+    moved.id = 'reparented-el-b';
+
+    origParent.appendChild(moved);
+    document.body.appendChild(origParent);
+    document.body.appendChild(container);
+
+    // 模拟已嵌入
+    container.appendChild(moved);
+
+    h.store.add({
+      selector: '#reparented-el-b',
+      elementType: 'container',
+      summary: 'div',
+      note: '',
+      changes: [],
+      viewportPos: { x: 0, y: 0, w: 50, h: 50 },
+      move: {
+        dx: 0, dy: 0,
+        initialRect: { x: 0, y: 0, w: 50, h: 50 },
+        finalRect: { x: 100, y: 0, w: 50, h: 50 },
+        snap: null, freeMove: false,
+        reparent: {
+          fromSelector: '#reparented-el-b',
+          toSelector: '#drop-container-b',
+          origParentSelector: '#orig-parent-b',
+          origNextSibSelector: null,
+          embedInsertBeforeSelector: null,
+        },
+      },
+    });
+
+    triggerAndConfirm(h);
+    expect(moved.parentElement).toBe(origParent);
+
+    h.history.undo();
+    // 撤销清空后：元素重回容器
+    expect(moved.parentElement).toBe(container);
+
+    origParent.remove();
+    container.remove();
+  });
+});

@@ -147,6 +147,23 @@ export class ClearManager {
         const el = document.querySelector(ann.selector);
         applyChangesTo(el, ann.changes, 'old');
         if (ann.move && el instanceof HTMLElement) {
+          if (ann.move.reparent) {
+            // D3：DOM 重父移动——将元素还原到原始父容器中的原始位置
+            const r = ann.move.reparent;
+            const origParent = r.origParentSelector
+              ? document.querySelector<HTMLElement>(r.origParentSelector)
+              : document.body;
+            if (origParent instanceof HTMLElement) {
+              const origNextSib = r.origNextSibSelector
+                ? document.querySelector(r.origNextSibSelector)
+                : null;
+              if (origNextSib instanceof Node && origNextSib.parentNode === origParent) {
+                origParent.insertBefore(el, origNextSib);
+              } else {
+                origParent.appendChild(el);
+              }
+            }
+          }
           el.style.transform = '';
         }
       }
@@ -158,10 +175,35 @@ export class ClearManager {
       for (const ann of anns) {
         // 区域标注由 store.load 恢复即可（overlay 自动重建），无 DOM 回放。
         if (ann.kind === 'region' || !ann.selector) continue;
-        const el = document.querySelector(ann.selector);
-        applyChangesTo(el, ann.changes, 'new');
-        if (ann.move && el instanceof HTMLElement) {
-          el.style.transform = `translate(${ann.move.dx}px, ${ann.move.dy}px)`;
+        if (ann.move?.reparent) {
+          // D3：DOM 重父移动——doClear 已将元素还原到 fromSelector 位置，
+          // 此处找回并重新嵌入目标容器。
+          const r = ann.move.reparent;
+          const origEl = r.fromSelector
+            ? document.querySelector<HTMLElement>(r.fromSelector)
+            : null;
+          if (!(origEl instanceof HTMLElement)) continue;
+          applyChangesTo(origEl, ann.changes, 'new');
+          const container = r.toSelector
+            ? document.querySelector<HTMLElement>(r.toSelector)
+            : null;
+          if (container instanceof HTMLElement) {
+            const insertBefore = r.embedInsertBeforeSelector
+              ? document.querySelector(r.embedInsertBeforeSelector)
+              : null;
+            if (insertBefore instanceof Node && insertBefore.parentNode === container) {
+              container.insertBefore(origEl, insertBefore);
+            } else {
+              container.appendChild(origEl);
+            }
+            origEl.style.transform = '';
+          }
+        } else {
+          const el = document.querySelector(ann.selector);
+          applyChangesTo(el, ann.changes, 'new');
+          if (ann.move && el instanceof HTMLElement) {
+            el.style.transform = `translate(${ann.move.dx}px, ${ann.move.dy}px)`;
+          }
         }
       }
     };

@@ -162,9 +162,10 @@ export class MoveManager {
     this.unsubscribeController = opts.controller.subscribe(() => this.syncActive());
     this.syncActive();
 
-    // capture 段：移动模式接管 click/mousedown
+    // capture 段：移动模式接管 click/mousedown/contextmenu
     window.addEventListener('click', this.onClick, true);
     window.addEventListener('mousedown', this.onMouseDown, true);
+    window.addEventListener('contextmenu', this.onContextMenu, true);
     window.addEventListener('mousemove', this.onHoverMove, true);
     window.addEventListener('scroll', this.scheduleReposition, { capture: true, passive: true });
     window.addEventListener('resize', this.scheduleReposition);
@@ -174,6 +175,7 @@ export class MoveManager {
     this.unsubscribeController();
     window.removeEventListener('click', this.onClick, true);
     window.removeEventListener('mousedown', this.onMouseDown, true);
+    window.removeEventListener('contextmenu', this.onContextMenu, true);
     window.removeEventListener('mousemove', this.onHoverMove, true);
     window.removeEventListener('scroll', this.scheduleReposition, true);
     window.removeEventListener('resize', this.scheduleReposition);
@@ -222,18 +224,20 @@ export class MoveManager {
       return;
     }
 
-    // 解析选中目标
-    const resolved = this.resolver.resolve(target);
+    // 解析选中目标：offset=0 时直接使用命中元素本身（与批注模式 openFromHit 一致），
+    // 仅当用户通过 +/- 调整过粒度（offset≠0）时才经解析器改变粒度。
+    const resolved = this.resolver.getOffset() !== 0 ? this.resolver.resolve(target) : target;
     this.selectElement(resolved);
   };
 
   private onMouseDown = (ev: MouseEvent): void => {
     if (!this.active || this.isOwnUi(ev)) return;
-    if (ev.target === document.body || ev.target === document.documentElement) return;
 
-    // 阻止页面默认 mousedown（焦点/选区/链接等）
+    // 阻止页面默认 mousedown（焦点/选区/链接等）——包括 body/html（防文字选区）
     ev.preventDefault();
     ev.stopPropagation();
+
+    if (ev.target === document.body || ev.target === document.documentElement) return;
 
     // 落在已选元素本体上 → 开始拖拽移动（句柄的 mousedown 已 stopPropagation 不到这）
     if (
@@ -243,6 +247,15 @@ export class MoveManager {
     ) {
       this.startMove(ev);
     }
+  };
+
+  // ---- 右键菜单拦截（D1b：移动模式完全接管页面指针交互） ----
+
+  private onContextMenu = (ev: MouseEvent): void => {
+    if (!this.active || this.isOwnUi(ev)) return;
+    // 阻止浏览器原生右键菜单（与批注模式 onContextMenu 保持对称）
+    ev.preventDefault();
+    ev.stopPropagation();
   };
 
   // ---- 选中框 ----
@@ -286,8 +299,8 @@ export class MoveManager {
       this.clearHover();
       return;
     }
-    // 指向 click 将实际选中的元素（应用当前粒度/偏移），与选中框一致
-    const resolved = this.resolver.resolve(target);
+    // 指向 click 将实际选中的元素（offset=0 时用命中元素本身，与批注模式一致）
+    const resolved = this.resolver.getOffset() !== 0 ? this.resolver.resolve(target) : target;
     // 已选中的元素本身不再画 hover（已有句柄框）
     if (resolved === this.selectedEl) {
       this.clearHover();
@@ -769,6 +782,17 @@ export class MoveManager {
     // 插入参照（重父前按拖放点计算）
     const insertRef = this.computeInsertRef(container, el, clientX, clientY);
 
+    // D3：清空还原 / 撤销清空重放用的额外定位信息（重父前捕获，此时 DOM 未变）
+    const origParentSelector = originalParent === document.body
+      ? null
+      : buildSelector(originalParent);
+    const origNextSibSelector = originalNextSibling instanceof Element
+      ? buildSelector(originalNextSibling)
+      : null;
+    const embedInsertBeforeSelector = insertRef instanceof Element
+      ? buildSelector(insertRef)
+      : null;
+
     // 执行重父 + 清 transform（元素在容器内自然排布）
     container.insertBefore(el, insertRef);
     el.style.transform = '';
@@ -788,7 +812,19 @@ export class MoveManager {
       finalRect,
       snap: null,
       freeMove: false,
-      reparent: { fromSelector: reparentFrom, toSelector },
+      reparent: {
+        fromSelector: reparentFrom,
+        toSelector,
+        // 多次嵌入时：保留首次嵌入的 origParent/origNextSib（还原到最初来源位置），
+        // 但 embedInsertBeforeSelector 改为本次的参照节点（供撤销清空重新嵌入用）。
+        origParentSelector: preMove?.reparent?.origParentSelector !== undefined
+          ? preMove.reparent.origParentSelector
+          : origParentSelector,
+        origNextSibSelector: preMove?.reparent?.origNextSibSelector !== undefined
+          ? preMove.reparent.origNextSibSelector
+          : origNextSibSelector,
+        embedInsertBeforeSelector,
+      },
     };
 
     // 元素引用重插（插入参照失效时兜底 append）
