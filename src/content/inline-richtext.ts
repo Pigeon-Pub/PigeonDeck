@@ -114,6 +114,9 @@ export class RichTextBar {
    * getChanges() 归并后并入标注 richText[]，作为导出唯一富文本源。
    */
   private changes: RichTextChange[] = [];
+  /** 字体/字号选择器的显示标签（selectionchange 时实时刷新，N6 修复） */
+  private fontLabel: HTMLSpanElement | null = null;
+  private sizeLabel: HTMLSpanElement | null = null;
 
   constructor(opts: RichTextBarOptions) {
     this.panelLayer = opts.panelLayer;
@@ -148,6 +151,7 @@ export class RichTextBar {
    * 否则（折叠光标/无选区）→ 锚定在 editEl 上边缘上方，绝不遮挡正在编辑的文字。
    */
   private reposition = (): void => {
+    this.updateDropdownLabels();
     const rect = this.currentAnchorRect();
     this.showAt(rect);
   };
@@ -157,7 +161,10 @@ export class RichTextBar {
     const sel = window.getSelection();
     if (sel && sel.rangeCount && !sel.isCollapsed) {
       const range = sel.getRangeAt(0);
-      if (this.editEl.contains(range.commonAncestorContainer)) {
+      if (
+        this.editEl.contains(range.commonAncestorContainer) &&
+        typeof range.getBoundingClientRect === 'function'
+      ) {
         const r = range.getBoundingClientRect();
         if (r.width > 0 || r.height > 0) return r;
       }
@@ -180,6 +187,22 @@ export class RichTextBar {
     top = Math.max(EDGE, Math.min(top, vh - barH - EDGE));
     this.el.style.left = `${left}px`;
     this.el.style.top = `${top}px`;
+  }
+
+  /**
+   * 字体/字号选择器标签跟随选区实时刷新（N6 修复：不再硬编码默认值）。
+   * 选区跨不同值时，以选区起点的计算值为准——不试图枚举混合值。
+   */
+  private updateDropdownLabels(): void {
+    if (this.fontLabel) {
+      const family = primaryFontFamily(this.getComputedProp('fontFamily'));
+      const entry = FONT_LIST.find((f) => f.value === family);
+      this.fontLabel.textContent = entry ? entry.label : family || '—';
+    }
+    if (this.sizeLabel) {
+      const n = Math.round(parseFloat(this.getComputedProp('fontSize')));
+      this.sizeLabel.textContent = Number.isFinite(n) ? String(n) : '—';
+    }
   }
 
   // ============================================================
@@ -266,8 +289,61 @@ export class RichTextBar {
     offVal: string,
     isOn: boolean
   ): void {
-    const ctx = this.applyStyle(cssProp, isOn ? offVal : onVal, false);
+    let ctx: { target: 'selection' | 'element'; targetText?: string };
+    if (isOn && cssProp === 'text-decoration-line') {
+      // text-decoration-line: none 无法覆盖祖先 span 的装饰（CSS 绘制机制不受后代影响），
+      // 必须直接从有该属性的 span 上 removeProperty（N7 修复）。
+      ctx = this.removeDecorationToggle();
+    } else {
+      ctx = this.applyStyle(cssProp, isOn ? offVal : onVal, false);
+    }
     this.record(kind, ctx.target, ctx.targetText, isOn ? 'on' : 'off', isOn ? 'off' : 'on');
+  }
+
+  /**
+   * text-decoration-line「关闭」：直接从实际持有该属性的 span 上 removeProperty，
+   * 而不是用 setProperty('none')——CSS text-decoration 是绘制属性，后代 none 无法取消祖先的装饰。
+   * 处理路径：
+   * 1. 元素级（光标态）→ 取整块包裹 span 移除；
+   * 2. 选区精确匹配某 span → 直接在该 span 上 removeProperty；
+   * 3. 选区仅覆盖 span 部分内容 → 沿 DOM 向上找最近的装饰 span 整体移除。
+   */
+  private removeDecorationToggle(): { target: 'selection' | 'element'; targetText?: string } {
+    const ctx = this.currentTargetContext();
+    const PROP = 'text-decoration-line';
+    if (ctx.target === 'element') {
+      const el = this.editEl;
+      const only = el.firstChild;
+      if (el.childNodes.length === 1 && only instanceof HTMLElement && only.tagName === 'SPAN') {
+        only.style.removeProperty(PROP);
+      } else {
+        el.style.removeProperty(PROP);
+      }
+    } else {
+      const sel = window.getSelection();
+      let handled = false;
+      if (sel && sel.rangeCount && !sel.isCollapsed) {
+        const range = sel.getRangeAt(0);
+        const reuse = this.selectionWrapSpan(range);
+        if (reuse && reuse.style.getPropertyValue(PROP)) {
+          reuse.style.removeProperty(PROP);
+          handled = true;
+        }
+      }
+      if (!handled) {
+        // 选区仅覆盖 span 部分内容（selectionWrapSpan 未能精确匹配），
+        // 向上找最近有该属性的 span 并移除（整 span 去装饰）。
+        let node: HTMLElement | null = this.selectionAnchorElement();
+        while (node && node !== this.editEl) {
+          if (node.tagName === 'SPAN' && node.style.getPropertyValue(PROP)) {
+            node.style.removeProperty(PROP);
+            break;
+          }
+          node = node.parentElement;
+        }
+      }
+    }
+    return ctx;
   }
 
   /**
@@ -353,7 +429,8 @@ export class RichTextBar {
     row1.className = 'rtrow';
 
     // 字体下拉触发钮
-    const fontSel = this.makeDropdownTrigger('selfont', t('rt_font'), 'System UI');
+    const fontSel = this.makeDropdownTrigger('selfont', t('rt_font'), '');
+    this.fontLabel = fontSel.querySelector<HTMLSpanElement>('.v');
     const fontBtn = fontSel.querySelector('button') as HTMLElement;
     bindPopoverToggle(fontBtn, (onClose) => {
       this.saveSelection();
@@ -378,7 +455,8 @@ export class RichTextBar {
     row1.appendChild(fontSel);
 
     // 字号下拉触发钮
-    const sizeSel = this.makeDropdownTrigger('selsz', t('rt_size'), '16', 'pd-rt-size');
+    const sizeSel = this.makeDropdownTrigger('selsz', t('rt_size'), '', 'pd-rt-size');
+    this.sizeLabel = sizeSel.querySelector<HTMLSpanElement>('.v');
     const sizeBtn = sizeSel.querySelector('button') as HTMLElement;
     bindPopoverToggle(sizeBtn, (onClose) => {
       this.saveSelection();
