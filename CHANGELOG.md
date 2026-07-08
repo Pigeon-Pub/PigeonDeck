@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
 
+### Refactor — Codex 架构重构（2026-07-08，分支 arch-refactor-codex）
+
+- **拆巨型模块（`76b153d`…`6bb7798`）**：从 `capture.ts`/`fields.ts`/`panel.ts` 抽出可单测的纯函数/工具子模块并补行为保护测试（行为等价，门禁全绿）——`capture-range.ts`（截图范围）/`capture-client.ts`（截图请求）/`capture-overlay-layout.ts`·`capture-card-layout.ts`（叠加与卡片布局）；`field-labels.ts`/`field-values.ts`/`field-layout.ts`；`floating-drag.ts`（`makeDraggableByHandle`）/`theme.ts`/`change-apply.ts`（`applyChangesTo`）/`annotation-summary.ts`。
+- **文档单源（`afdc6cf`）**：`AGENTS.md` 收敛为指向 `CLAUDE.md` 的指针（CLAUDE.md 声明为唯一上下文真相源），避免两处漂移。
+
+### Bugfix — 7.6.3 用户反馈第四轮（2026-07-08）
+
+真机第四轮反馈：4 个上轮遗留项（移动模式/导出图片/清空还原/导出提示词）+ 一批面板与富文本交互细节。6 组并行 worktree 子代理实现 → 主 session 审查合并（因子代理基线落在 origin/main 未含重构，逐条 cherry-pick 到重构后 HEAD 并就地解冲）。基线：build ✓ / typecheck ✓ / vitest 449 ✓ / 全量 E2E 110 passed ✓ / i18n ✓。
+
+- **移动模式选择粒度 + 点击拦截 + 清空还原 D1/D3（`1654f21`, `1240cf1`）**：① 移动模式默认粒度对齐批注模式——`offset=0` 时选**原始命中元素本身**（不再无脑解析到组件块），精确元素与批注一样好选，组件块仍可用 +/- 胶囊逐级展开；② 移动模式 `mousedown`/`click`/`contextmenu` 一律 `preventDefault`+`stopPropagation`——**拦截全部页面交互**（拖动期间链接不跳转、按钮不触发、右键无原生菜单）；③ **清空后被移动（DOM 重父嵌入）的元素归位**——`MoveData.reparent` 记录原父/原后继兄弟，`doClear` 按此复位，撤销清空可重新嵌入。
+- **导出图片移动箭头 + 叠加对齐 D2（`d9f533e`）**：移动方向由「幽灵框 + 虚线」改为**实线金色箭头**（原位中心→终位中心，白晕保任意背景可读，`computeArrowHead` 纯函数算两翼）；修正叠加层与截图的水平对齐——按 `captureScrollX` 定位、以截图自然 CSS 宽度绘制（宽文档不再横向拉伸/错位）。
+- **图片替换按钮 + 导出文件名 N8/D4（`0709de5`）**：① 图片批注面板「替换图片」按钮修复——经 `ControlContext.onReplaceMedia` → `DirectEditManager` 复用双击替换逻辑弹出替换面板（此前按钮空实现）；② 上传本地文件替换后，导出提示词显示**文件名**（`StyleChange.srcLabel`）而非 `data:image/png` 摘要（粘贴 URL 仍显示 URL 尾段）。
+- **富文本字体回显 + 装饰可取消 N6/N7（`a2f37b7`）**：① 浮条字号/字体标签**实时反映选区真实计算值**（随 `selectionchange` 跟随光标，映射到 FONT_LIST 标签或原值，混合选区取起点值）而非固定「System UI / 16」；② 下划线/删除线可用**同一按钮再点取消**（`text-decoration-line` 非继承，走 `removeProperty` 而非嵌套 `none` span；加粗/斜体不受影响）。
+- **面板动画 + 不移位 + 单击 toggle N3/N4/N5（`dcabe70`）**：① 展开高级样式的高度动画顺滑（去掉动画结束后的重定位——顿挫根因）；② 面板**首次打开定位后，内容高度变化不再重新定位**（展开高级样式不跳到另一侧，避免误点；滚动/缩放仍跟随目标）；③ **单击已标注元素 toggle 面板**（首次开、再次同元素点关闭；`_mousedownClosedTarget` 越过「mousedown 关→click 开」时序），双击仍进入富文本编辑（250ms 消歧不受影响）。
+- **调试整页滚动 + 工具盘收起动画 N1/N2（`fdc35b3`）**：① 高级样式「调试」页计算样式**去掉内层小滚动**，整列自然展开、随外层一起滚动（反转 7.6.2 R7 的内层滚动）；② 工具盘**收起有动画**——`display: allow-discrete` + opacity/transform 与展开对称淡出缩小。
+
 ### Bugfix — 7.6.2 用户反馈第三轮（2026-07-07）
 
 第二轮后的复冒烟反馈：几处上一轮未真正落地（取色器仍卡死、动画未生效、高级样式改错）+ 一批交互约定要求固化，勿再逐条提醒。基线：build ✓ / typecheck ✓ / vitest 385 ✓ / 全量 E2E 105 passed ✓ / i18n ✓。**并把交互不变量固化到 [docs/conventions/interaction-invariants.md](docs/conventions/interaction-invariants.md)（INDEX + CLAUDE 指针）。**
