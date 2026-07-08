@@ -14,6 +14,8 @@
 
 > **2026-07-08：Codex 架构重构（分支 `arch-refactor-codex`，9 个重构提交 `76b153d`…`6bb7798`）。** 从巨型模块拆出可单测的纯函数/工具子模块并补行为保护测试（行为等价，门禁全绿）：`capture.ts` → `capture-range.ts`（截图范围）/`capture-client.ts`（截图请求客户端）/`capture-overlay-layout.ts`·`capture-card-layout.ts`（叠加与卡片布局）；`fields.ts` → `field-labels.ts`（轻量标签表）/`field-values.ts`（样式字段值工具）/`field-layout.ts`（字段布局规则）；`panel.ts` → `floating-drag.ts`（`makeDraggableByHandle`）/`theme.ts`（主题切换）/`change-apply.ts`（`applyChangesTo`）/`annotation-summary.ts`（导出摘要）。**改这些领域时优先改拆出的子模块，别把逻辑塞回巨型文件。** 本文件是仓库唯一上下文真相源；`AGENTS.md` 仅为指向本文件的指针。
 
+> **2026-07-08：已完成「7.6.3 用户反馈第四轮」修复**（真机第四轮，8 个提交：`fdc35b3`…`9fcecfc`）。6 组并行 worktree 子代理实现 → 主 session 逐条 cherry-pick 到重构后 HEAD 审查合并。修：移动模式选择粒度对齐批注（offset=0 选原始命中）+ 拦截全部页面点击 + 清空还原 DOM 重父位置（D1/D3）；导出图片移动方向改实线箭头 + 叠加水平对齐（D2）；图片批注「替换图片」按钮修复 + 导出提示词显示上传文件名而非 `data:image/png`（N8/D4）；富文本浮条字号/字体实时回显 + 下划线/删除线可同键取消（N6/N7）；批注面板展开动画顺滑 + 首次定位后内容变化不再移位 + 单击已标注元素 toggle 面板（N3/N4/N5）；高级样式调试页计算样式去内层小滚动改整页滚动（**反转上轮 R7**）+ 工具盘收起动画（N1/N2）。终态 vitest 449 / 全量 E2E 110 passed / i18n ✓。
+
 各阶段要点：
 - **阶段 1 工程骨架**：Vite 双配置构建（content IIFE + background ES）、Shadow DOM 四层宿主、pigeonlib 设计令牌、i18n 框架、logger。
 - **阶段 2 工具盘与悬浮球**：模式控制器状态机、42px 悬浮球、7 按钮工具盘、tooltip、长按拖拽持久化、E2E 测试基建。
