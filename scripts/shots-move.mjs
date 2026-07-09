@@ -57,23 +57,43 @@ await page.waitForTimeout(300);
 await clickShadow(page, 'pd-btn-move');
 await page.waitForTimeout(200);
 
-// click the hero-media CONTAINER (not just the img inside) so the frame + image move together.
-// Temporarily set pointer-events:none on the img so the click passes through to .hero-media.
-await page.evaluate(() => { document.querySelector('.hero-photo').style.pointerEvents = 'none'; });
+// Force elementFromPoint to hit exactly .hero-media (not a larger ancestor).
+// Suppress pointer-events on the hero section & img, keep only .hero-media responsive.
+await page.evaluate(() => {
+  const hero = document.querySelector('.hero');
+  if (hero) hero.style.pointerEvents = 'none';
+  const media = document.querySelector('.hero-media');
+  if (media) media.style.pointerEvents = 'auto';
+  const img = document.querySelector('.hero-photo');
+  if (img) img.style.pointerEvents = 'none';
+  // also ensure the moved element won't be clipped
+  for (let el = media; el; el = el.parentElement) el.style.overflow = 'visible';
+});
 const mediaBox = await page.locator('.hero-media').first().boundingBox();
 if (!mediaBox) throw new Error('hero-media not found');
 await page.mouse.click(mediaBox.x + mediaBox.width/2, mediaBox.y + mediaBox.height/2);
-await page.evaluate(() => { document.querySelector('.hero-photo').style.pointerEvents = ''; });
 await waitShadow(page, 'pd-selbox');
-await page.waitForTimeout(300);
+await page.waitForTimeout(400);
 
-// drag it DOWN ~130px (hold and move, screenshot mid-drag)
+// verify selbox wraps the media container (not the whole hero section)
+const selboxRect = await rect(page, 'pd-selbox');
+console.log('selbox w×h:', Math.round(selboxRect?.w), '×', Math.round(selboxRect?.h),
+  '(media:', Math.round(mediaBox.width), '×', Math.round(mediaBox.height), ')');
+
+// drag LEFT 350px so image clearly overlaps the text area (unmistakable displacement)
 const cx = mediaBox.x + mediaBox.width/2;
 const cy = mediaBox.y + mediaBox.height/2;
 await page.mouse.move(cx, cy);
 await page.mouse.down();
-await page.mouse.move(cx, cy + 140, { steps: 15 });
-await page.waitForTimeout(400);
+await page.mouse.move(cx - 350, cy + 80, { steps: 20 });
+await page.mouse.up();
+await page.waitForTimeout(600);
+
+const hasMoved = await page.evaluate(() => {
+  const el = document.querySelector('.hero-media');
+  return el ? el.style.transform : 'NO TRANSFORM';
+});
+console.log('transform:', hasMoved);
 
 // screenshot mid-drag (element displaced + possible guide)
 const buf = await page.screenshot();
