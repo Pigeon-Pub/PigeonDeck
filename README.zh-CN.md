@@ -192,9 +192,13 @@ npm run build      # 输出到 dist/
 
 ## Star 趋势
 
+<div align="center">
+
 <a href="https://star-history.com/#Pigeon-Pub/PigeonDeck&Date">
   <img src="https://api.star-history.com/svg?repos=Pigeon-Pub/PigeonDeck&type=Date" alt="Star History Chart" width="640">
 </a>
+
+</div>
 
 如果 PigeonDeck 对你有用，点一个 star 能帮更多人找到它。
 

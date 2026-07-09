@@ -192,9 +192,13 @@ For code, the gates are `npm run build`, `npm run typecheck`, `npm test`, `npm r
 
 ## Star history
 
+<div align="center">
+
 <a href="https://star-history.com/#Pigeon-Pub/PigeonDeck&Date">
   <img src="https://api.star-history.com/svg?repos=Pigeon-Pub/PigeonDeck&type=Date" alt="Star History Chart" width="640">
 </a>
+
+</div>
 
 If PigeonDeck is useful to you, a star helps others find it.
 
