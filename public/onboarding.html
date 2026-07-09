@@ -4,196 +4,296 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="onboarding_title">PigeonDeck — Quick Start</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet" />
   <style>
-    /* 自包含：品牌风格（邮政金点睛 + Fraunces/思源宋体标题栈），不依赖 base.css */
     :root {
       --gold: #b8842c;
-      --gold-soft: rgba(184, 132, 44, 0.12);
-      --gold-edge: rgba(184, 132, 44, 0.45);
-      --ink: #26292f;
-      --ink2: #5b616b;
-      --bg: #f6f4ef;
+      --gold-deep: #9a6f21;
+      --gold-soft: rgba(184, 132, 44, 0.10);
+      --gold-edge: rgba(184, 132, 44, 0.32);
+      --ink: #23262e;
+      --ink2: #6b6b6b;
+      --bg: #f7f4ec;
+      --bg2: #fbf9f3;
       --card: #ffffff;
-      --edge: #e7e4dc;
-      --r-card: 14px;
-      --r-ctl: 10px;
-      --sh: 0 1px 3px rgba(30, 24, 12, 0.08);
-      --sh-up: 0 10px 30px -12px rgba(60, 44, 16, 0.3);
-      --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+      --edge: #e7e1d3;
+      --r-card: 16px;
+      --sh: 0 1px 2px rgba(30, 24, 12, 0.06);
+      --sh-up: 0 24px 60px -28px rgba(60, 44, 16, 0.42), 0 4px 14px -8px rgba(60, 44, 16, 0.18);
+      --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
       --font-serif: "Fraunces", "Noto Serif SC", Georgia, serif;
+      --maxw: 1060px;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
-      background: var(--bg);
+      background:
+        radial-gradient(1200px 560px at 78% -10%, var(--gold-soft), transparent 60%),
+        var(--bg);
       color: var(--ink);
       font-family: var(--font-ui);
-      line-height: 1.55;
+      line-height: 1.65;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
-    .wrap { max-width: 860px; margin: 0 auto; padding: 48px 24px 64px; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+    a { color: var(--gold-deep); }
 
-    /* 品牌头 */
-    .brand {
-      display: flex; align-items: center; gap: 18px;
-      padding-bottom: 28px; margin-bottom: 36px;
-      border-bottom: 1px solid var(--edge);
-    }
-    .brand .logo {
-      width: 58px; height: 58px; flex: none;
-      color: var(--gold);
-      display: flex; align-items: center; justify-content: center;
-      background: var(--gold-soft); border-radius: 16px;
-      padding: 8px;
-    }
-    .brand .logo img { width: 100%; height: 100%; display: block; }
-    .brand h1 {
-      font-family: var(--font-serif); font-weight: 600;
-      font-size: 34px; margin: 0 0 2px; letter-spacing: -0.01em;
-    }
-    .brand .sub { color: var(--ink2); font-size: 15px; margin: 0; }
+    /* ---------- entrance animation ---------- */
+    @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    .rise { opacity: 0; animation: rise 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
+    .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.14s; }
+    .d3 { animation-delay: 0.23s; } .d4 { animation-delay: 0.32s; }
+    @media (prefers-reduced-motion: reduce) { .rise { animation: none; opacity: 1; } }
 
-    section { margin-bottom: 44px; }
-    h2 {
-      font-family: var(--font-serif); font-weight: 600;
-      font-size: 22px; margin: 0 0 20px;
-      display: flex; align-items: center; gap: 10px;
+    /* ---------- hero ---------- */
+    .hero { text-align: center; padding: 112px 24px 56px; max-width: 860px; margin: 0 auto; }
+    .kicker {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-serif); font-weight: 500;
+      font-size: 12.5px; letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--gold-deep);
+      background: var(--gold-soft); border: 1px solid var(--gold-edge);
+      padding: 7px 16px; border-radius: 999px;
     }
-    h2::before {
-      content: ""; width: 6px; height: 22px; border-radius: 999px;
-      background: var(--gold); flex: none;
+    .kicker svg { width: 15px; height: 15px; }
+    .lockup { display: flex; align-items: center; justify-content: center; gap: 22px; margin: 36px 0 0; }
+    .lockup .mark { width: 78px; height: 78px; color: var(--gold); flex: none;
+      filter: drop-shadow(0 10px 18px rgba(184, 132, 44, 0.22)); }
+    .lockup .mark svg { width: 100%; height: 100%; }
+    .lockup h1 {
+      font-family: var(--font-serif); font-weight: 400;
+      font-size: 70px; line-height: 1; letter-spacing: -0.025em; margin: 0; color: var(--ink);
     }
+    .lockup h1 b { font-weight: 600; }
+    .hero .lede { font-size: 20px; color: var(--ink2); margin: 30px auto 0; max-width: 660px; }
+    .hint {
+      display: inline-flex; align-items: center; gap: 9px;
+      margin-top: 32px; font-size: 14px; color: var(--ink2);
+    }
+    .hint svg { width: 17px; height: 17px; color: var(--gold); flex: none; }
 
-    /* 快速上手：编号步骤 */
-    .steps { display: grid; gap: 14px; }
-    .step {
-      display: flex; gap: 16px; align-items: flex-start;
-      background: var(--card); border: 1px solid var(--edge);
-      border-radius: var(--r-card); padding: 18px 20px; box-shadow: var(--sh);
+    /* ---------- framed screenshot ---------- */
+    .frame {
+      border-radius: var(--r-card); border: 1px solid var(--edge);
+      background: var(--card); box-shadow: var(--sh-up); overflow: hidden;
+      line-height: 0;
     }
-    .step .n {
-      flex: none; width: 32px; height: 32px; border-radius: 50%;
-      background: var(--gold); color: #fff;
-      font-weight: 600; font-size: 15px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .step h3 { margin: 3px 0 4px; font-size: 16px; font-weight: 600; }
-    .step p { margin: 0; color: var(--ink2); font-size: 14px; }
+    .frame img { width: 100%; height: auto; display: block; }
+    .hero-shot { max-width: 900px; margin: 80px auto 0; }
 
-    /* 示例场景 */
-    .scenario {
-      background: linear-gradient(135deg, var(--gold-soft), rgba(255,255,255,0.4));
-      border: 1px solid var(--gold-edge);
-      border-radius: var(--r-card); padding: 22px 24px;
-      font-size: 15px; color: var(--ink);
+    /* ---------- section frame ---------- */
+    section.wrap { padding-top: 78px; padding-bottom: 78px; }
+    section.wrap.closing { padding-top: 0; padding-bottom: 44px; margin-top: -24px; }
+    .sec-head { text-align: center; margin-bottom: 66px; }
+    .sec-head .eyebrow {
+      font-family: var(--font-serif); font-weight: 500; font-size: 12.5px;
+      letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold-deep); margin: 0 0 8px;
     }
+    .sec-head h2 { font-family: var(--font-serif); font-weight: 600; font-size: 31px; margin: 0; letter-spacing: -0.01em; }
 
-    /* 功能总览网格 */
-    .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    /* ---------- steps ---------- */
+    .step-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 76px;
+      align-items: center; margin: 0 auto 104px; max-width: 1000px;
+    }
+    .step-row:last-child { margin-bottom: 0; }
+    .step-row .copy .num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--gold); color: #fff; font-weight: 600; font-size: 16px;
+      font-family: var(--font-serif); margin-bottom: 22px;
+    }
+    .step-row .copy h3 { font-family: var(--font-serif); font-weight: 600; font-size: 25px; margin: 0 0 16px; letter-spacing: -0.01em; }
+    .step-row .copy p { margin: 0; color: var(--ink2); font-size: 16px; line-height: 1.75; }
+    .step-row:nth-child(even) .media { order: 2; }
+    .step-row:nth-child(even) .copy { order: 1; }
+
+    /* ---------- features ---------- */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
     .feat {
       background: var(--card); border: 1px solid var(--edge);
-      border-radius: var(--r-ctl); padding: 14px 16px; box-shadow: var(--sh);
+      border-radius: 16px; padding: 30px 26px; box-shadow: var(--sh);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
-    .feat .name {
-      font-weight: 600; font-size: 15px; margin-bottom: 3px;
-      display: flex; align-items: center; gap: 8px;
+    .feat:hover { transform: translateY(-3px); box-shadow: var(--sh-up); }
+    .feat .ic {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: var(--gold-soft); color: var(--gold);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
     }
-    .feat .name::before {
-      content: ""; width: 8px; height: 8px; border-radius: 50%;
-      background: var(--gold); flex: none;
-    }
-    .feat .desc { color: var(--ink2); font-size: 13px; }
+    .feat .ic svg { width: 21px; height: 21px; }
+    .feat .name { font-weight: 600; font-size: 16.5px; margin-bottom: 7px; }
+    .feat .desc { color: var(--ink2); font-size: 14px; line-height: 1.62; }
 
-    /* 页脚 */
+    /* ---------- closing / cta ---------- */
+    .cta {
+      max-width: 1000px; margin: 0 auto; text-align: center;
+      background:
+        linear-gradient(160deg, rgba(184, 132, 44, 0.09), rgba(184, 132, 44, 0.02)),
+        var(--bg2);
+      border: 1px solid var(--gold-edge); border-radius: 24px; padding: 76px 48px;
+    }
+    .cta p.flow { font-size: 16px; color: var(--ink); line-height: 1.85; max-width: 660px; margin: 0 auto 28px; }
+    .cta p.punch { font-family: var(--font-serif); font-weight: 500; font-size: 23px; margin: 0 auto 36px; max-width: 660px; letter-spacing: -0.01em; line-height: 1.4; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: var(--gold); color: #fff; text-decoration: none;
+      font-weight: 600; font-size: 15px; padding: 13px 27px; border-radius: 999px;
+      box-shadow: 0 10px 24px -12px rgba(184, 132, 44, 0.7); transition: transform 0.16s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn svg { width: 17px; height: 17px; }
+
+    /* ---------- footer ---------- */
     footer {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 12px;
-      padding-top: 28px; margin-top: 8px;
+      max-width: var(--maxw); margin: 64px auto 0; padding: 34px 28px 56px;
       border-top: 1px solid var(--edge);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
       color: var(--ink2); font-size: 13px;
     }
-    footer a { color: var(--gold); text-decoration: none; font-weight: 500; }
+    footer .ver { font-variant-numeric: tabular-nums; }
+    footer a { color: var(--gold-deep); text-decoration: none; font-weight: 500; }
     footer a:hover { text-decoration: underline; }
-    .ver { font-variant-numeric: tabular-nums; }
 
-    @media (max-width: 560px) {
+    @media (max-width: 760px) {
+      .lockup h1 { font-size: 48px; } .lockup .mark { width: 56px; height: 56px; }
+      .hero { padding-top: 68px; }
+      .step-row { grid-template-columns: 1fr; gap: 26px; margin-bottom: 64px; }
+      .step-row .media, .step-row:nth-child(even) .media { order: 1; }
+      .step-row .copy, .step-row:nth-child(even) .copy { order: 2; }
       .features { grid-template-columns: 1fr; }
-      .brand h1 { font-size: 28px; }
+      .sec-head h2 { font-size: 26px; }
+      section.wrap { padding-top: 54px; padding-bottom: 54px; }
+      .cta { padding: 52px 28px; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="brand">
-      <span class="logo"><img id="brand-logo" alt="PigeonDeck" /></span>
-      <div>
-        <h1>PigeonDeck</h1>
-        <p class="sub" data-i18n="onboarding_subtitle">Annotate any web page and hand a ready-to-run task list to your AI.</p>
-      </div>
-    </header>
-
-    <section>
-      <h2 data-i18n="onboarding_quickstart_title">Quick start</h2>
-      <div class="steps">
-        <div class="step">
-          <span class="n">1</span>
-          <div>
-            <h3 data-i18n="onboarding_step1_title">Open the toolbar</h3>
-            <p data-i18n="onboarding_step1_body">Click the floating ball in the corner to expand the tools. It opens straight into annotation mode.</p>
-          </div>
-        </div>
-        <div class="step">
-          <span class="n">2</span>
-          <div>
-            <h3 data-i18n="onboarding_step2_title">Click an element</h3>
-            <p data-i18n="onboarding_step2_body">Single-click any element to drop a numbered pin and write a note. Long-press and drag to box a region.</p>
-          </div>
-        </div>
-        <div class="step">
-          <span class="n">3</span>
-          <div>
-            <h3 data-i18n="onboarding_step3_title">Edit, style and move</h3>
-            <p data-i18n="onboarding_step3_body">Double-click text to rewrite it, tweak styles in the card, or switch to Move mode to reposition components with snapping.</p>
-          </div>
-        </div>
-        <div class="step">
-          <span class="n">4</span>
-          <div>
-            <h3 data-i18n="onboarding_step4_title">Copy and hand off</h3>
-            <p data-i18n="onboarding_step4_body">Hit Copy as Text for an AI-ready task list, or Copy as Image for an annotated screenshot.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2 data-i18n="onboarding_scenario_title">A typical review flow</h2>
-      <p class="scenario" data-i18n="onboarding_scenario_body">Pin the hero heading and ask for shorter copy, recolor a button, then drag the sign-up card up to align with the nav. One Copy as Text later, you have a structured task list — page context, global rules, and every change — ready to paste into Codex or any coding AI.</p>
-    </section>
-
-    <section>
-      <h2 data-i18n="onboarding_features_title">What you can do</h2>
-      <div class="features">
-        <div class="feat"><div class="name" data-i18n="onboarding_feat_annotate">Annotate</div><div class="desc" data-i18n="onboarding_feat_annotate_desc">Numbered pins with notes on any element.</div></div>
-        <div class="feat"><div class="name" data-i18n="onboarding_feat_region">Region select</div><div class="desc" data-i18n="onboarding_feat_region_desc">Long-press and drag to mark an area.</div></div>
-        <div class="feat"><div class="name" data-i18n="onboarding_feat_edit">Direct edit</div><div class="desc" data-i18n="onboarding_feat_edit_desc">Rewrite text and tune styles inline.</div></div>
-        <div class="feat"><div class="name" data-i18n="onboarding_feat_move">Move &amp; snap</div><div class="desc" data-i18n="onboarding_feat_move_desc">Drag components with edge and center guides.</div></div>
-        <div class="feat"><div class="name" data-i18n="onboarding_feat_undo">Undo / redo</div><div class="desc" data-i18n="onboarding_feat_undo_desc">Step back and forward through every change.</div></div>
-        <div class="feat"><div class="name" data-i18n="onboarding_feat_copytext">Copy as Text</div><div class="desc" data-i18n="onboarding_feat_copytext_desc">Generate an AI-ready task list.</div></div>
-        <div class="feat"><div class="name" data-i18n="onboarding_feat_copyimage">Copy as Image</div><div class="desc" data-i18n="onboarding_feat_copyimage_desc">Export a single annotated long screenshot.</div></div>
-        <div class="feat"><div class="name" data-i18n="onboarding_feat_settings">Settings</div><div class="desc" data-i18n="onboarding_feat_settings_desc">Themes, language, export options and more.</div></div>
-      </div>
-    </section>
-
-    <footer>
-      <span data-i18n="onboarding_footer">Made for web review and AI-assisted delivery.</span>
-      <span>
-        <span class="ver" id="version"></span>
-        &nbsp;·&nbsp;
-        <a id="github-link" href="https://github.com/HELUOO404/PigeonDeck" target="_blank" rel="noopener" data-i18n="onboarding_github">View on GitHub</a>
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <span class="kicker rise d1" data-i18n="onboarding_hero_kicker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Installed — you're all set
+    </span>
+    <div class="lockup rise d1">
+      <span class="mark">
+        <svg viewBox="0 0 630.367 618.433" fill="none" stroke="currentColor" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"><path d="M78 387.5C152.631 368.891 76.4167 392.232 49.7159 390.136C29.1717 388.523 9.13425 371.072 2.55369 390.136C-12.5464 433.88 43.4887 557.5 61.4994 557.5C97.5603 557.5 95.1332 499.399 184.592 475.119C256.159 455.694 409.626 508.071 456.782 345.043C503.939 182.015 572.94 180.281 582.476 175.078C592.011 169.875 556.99 105.184 472.386 130.853C450.907 137.369 435.465 148.71 424.171 156.868C399.875 174.416 397.5 180 389 185.5C380.5 191 368.5 203 313.753 182.016C259.005 161.031 242.331 146.042 189.5 107C156.829 82.8558 176 96.4999 75.369 10.3161C-25.262 -75.8676 145.757 407.479 184.592 365.855C197.353 352.189 196.253 346.982 199.328 332.903C205.612 304.136 206.358 271.572 217.532 286.943C224.842 296.998 237.881 316.154 248.739 335.504C262.601 360.21 276.478 376.261 284.28 374.527C292.081 372.793 325.888 347.298 325.888 335.504C325.888 331.568 324.906 329.488 317.921 320.623C315.251 317.234 311.705 312.855 307 307C287.143 282.288 243.751 226.465 280 273" transform="matrix(0.996195,-0.0871557,0.0871557,0.996195,0,50.899)"/></svg>
       </span>
-    </footer>
-  </div>
+      <h1>Pigeon<b>Deck</b></h1>
+    </div>
+    <p class="lede rise d2" data-i18n="onboarding_subtitle">Annotate any web page and hand a ready-to-run task list to your AI.</p>
+    <div class="hint rise d3">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span data-i18n="onboarding_hint">Look for the pigeon in the bottom-right corner of any page.</span>
+    </div>
+    <div class="frame hero-shot rise d4">
+      <img class="shot" data-shot="03-pins-card" data-i18n-alt="onboarding_step2_title" alt="Annotated page" />
+    </div>
+  </header>
+
+  <!-- ===================== HOW IT WORKS ===================== -->
+  <section class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow" data-i18n="onboarding_quickstart_title">Quick start</p>
+      <h2 data-i18n="onboarding_how_title">How it works</h2>
+    </div>
+
+    <div class="step-row">
+      <div class="media"><div class="frame"><img class="shot" data-shot="01-toolbar-expanded" data-i18n-alt="onboarding_step1_title" alt="" /></div></div>
+      <div class="copy">
+        <span class="num">1</span>
+        <h3 data-i18n="onboarding_step1_title">Open the toolbar</h3>
+        <p data-i18n="onboarding_step1_body">Click the floating ball in the corner to expand the tools. It opens straight into annotation mode.</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="media"><div class="frame"><img class="shot" data-shot="02-annotate" data-i18n-alt="onboarding_step2_title" alt="" /></div></div>
+      <div class="copy">
+        <span class="num">2</span>
+        <h3 data-i18n="onboarding_step2_title">Click an element</h3>
+        <p data-i18n="onboarding_step2_body">Single-click any element to drop a numbered pin and write a note. Long-press and drag to box a region.</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="media"><div class="frame"><img class="shot" data-shot="05-advanced-styles" data-i18n-alt="onboarding_step3_title" alt="" /></div></div>
+      <div class="copy">
+        <span class="num">3</span>
+        <h3 data-i18n="onboarding_step3_title">Edit, style and move</h3>
+        <p data-i18n="onboarding_step3_body">Double-click text to rewrite it, tweak styles in the card, or switch to Move mode to reposition components with snapping.</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="media"><div class="frame"><img class="shot" data-shot="08-copy-text" data-i18n-alt="onboarding_step4_title" alt="" /></div></div>
+      <div class="copy">
+        <span class="num">4</span>
+        <h3 data-i18n="onboarding_step4_title">Copy and hand off</h3>
+        <p data-i18n="onboarding_step4_body">Hit Copy as Text for an AI-ready task list, or Copy as Image for an annotated screenshot.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FEATURES ===================== -->
+  <section class="wrap">
+    <div class="sec-head">
+      <h2 data-i18n="onboarding_features_title">What you can do</h2>
+    </div>
+    <div class="features">
+      <div class="feat">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+        <div class="name" data-i18n="onboarding_feat_annotate">Annotate</div>
+        <div class="desc" data-i18n="onboarding_feat_annotate_desc">Numbered pins with notes on any element.</div>
+      </div>
+      <div class="feat">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M21 16v3a2 2 0 0 1-2 2h-3"/></svg></span>
+        <div class="name" data-i18n="onboarding_feat_region">Region select</div>
+        <div class="desc" data-i18n="onboarding_feat_region_desc">Long-press and drag to mark an area.</div>
+      </div>
+      <div class="feat">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+        <div class="name" data-i18n="onboarding_feat_edit">Direct edit</div>
+        <div class="desc" data-i18n="onboarding_feat_edit_desc">Rewrite text and tune styles inline.</div>
+      </div>
+      <div class="feat">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg></span>
+        <div class="name" data-i18n="onboarding_feat_move">Move &amp; snap</div>
+        <div class="desc" data-i18n="onboarding_feat_move_desc">Drag components with edge and center guides.</div>
+      </div>
+      <div class="feat">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></span>
+        <div class="name" data-i18n="onboarding_feat_copytext">Copy as Text</div>
+        <div class="desc" data-i18n="onboarding_feat_copytext_desc">Generate an AI-ready task list.</div>
+      </div>
+      <div class="feat">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></span>
+        <div class="name" data-i18n="onboarding_feat_copyimage">Copy as Image</div>
+        <div class="desc" data-i18n="onboarding_feat_copyimage_desc">Export a single annotated long screenshot.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CLOSING ===================== -->
+  <section class="wrap closing">
+    <div class="cta">
+      <p class="flow" data-i18n="onboarding_scenario_body">Pin the hero heading and ask for shorter copy, recolor a button, then drag the sign-up card up to align with the nav. One Copy as Text later, you have a structured task list — page context, global rules, and every change — ready to paste into Codex or any coding AI.</p>
+      <p class="punch" data-i18n="onboarding_cta">That's it — paste into Codex or any coding AI and let it build.</p>
+      <a class="btn" id="github-link" href="https://github.com/HELUOO404/PigeonDeck" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.4 9.4 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.94.68 1.9v2.82c0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
+        <span data-i18n="onboarding_github">View on GitHub</span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <span data-i18n="onboarding_reopen">You can reopen this page anytime from Settings → Help.</span>
+    <span class="ver" id="version"></span>
+  </footer>
+
   <script src="onboarding.js"></script>
 </body>
 </html>

@@ -1,33 +1,44 @@
 /* ============================================================
-   onboarding.js — 安装说明页脚本（静态扩展页，不走 vite 入口）
-   阶段 12：用 chrome.i18n 填充文案 + 设置 logo/版本号，不硬编码中英文。
+   onboarding.js — install/quick-start page (static extension page).
+   Fills copy via chrome.i18n, swaps screenshots by language, sets version.
+   Degrades gracefully when opened directly via file:// (no chrome.* APIs):
+   images use relative paths so they still load; copy falls back to the
+   English text baked into the HTML.
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 文档标题（chrome.i18n，与 HTML data-i18n 同机制）
-  const title = chrome.i18n.getMessage('onboarding_title');
-  if (title) document.title = title;
+  const cr = (typeof chrome !== 'undefined' && chrome.runtime) ? chrome : null;
+  const i18n = (cr && chrome.i18n) ? chrome.i18n : null;
 
-  // <html lang> 跟随界面语言（en / zh-CN 等）
-  const uiLang = chrome.i18n.getUILanguage();
-  if (uiLang) document.documentElement.lang = uiLang;
+  // Language bucket for screenshots (extension UI language → else browser → else en)
+  let uiLang = 'en';
+  try { uiLang = (i18n && i18n.getUILanguage()) || navigator.language || 'en'; }
+  catch { uiLang = navigator.language || 'en'; }
+  document.documentElement.lang = uiLang;
+  const shotLang = uiLang.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 
-  // 所有带 data-i18n 的元素：填 chrome.i18n 文案（有则覆盖 HTML 兜底文本）
-  document.querySelectorAll('[data-i18n]').forEach((el) => {
-    const key = el.getAttribute('data-i18n');
-    if (!key) return;
-    const msg = chrome.i18n.getMessage(key);
-    if (msg) el.textContent = msg;
+  // Localized copy — only when running as an extension page; otherwise keep HTML defaults
+  if (i18n) {
+    const title = i18n.getMessage('onboarding_title');
+    if (title) document.title = title;
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const msg = i18n.getMessage(el.getAttribute('data-i18n'));
+      if (msg) el.textContent = msg;
+    });
+    document.querySelectorAll('[data-i18n-alt]').forEach((el) => {
+      const msg = i18n.getMessage(el.getAttribute('data-i18n-alt'));
+      if (msg) el.setAttribute('alt', msg);
+    });
+  }
+
+  // Screenshots via RELATIVE path — resolves both as an extension page and via file://
+  document.querySelectorAll('img.shot[data-shot]').forEach((img) => {
+    img.src = `onboarding/${shotLang}/${img.getAttribute('data-shot')}.webp`;
   });
 
-  // 品牌 logo：扩展内资源 URL
-  const logo = document.getElementById('brand-logo');
-  if (logo) logo.src = chrome.runtime.getURL('brand/logo.svg');
-
-  // 版本号：读 manifest
+  // Version from manifest (extension only)
   const versionEl = document.getElementById('version');
-  if (versionEl) {
-    const v = chrome.runtime.getManifest().version;
-    versionEl.textContent = 'v' + v;
+  if (versionEl && cr) {
+    try { versionEl.textContent = 'v' + cr.runtime.getManifest().version; } catch { /* ignore */ }
   }
 });
