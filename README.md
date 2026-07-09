@@ -142,7 +142,7 @@ Chrome Web Store and Edge Add-ons listings are **coming soon**. A self-hosted `.
 ### From source (available now)
 
 ```bash
-git clone https://github.com/HELUOO404/PigeonDeck.git
+git clone https://github.com/Pigeon-Pub/PigeonDeck.git
 cd PigeonDeck
 npm install
 npm run build      # outputs to dist/
@@ -192,8 +192,8 @@ For code, the gates are `npm run build`, `npm run typecheck`, `npm test`, `npm r
 
 ## Star history
 
-<a href="https://star-history.com/#HELUOO404/PigeonDeck&Date">
-  <img src="https://api.star-history.com/svg?repos=HELUOO404/PigeonDeck&type=Date" alt="Star History Chart" width="640">
+<a href="https://star-history.com/#Pigeon-Pub/PigeonDeck&Date">
+  <img src="https://api.star-history.com/svg?repos=Pigeon-Pub/PigeonDeck&type=Date" alt="Star History Chart" width="640">
 </a>
 
 If PigeonDeck is useful to you, a star helps others find it.

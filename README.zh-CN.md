@@ -142,7 +142,7 @@ Chrome 网上应用店与 Edge 加载项上架**即将推出**。上架同期计
 ### 从源码（现在即可）
 
 ```bash
-git clone https://github.com/HELUOO404/PigeonDeck.git
+git clone https://github.com/Pigeon-Pub/PigeonDeck.git
 cd PigeonDeck
 npm install
 npm run build      # 输出到 dist/
@@ -192,8 +192,8 @@ npm run build      # 输出到 dist/
 
 ## Star 趋势
 
-<a href="https://star-history.com/#HELUOO404/PigeonDeck&Date">
-  <img src="https://api.star-history.com/svg?repos=HELUOO404/PigeonDeck&type=Date" alt="Star History Chart" width="640">
+<a href="https://star-history.com/#Pigeon-Pub/PigeonDeck&Date">
+  <img src="https://api.star-history.com/svg?repos=Pigeon-Pub/PigeonDeck&type=Date" alt="Star History Chart" width="640">
 </a>
 
 如果 PigeonDeck 对你有用，点一个 star 能帮更多人找到它。
