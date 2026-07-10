@@ -35,6 +35,5 @@
       "resources": ["brand/logo.svg"],
       "matches": ["<all_urls>"]
     }
-  ],
-  "update_url": "https://github.com/Pigeon-Pub/PigeonDeck/releases/latest/download/updates.xml"
+  ]
 }
