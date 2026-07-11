@@ -79,12 +79,14 @@ export class SelectionBox {
     this.unsubscribeHistory = opts.history.subscribe(() => this.scheduleReposition());
     window.addEventListener('scroll', this.scheduleReposition, { capture: true, passive: true });
     window.addEventListener('resize', this.scheduleReposition);
+    window.addEventListener('keydown', this.onKeyDown, true);
   }
 
   destroy(): void {
     this.unsubscribeHistory();
     window.removeEventListener('scroll', this.scheduleReposition, true);
     window.removeEventListener('resize', this.scheduleReposition);
+    window.removeEventListener('keydown', this.onKeyDown, true);
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     this.clear();
   }
@@ -164,6 +166,40 @@ export class SelectionBox {
       this.reposition();
     });
   };
+
+  private onKeyDown = (ev: KeyboardEvent): void => {
+    if (ev.defaultPrevented || ev.key !== 'Delete' || !this.selectedEl?.isConnected) return;
+    if (ev.composedPath().some((node) => this.isEditable(node))) return;
+
+    const el = this.selectedEl;
+    const parent = el.parentNode;
+    if (!parent) return;
+    const nextSibling = el.nextSibling;
+    const annotation = this.store.getBySelector(buildSelector(el));
+
+    const remove = (): void => {
+      el.remove();
+      if (annotation) this.store.remove(annotation.id);
+    };
+    const restore = (): void => {
+      if (nextSibling?.parentNode === parent) parent.insertBefore(el, nextSibling);
+      else parent.appendChild(el);
+      if (annotation) this.store.restore(annotation);
+    };
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    this.clear();
+    remove();
+    this.history.push({ label: 'delete:element', apply: remove, revert: restore });
+  };
+
+  private isEditable(node: EventTarget): boolean {
+    return (
+      node instanceof Element &&
+      node.matches('input, textarea, select, [contenteditable]:not([contenteditable="false"])')
+    );
+  }
 
   // ---- 句柄缩放拖拽 ----
 
