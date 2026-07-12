@@ -115,6 +115,47 @@ beforeEach(() => {
   document.body.innerHTML = '';
 });
 
+describe('Delete in annotate mode', () => {
+  it('deletes the selected element while the note only has automatic focus', () => {
+    const { manager, panelLayer, target } = setupCtx();
+    manager.openPanel(target, null);
+    const textarea = panelLayer.querySelector<HTMLTextAreaElement>('[data-testid="pd-panel-note"]')!;
+    expect((textarea.getRootNode() as ShadowRoot).activeElement).toBe(textarea);
+
+    textarea.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Delete',
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+
+    expect(target.isConnected).toBe(false);
+    expect(panelLayer.querySelector('[data-testid="pd-panel"]')).toBeNull();
+    manager.destroy();
+  });
+
+  it('keeps the selected element after the user starts editing the note', () => {
+    const { manager, panelLayer, target } = setupCtx();
+    manager.openPanel(target, null);
+    const textarea = panelLayer.querySelector<HTMLTextAreaElement>('[data-testid="pd-panel-note"]')!;
+    textarea.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));
+
+    textarea.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Delete',
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+
+    expect(target.isConnected).toBe(true);
+    manager.destroy();
+  });
+});
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();

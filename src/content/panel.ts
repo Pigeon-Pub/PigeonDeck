@@ -254,6 +254,7 @@ export class PanelManager {
   private escPop: (() => void) | undefined;
   private unsubscribeStore: () => void;
   private unsubscribeController: () => void;
+  private passiveDeleteTextarea: HTMLTextAreaElement | null = null;
 
   constructor(
     controller: Controller,
@@ -283,6 +284,8 @@ export class PanelManager {
       history,
       overlayLayer,
       settings,
+      allowDeleteFromEditable: (node) => node === this.passiveDeleteTextarea,
+      onBeforeDelete: () => this.closePanel(),
       onAfterResize: (el) => this.onSelboxResize(el),
     });
 
@@ -586,6 +589,12 @@ export class PanelManager {
     textarea.setAttribute('data-testid', 'pd-panel-note');
     textarea.placeholder = t('panel_note_placeholder');
     textarea.value = existing?.note ?? '';
+    this.passiveDeleteTextarea = textarea;
+    const markNoteEditing = (): void => {
+      if (this.passiveDeleteTextarea === textarea) this.passiveDeleteTextarea = null;
+    };
+    textarea.addEventListener('mousedown', markNoteEditing);
+    textarea.addEventListener('input', markNoteEditing);
     // 保存快捷键（默认 Ctrl/Cmd+Enter）保存（普通 Enter 仍换行）（建议1）
     textarea.addEventListener('keydown', (ev) => {
       if (matchCombo(ev, this.settings.shortcuts.save)) {
@@ -977,6 +986,7 @@ export class PanelManager {
 
   closePanel(): void {
     if (!this.panelEl) return;
+    this.passiveDeleteTextarea = null;
     this.escPop?.();
     this.escPop = undefined;
     closeAllPopovers();

@@ -47,6 +47,10 @@ export interface SelectionBoxOptions {
   overlayLayer: HTMLElement;
   /** 设置（读 shortcuts.delete 绑定；共享引用，改绑即时生效）。 */
   settings: Settings;
+  /** Allow an owner to distinguish programmatic focus from active editing. */
+  allowDeleteFromEditable?: (node: Element) => boolean;
+  /** Let the owner close UI tied to the element before it is detached. */
+  onBeforeDelete?: () => void;
   /** 句柄缩放提交后回调（拥有者可据此同步自身状态，如面板刷新已有标注引用） */
   onAfterResize?: (el: HTMLElement) => void;
 }
@@ -56,6 +60,8 @@ export class SelectionBox {
   private history: History;
   private overlayLayer: HTMLElement;
   private settings: Settings;
+  private allowDeleteFromEditable?: (node: Element) => boolean;
+  private onBeforeDelete?: () => void;
   private onAfterResize?: (el: HTMLElement) => void;
 
   // 当前选中
@@ -79,6 +85,8 @@ export class SelectionBox {
     this.history = opts.history;
     this.overlayLayer = opts.overlayLayer;
     this.settings = opts.settings;
+    this.allowDeleteFromEditable = opts.allowDeleteFromEditable;
+    this.onBeforeDelete = opts.onBeforeDelete;
     this.onAfterResize = opts.onAfterResize;
 
     // 撤销/重做改动 el.style.transform 或重父后，选中框必须跟随（move.ts Bug1/显示15）。
@@ -196,6 +204,7 @@ export class SelectionBox {
     ev.preventDefault();
     ev.stopPropagation();
     this.clear();
+    this.onBeforeDelete?.();
     remove();
     this.history.push({ label: 'delete:element', apply: remove, revert: restore });
   };
@@ -203,7 +212,8 @@ export class SelectionBox {
   private isEditable(node: EventTarget): boolean {
     return (
       node instanceof Element &&
-      node.matches('input, textarea, select, [contenteditable]:not([contenteditable="false"])')
+      node.matches('input, textarea, select, [contenteditable]:not([contenteditable="false"])') &&
+      !this.allowDeleteFromEditable?.(node)
     );
   }
 
