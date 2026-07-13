@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **当前阶段：编码进行中。** V1 首个版本号将在功能闭环完成后确定。
+## [1.0.0] - 2026-07-13
+
+PigeonDeck 首个正式发布版本，标志 V1 功能闭环。以下为自 v0.1.0 起累积的全部变更。
 
 ### Feature — 快捷键全量重绑 + 教程页按键指南 + 设置面板收紧（2026-07-12，分支 原欢迎页完善）
 
@@ -364,4 +366,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/Pigeon-Pub/PigeonDeck/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Pigeon-Pub/PigeonDeck/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Pigeon-Pub/PigeonDeck/compare/v0.1.0...v1.0.0
