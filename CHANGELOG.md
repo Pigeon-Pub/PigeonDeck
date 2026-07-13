@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 全链路集成 E2E（`tests/e2e/full-flow.spec.ts`，1 大场景，蓝图 §10.3）：展开→批注#1→改背景色#2（验 computed 变化）→移动模式拖 #snap-b 出#3→区域框选#4→**复制文本读剪贴板真断言**（`[Page Context]`/`[Operations]`/`#1`/note）→撤销回退→清空确认+Ctrl+Z 恢复→**刷新 sessionStorage 恢复**→设置面板开关；时序全轮询；复制图片（captureVisibleTab 本环境挂起）按 §15 跳过转手动冒烟
 - 单测：审计确认既有覆盖充分（format 43 / snap 14 / selection 9 / visual-units 8 / disable 13 / languages 11 等已覆盖全部纯函数分支），**无真实盲区，不造凑数测试**
 - E2E 稳健性：`playwright.config.ts` 加 `retries: 1`（headed 扩展测试对机器负载敏感，吸收冷启动/高负载偶发 flake；`--retries=0` 下全套 71×2 亦稳定通过，重试不掩盖确定性回归）
-- **手动冒烟清单**（`docs/manual-smoke-checklist.md`，交付用户）：71 项可勾选，16 分区覆盖 Playwright 无法可靠验证的部分——尤其**复制图片长图/叠加/剪贴板（真机关键）**、`file://`（需扩展详情手动开启文件访问）、Popup 站点禁用 reload 联动、右键菜单、PDF 提示、亮暗主题；含环境与加载 dist/ 步骤
+- **手动冒烟清单**（`docs/development/manual-smoke-checklist.md`，交付用户）：71 项可勾选，16 分区覆盖 Playwright 无法可靠验证的部分——尤其**复制图片长图/叠加/剪贴板（真机关键）**、`file://`（需扩展详情手动开启文件访问）、Popup 站点禁用 reload 联动、右键菜单、PDF 提示、亮暗主题；含环境与加载 dist/ 步骤
 - 已知妥协（§15 记录）：复制图片、file:// 授权、浏览器原生右键菜单、onInstalled 首装自动打开——均 persistent-context 不可自动验，转手动冒烟
 
 ### Coding — 阶段 14：i18n 完整化（2026-07-03）
@@ -300,10 +300,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- 完成 V1 实施计划（[docs/v1-plan.md](docs/v1-plan.md)）：15 个实施阶段、文件模块清单、验收标准
-- 完成设计系统参考文档（[docs/design-system.md](docs/design-system.md)）
-- 完成 11 轮 UI 预览裁决记录（[docs/ui-preview-rulings.md](docs/ui-preview-rulings.md)）
-- 建立颗粒化项目规范系统（[docs/conventions/INDEX.md](docs/conventions/INDEX.md)）
+- 完成 V1 实施计划（[docs/development/v1-plan.md](docs/development/v1-plan.md)）：15 个实施阶段、文件模块清单、验收标准
+- 完成设计系统参考文档（[docs/design/design-system.md](docs/design/design-system.md)）
+- 完成 11 轮 UI 预览裁决记录（[docs/design/ui-preview-rulings.md](docs/design/ui-preview-rulings.md)）
+- 建立颗粒化项目规范系统（[docs/conventions/README.md](docs/conventions/README.md)）
 - 建立仓库级 CLAUDE.md 索引（项目指令 + 文档导航 + 架构要点）
 
 ### Architecture Decisions
@@ -327,11 +327,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`preview/`** — UI 组件画廊（38 张表面卡，含 pigeonlib.css + pigeon-components.js）
-- **`docs/v1-plan.md`** — V1 实施计划（15 阶段 + 验收标准）
-- **`docs/design-system.md`** — 设计令牌与控件规格
-- **`docs/ui-preview-rulings.md`** — 11 轮 UI 裁决记录
+- **`docs/development/v1-plan.md`** — V1 实施计划（15 阶段 + 验收标准）
+- **`docs/design/design-system.md`** — 设计令牌与控件规格
+- **`docs/design/ui-preview-rulings.md`** — 11 轮 UI 裁决记录
 - **`docs/conventions/`** — 颗粒化项目规范
-- **`context/构想蓝图2.md`** — 产品规格完整定义
+- **`docs/product/product-spec.md`** — 产品规格完整定义
 - **`CLAUDE.md`** — 仓库级 AI 编码指令
 - 设计系统 pigeonlib 全套令牌与控件配方
 - Light/Dark 双主题完整定义
@@ -342,7 +342,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Future — Planned for v1.0.0
 
 > 以下为 V1 实施计划中的 15 个开发阶段，将在后续版本中逐步完成。
-> 详细验收标准见 [docs/v1-plan.md §4](docs/v1-plan.md#4-验收标准)。
+> 详细验收标准见 [docs/development/v1-plan.md §4](docs/development/v1-plan.md#4-验收标准)。
 
 | Phase | Scope |
 |-------|-------|

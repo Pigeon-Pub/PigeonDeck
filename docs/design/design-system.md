@@ -1,8 +1,8 @@
 # PigeonDeck 设计系统
 
 > **定位**：PigeonDeck 的完整视觉语言参考。设计令牌从 pigeonlib 照搬，控件配方从 `preview/` 组件画廊提取。编码阶段以此文件为 UI 实现的单一真相源。
-> **源文件**：[preview/pigeonlib.css](../preview/pigeonlib.css)（设计令牌 + 控件配方）、[preview/pigeon-components.js](../preview/pigeon-components.js)（Web Components 控件原件）、[preview/index.html](../preview/index.html)（画廊宿主）。
-> **活文档**：[preview/design-system.html](../preview/design-system.html) — 令牌与配方的实时渲染版（随主题切换、链接画廊）。本 md 为文字规格，HTML 为可视核对。
+> **历史源文件**：[preview/pigeonlib.css](../../preview/pigeonlib.css)（设计令牌 + 控件配方）、[preview/pigeon-components.js](../../preview/pigeon-components.js)（Web Components 控件原件）、[preview/index.html](../../preview/index.html)（画廊宿主）。
+> **历史渲染页**：[preview/design-system.html](../../preview/design-system.html) — 令牌与配方的归档渲染版。本 md 为当前文字规格，`preview/` 不再作为编码依据。
 
 ---
 

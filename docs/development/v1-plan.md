@@ -1,7 +1,7 @@
 # PigeonDeck V1 实施计划
 
-> **定位**：本文件是 PigeonDeck V1 的完整实施规格，融合了构想蓝图2、PRD、UI 层级文档和 UI 风格文档的全部独有内容。编码阶段以本文件为单一真相源。
-> **前置阅读**：[context/构想蓝图2.md](../context/构想蓝图2.md) — 产品定位、设计系统、交互规格、输出格式的完整定义。本文件侧重于**实施层面**的内容：开发阶段划分、验收标准、文件模块清单。
+> **状态**：已完成的 PigeonDeck V1 实施与验收基线。本文用于查阅既有模块、阶段决策和验收范围，不再是当前任务计划。
+> **前置阅读**：[产品规格](../product/product-spec.md) — 产品定位、设计系统、交互规格、输出格式的完整定义。本文侧重于**实施层面**的内容：开发阶段划分、验收标准、文件模块清单。
 
 ---
 
@@ -453,7 +453,7 @@ pigeondeck/
 │   └── fixtures/                    # E2E 本地 HTML 夹具
 ├── preview/                         # UI 组件画廊（设计阶段产物，保留）
 ├── docs/
-├── context/
+├── docs/product/
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
@@ -511,7 +511,7 @@ pigeondeck/
 - 提交信息用中文，一句话说清做了什么
 
 ### 5.2 规范维护
-- 颗粒化规范：每条规则一个文件 + `docs/conventions/INDEX.md` 索引
+- 颗粒化规范：每条规则一个文件 + `docs/conventions/README.md` 索引
 - 杜绝冗余：删除过时规则，避免描述重叠
 - 变更必同步：新增或更新规范时同步更新索引文件
 
@@ -523,7 +523,7 @@ pigeondeck/
 
 ## 6. 参考：UI 状态清单
 
-以下是 V1 需要实现的所有 UI 状态（低保真清单，详细视觉参数见 [design-system.md](design-system.md) 和 [../preview/](../preview/) 画廊）：
+以下是 V1 需要实现的所有 UI 状态（低保真清单，详细视觉参数见 [design-system.md](../design/design-system.md) 和 [preview/](../../preview/) 画廊）：
 
 ### 6.1 页面内 UI 状态
 - 悬浮球收起态（邮政金圆形底色 42px + 抽象鸽子 logo）
@@ -558,8 +558,8 @@ pigeondeck/
 
 | 文档 | 与本文件的关系 |
 |------|--------------|
-| [context/构想蓝图2.md](../context/构想蓝图2.md) | 产品定位、设计系统、交互规格、输出格式的完整定义。本文件引用之 |
-| [docs/design-system.md](design-system.md) | 设计令牌、UI 组件配方、控件规格的详细参考 |
-| [docs/ui-preview-rulings.md](ui-preview-rulings.md) | 11 轮 UI 预览裁决记录（历史参考） |
-| [docs/conventions/](conventions/INDEX.md) | 颗粒化项目规范 |
-| [preview/](../preview/) | UI 组件画廊（设计阶段产物，含完整交互态演示） |
+| [产品规格](../product/product-spec.md) | 产品定位、设计系统、交互规格、输出格式的完整定义。本文引用之 |
+| [设计系统](../design/design-system.md) | 设计令牌、UI 组件配方、控件规格的详细参考 |
+| [UI 预览裁决](../design/ui-preview-rulings.md) | 11 轮 UI 预览裁决记录（历史参考） |
+| [docs/conventions/](../conventions/README.md) | 颗粒化项目规范 |
+| [preview/](../../preview/) | UI 组件画廊（设计阶段归档） |

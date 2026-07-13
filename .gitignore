@@ -20,3 +20,9 @@ playwright-report/
 test-results/
 .playwright-profile/
 release/
+
+# Local agent tools
+.od-skills/
+.agents/
+.codex/
+.claude/worktrees/

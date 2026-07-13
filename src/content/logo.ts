@@ -1,6 +1,6 @@
 /* ============================================================
    logo.ts — PigeonDeck 品牌鸽 Logo（唯一真相源）
-   与 public/brand/logo.svg / 仓库根 PigeonDeckLogo.svg 同一矢量。
+   与 public/brand/logo.svg / assets/pigeondeck-logo-source.svg 同一矢量。
    currentColor 描边，供悬浮球 / 工具盘 Logo 按钮 / 设置关于区共用，
    杜绝多处内联字形不一致（原 settings-panel 的 24×24 简化字形已废弃）。
    ============================================================ */
