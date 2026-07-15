@@ -22,6 +22,7 @@ import {
   MeasureFn,
   CARD_MAX_WIDTH,
   CARD_MIN_WIDTH,
+  collectOverlayItems,
 } from './capture';
 import { Controller } from './controller';
 import { initEscStack } from './esc-stack';
@@ -140,6 +141,31 @@ describe('computeCaptureRange', () => {
     const rects: DocRect[] = [{ x: 0, y: 0, w: 100, h: 100 }];
     const r = computeCaptureRange(rects, 0, MAX_CAPTURE_HEIGHT, 1920);
     expect(r.width).toBe(1920);
+  });
+});
+
+describe('collectOverlayItems — 删除标注', () => {
+  it('使用删除前文档坐标并生成中英文删除卡片', () => {
+    const store = new AnnotationStore();
+    const ann = store.add({
+      selector: '#gone',
+      elementType: 'container',
+      summary: 'div',
+      note: '',
+      changes: [],
+      viewportPos: { x: 1, y: 2, w: 3, h: 4 },
+      deleted: true,
+      deletion: {
+        layout: 'reflow',
+        docRect: { x: 100, y: 200, w: 80, h: 30 },
+      },
+    });
+
+    expect(collectOverlayItems([ann], 'en')[0]).toMatchObject({
+      box: { x: 100, y: 200, w: 80, h: 30 },
+      card: { typeLabel: 'Delete' },
+    });
+    expect(collectOverlayItems([ann], 'zh_CN')[0].card?.typeLabel).toBe('删除');
   });
 });
 

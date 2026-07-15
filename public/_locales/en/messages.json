@@ -196,6 +196,7 @@
   "card_type_annotation": { "message": "Annotation", "description": "Export image card header: annotation type segment" },
   "card_type_style": { "message": "Style", "description": "Export image card header: style modification type segment" },
   "card_type_move": { "message": "Move", "description": "Export image card header: move type segment" },
+  "card_type_delete": { "message": "Delete", "description": "Export image card header: delete type" },
   "gran_narrow": { "message": "Narrow selection (child element)", "description": "Granularity capsule: shrink to child element" },
   "gran_widen": { "message": "Widen selection (parent element)", "description": "Granularity capsule: expand to parent element" },
   "guide_align_left": { "message": "Left aligned", "description": "Snap guide semantic: left edges aligned" },

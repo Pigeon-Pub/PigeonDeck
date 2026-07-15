@@ -50,8 +50,8 @@ export function getLocale(): string {
  * 翻译 key → 文案字符串。
  * 查找顺序：currentLocale → en → key 本身（最终兜底）。
  */
-export function t(key: string): string {
-  const messages = LOCALE_MAP[currentLocale];
+export function tIn(locale: string, key: string): string {
+  const messages = LOCALE_MAP[locale];
   if (messages && key in messages) {
     return messages[key].message;
   }
@@ -61,4 +61,8 @@ export function t(key: string): string {
     return fallback[key].message;
   }
   return key;
+}
+
+export function t(key: string): string {
+  return tIn(currentLocale, key);
 }

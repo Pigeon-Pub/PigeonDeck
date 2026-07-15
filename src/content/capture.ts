@@ -9,7 +9,7 @@ import { Controller } from './controller';
 import { AnnotationStore, Annotation } from '../state/annotations';
 import { Settings } from '../state/settings';
 import { Toast } from './toast';
-import { t } from './i18n';
+import { getLocale, t, tIn } from './i18n';
 import { makeDraggableByHandle } from './floating-drag';
 import { closeAllPopovers } from './popover';
 import { composeCardChangeLines } from './annotation-summary';
@@ -56,7 +56,7 @@ export type { OverlayLayout } from './capture-overlay-layout';
 export { CARD_MAX_WIDTH, CARD_MIN_WIDTH, computeCardLayout, wrapText } from './capture-card-layout';
 export type { CardContent, CardLayoutItem, LaidOutCard, MeasureFn } from './capture-card-layout';
 
-interface OverlayItem {
+export interface OverlayItem {
   number: number;
   kind: 'element' | 'region';
   box: DocRect;
@@ -70,21 +70,22 @@ interface OverlayItem {
 // 布局全程用文档坐标；卡片矩形并入 computeCaptureRange 使画布容纳所有卡片。
 
 /** 类型标签（本地化）：批注 / 样式 / 移动 组合，或区域（照 format.ts 语义，紧凑版） */
-function cardTypeLabel(a: Annotation): string {
-  if (a.kind === 'region') return t('region_label');
+function cardTypeLabel(a: Annotation, locale: string): string {
+  if (a.deleted) return tIn(locale, 'card_type_delete');
+  if (a.kind === 'region') return tIn(locale, 'region_label');
   const parts: string[] = [];
-  if (a.note.trim()) parts.push(t('card_type_annotation'));
-  if (a.changes.length > 0) parts.push(t('card_type_style'));
-  if (a.move) parts.push(t('card_type_move'));
+  if (a.note.trim()) parts.push(tIn(locale, 'card_type_annotation'));
+  if (a.changes.length > 0) parts.push(tIn(locale, 'card_type_style'));
+  if (a.move) parts.push(tIn(locale, 'card_type_move'));
   return parts.join(' + ');
 }
 
 /** 组装一条标注的卡片内容；无 note 且无变更行 → undefined（不画卡片） */
-function composeCard(a: Annotation): CardContent | undefined {
+function composeCard(a: Annotation, locale: string): CardContent | undefined {
   const note = a.note.trim();
   const lines = a.kind === 'region' ? [] : composeCardChangeLines(a);
-  if (!note && lines.length === 0) return undefined;
-  return { typeLabel: cardTypeLabel(a), note, lines };
+  if (!a.deleted && !note && lines.length === 0) return undefined;
+  return { typeLabel: cardTypeLabel(a, locale), note, lines };
 }
 
 
@@ -93,13 +94,25 @@ function composeCard(a: Annotation): CardContent | undefined {
  * 元素标注取实时 getBoundingClientRect（含 transform 预览 = 最终位置）；
  * 被移动元素反推初始位置 = 最终 − (dx, dy)，最终位置作为幽灵框。
  */
-function collectOverlayItems(annotations: Annotation[]): OverlayItem[] {
+export function collectOverlayItems(annotations: Annotation[], locale: string): OverlayItem[] {
   const sx = window.scrollX;
   const sy = window.scrollY;
   const items: OverlayItem[] = [];
 
   for (const a of annotations) {
-    const card = composeCard(a);
+    const card = composeCard(a, locale);
+    if (a.deleted && a.deletion) {
+      const r = a.deletion.docRect;
+      if (r.w > 0 && r.h > 0) {
+        items.push({
+          number: a.number,
+          kind: 'element',
+          box: { x: r.x, y: r.y, w: r.w, h: r.h },
+          card,
+        });
+      }
+      continue;
+    }
     // 区域标注：docRect 本身已是文档坐标
     if (a.kind === 'region' && a.region) {
       const r = a.region.docRect;
@@ -639,7 +652,8 @@ export class CopyImageManager {
     this.toast.show(t('toast_capture_generating'));
 
     try {
-      const items = collectOverlayItems(annotations);
+      const locale = this.settings.exportLang === 'auto' ? getLocale() : this.settings.exportLang;
+      const items = collectOverlayItems(annotations, locale);
       if (items.length === 0) {
         this.toast.show(t('toast_capture_failed'));
         return;

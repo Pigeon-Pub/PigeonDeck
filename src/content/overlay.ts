@@ -173,6 +173,7 @@ export class Overlay {
     let count = 0;
     for (const entry of this.entries.values()) {
       if (entry.isRegion) continue;
+      if (entry.annotation.deleted && entry.annotation.deletion) continue;
       if (!entry.target || !entry.target.isConnected) count++;
     }
     return count;
@@ -189,8 +190,17 @@ export class Overlay {
       const { dx, dy } = this.regionScrollOffset(region);
       return new DOMRect(docRect.x - dx, docRect.y - dy, docRect.w, docRect.h);
     }
-    if (!entry.target?.isConnected) return null;
-    return entry.target.getBoundingClientRect();
+    if (entry.target?.isConnected) return entry.target.getBoundingClientRect();
+    if (entry.annotation.deleted && entry.annotation.deletion) {
+      const { docRect } = entry.annotation.deletion;
+      return new DOMRect(
+        docRect.x - window.scrollX,
+        docRect.y - window.scrollY,
+        docRect.w,
+        docRect.h
+      );
+    }
+    return null;
   }
 
   /** 某标注位号圆的当前视口矩形（卡片/菜单锚点用，由目标矩形推算，不依赖渲染时序） */
@@ -477,15 +487,14 @@ export class Overlay {
         this.observeTarget(entry);
       }
 
-      const el = entry.target;
-      if (!el || !el.isConnected || el.getClientRects().length === 0) {
+      const rect = this.getTargetRect(entry.annotation.id);
+      if (!rect || rect.width === 0 || rect.height === 0) {
         // 隐藏 UI，保留数据
         entry.markbox.style.display = 'none';
         entry.pin.style.display = 'none';
         continue;
       }
 
-      const rect = el.getBoundingClientRect();
       const left = rect.left - MARK_INSET;
       const top = rect.top - MARK_INSET;
       Object.assign(entry.markbox.style, {

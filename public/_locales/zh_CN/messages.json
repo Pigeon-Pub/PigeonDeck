@@ -196,6 +196,7 @@
   "card_type_annotation": { "message": "批注", "description": "导出图卡片标题：批注类型段" },
   "card_type_style": { "message": "样式", "description": "导出图卡片标题：样式修改类型段" },
   "card_type_move": { "message": "移动", "description": "导出图卡片标题：移动类型段" },
+  "card_type_delete": { "message": "删除", "description": "导出图卡片标题：删除类型" },
   "gran_narrow": { "message": "收窄选中（向子元素）", "description": "粒度胶囊：收窄到子元素" },
   "gran_widen": { "message": "扩大选中（向祖先）", "description": "粒度胶囊：扩展到祖先元素" },
   "guide_align_left": { "message": "左对齐", "description": "吸附参考线语义：左边缘对齐" },

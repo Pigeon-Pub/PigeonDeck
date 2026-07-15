@@ -111,4 +111,43 @@ describe('Overlay.setSuppressedMark — 抑制持久标注框（R5）', () => {
     expect(markVisible(s.layer, 'pd-markbox')).toBe(true);
     expect(markVisible(s.layer, 'pd-pin')).toBe(true);
   });
+
+  it('已删除目标断连后按文档坐标显示占位框，并跟随窗口滚动', async () => {
+    vi.stubGlobal('scrollX', 10);
+    vi.stubGlobal('scrollY', 20);
+    const host = document.createElement('div');
+    const shadow = host.attachShadow({ mode: 'open' });
+    const layer = document.createElement('div');
+    shadow.appendChild(layer);
+    document.body.appendChild(host);
+    const store = new AnnotationStore();
+    const ann = store.add({
+      selector: '#gone',
+      elementType: 'container',
+      summary: 'div',
+      note: '',
+      changes: [],
+      viewportPos: { x: 1, y: 2, w: 3, h: 4 },
+      deleted: true,
+      deletion: {
+        layout: 'reflow',
+        docRect: { x: 110, y: 220, w: 80, h: 30 },
+      },
+    });
+
+    overlay = new Overlay(new Controller(), store, layer, { ...DEFAULT_SETTINGS });
+    await flush();
+
+    const rect = overlay.getTargetRect(ann.id);
+    expect(rect).not.toBeNull();
+    expect({ x: rect?.x, y: rect?.y, w: rect?.width, h: rect?.height }).toEqual({
+      x: 100,
+      y: 200,
+      w: 80,
+      h: 30,
+    });
+    expect(overlay.getUnresolvedCount()).toBe(0);
+    expect(markVisible(layer, 'pd-markbox')).toBe(true);
+    expect(markVisible(layer, 'pd-pin')).toBe(true);
+  });
 });
