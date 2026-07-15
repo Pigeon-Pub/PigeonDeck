@@ -13,6 +13,7 @@ import { Controller } from './controller';
 import { AnnotationStore, AnnotationInput } from '../state/annotations';
 import { History } from '../state/history';
 import { Toast } from './toast';
+import { deletionRuntime } from './deletion-runtime';
 
 function makeInput(selector: string, note: string): AnnotationInput {
   return {
@@ -47,6 +48,7 @@ interface Harness {
 }
 
 function setup(): Harness {
+  deletionRuntime.reset();
   document.body.innerHTML = '';
 
   const controlLayer = document.createElement('div');
@@ -175,6 +177,43 @@ describe('ClearManager — 清空复合命令', () => {
     expect(regionAnn).toBeDefined();
     expect(regionAnn?.region?.elements).toEqual(['div.card']);
   });
+
+  it.each(['preserve-space', 'reflow'] as const)(
+    '清空恢复 %s 删除，撤销和重做保持删除语义',
+    (layout) => {
+      const deleted = setup();
+      const target = document.createElement('div');
+      target.id = `deleted-${layout}`;
+      document.body.appendChild(target);
+      const ann = deleted.store.add({
+        selector: `#${target.id}`,
+        elementType: 'container',
+        summary: 'div',
+        note: '',
+        changes: [],
+        viewportPos: { x: 0, y: 0, w: 100, h: 40 },
+        deleted: true,
+        deletion: {
+          layout,
+          docRect: { x: 0, y: 0, w: 100, h: 40 },
+        },
+      });
+      deletionRuntime.capture(ann.id, target);
+      deletionRuntime.apply(ann.id, layout);
+
+      triggerAndConfirm(deleted);
+      expect(target.isConnected).toBe(true);
+      expect(target.style.opacity).toBe('');
+
+      expect(deleted.history.undo()).toBe(true);
+      if (layout === 'reflow') expect(target.isConnected).toBe(false);
+      else expect(target.style.opacity).toBe('0');
+
+      expect(deleted.history.redo()).toBe(true);
+      expect(target.isConnected).toBe(true);
+      expect(target.style.opacity).toBe('');
+    }
+  );
 });
 
 // ============================================================

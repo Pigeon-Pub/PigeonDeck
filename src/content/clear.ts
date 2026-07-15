@@ -13,6 +13,7 @@ import { Toast } from './toast';
 import { t } from './i18n';
 import { mountPopover, PopoverHandle } from './popover';
 import { applyChangesTo } from './change-apply';
+import { deletionRuntime } from './deletion-runtime';
 
 export class ClearManager {
   private controller: Controller;
@@ -144,6 +145,7 @@ export class ClearManager {
         // 区域标注仅为 overlay，无 DOM 元素可回退，且 selector 为空串会让
         // document.querySelector('') 抛 SyntaxError 中断整个清空——直接跳过。
         if (ann.kind === 'region' || !ann.selector) continue;
+        if (ann.deleted && ann.deletion) deletionRuntime.restore(ann.id);
         const el = document.querySelector(ann.selector);
         applyChangesTo(el, ann.changes, 'old');
         if (ann.move && el instanceof HTMLElement) {
@@ -175,6 +177,7 @@ export class ClearManager {
       for (const ann of anns) {
         // 区域标注由 store.load 恢复即可（overlay 自动重建），无 DOM 回放。
         if (ann.kind === 'region' || !ann.selector) continue;
+        if (ann.deleted && ann.deletion) deletionRuntime.restore(ann.id);
         if (ann.move?.reparent) {
           // D3：DOM 重父移动——doClear 已将元素还原到 fromSelector 位置，
           // 此处找回并重新嵌入目标容器。
@@ -204,6 +207,9 @@ export class ClearManager {
           if (ann.move && el instanceof HTMLElement) {
             el.style.transform = `translate(${ann.move.dx}px, ${ann.move.dy}px)`;
           }
+        }
+        if (ann.deleted && ann.deletion) {
+          deletionRuntime.apply(ann.id, ann.deletion.layout);
         }
       }
     };
