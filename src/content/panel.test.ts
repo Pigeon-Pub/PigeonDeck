@@ -13,6 +13,7 @@ import { History } from '../state/history';
 import { DEFAULT_SETTINGS } from '../state/settings';
 import type { Overlay } from './overlay';
 import type { Toast } from './toast';
+import { deletionRuntime } from './deletion-runtime';
 
 // ---- 最小 Overlay / Toast mock（只需实例方法，不需真实布局） ----
 function makeOverlay(): Overlay {
@@ -104,6 +105,7 @@ function fire(el: HTMLElement, type: 'mousedown' | 'click'): void {
 
 // ---- 全局 jsdom 补丁 ----
 beforeEach(() => {
+  deletionRuntime.reset();
   // SelectionBox 用到 ResizeObserver
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
@@ -135,7 +137,8 @@ describe('Delete in annotate mode', () => {
       }),
     );
 
-    expect(target.isConnected).toBe(false);
+    expect(target.isConnected).toBe(true);
+    expect(target.style.opacity).toBe('0');
     expect(panelLayer.querySelector('[data-testid="pd-panel"]')).toBeNull();
     manager.destroy();
   });
