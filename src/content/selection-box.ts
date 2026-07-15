@@ -13,6 +13,7 @@ import { History } from '../state/history';
 import { Settings } from '../state/settings';
 import { buildSelector } from '../shared/dom-utils';
 import { applyChangesTo } from './change-apply';
+import { deletionRuntime } from './deletion-runtime';
 import { matchCombo } from './shortcuts';
 
 /** 八向句柄方位 */
@@ -186,20 +187,26 @@ export class SelectionBox {
     if (ev.composedPath().some((node) => this.isEditable(node))) return;
 
     const el = this.selectedEl;
-    const parent = el.parentNode;
-    if (!parent) return;
-    const nextSibling = el.nextSibling;
+    if (!el.parentNode) return;
     const selector = buildSelector(el);
     const annotation = this.store.getBySelector(selector);
     const rect = el.getBoundingClientRect();
+    const deletion = {
+      layout: this.settings.deletionLayout,
+      docRect: {
+        x: Math.round(rect.x + window.scrollX),
+        y: Math.round(rect.y + window.scrollY),
+        w: Math.round(rect.width),
+        h: Math.round(rect.height),
+      },
+    };
     let deletedRecord: Annotation | undefined = annotation
-      ? { ...annotation, deleted: true }
+      ? { ...annotation, deleted: true, deletion }
       : undefined;
 
     const remove = (): void => {
-      el.remove();
-      if (annotation) this.store.remove(annotation.id);
       if (deletedRecord) {
+        if (annotation) this.store.remove(annotation.id);
         this.store.restore(deletedRecord);
       } else {
         deletedRecord = this.store.add({
@@ -215,13 +222,16 @@ export class SelectionBox {
             h: Math.round(rect.height),
           },
           deleted: true,
+          deletion,
         });
       }
+      deletionRuntime.capture(deletedRecord.id, el);
+      deletionRuntime.apply(deletedRecord.id, deletedRecord.deletion!.layout);
     };
     const restore = (): void => {
-      if (nextSibling?.parentNode === parent) parent.insertBefore(el, nextSibling);
-      else parent.appendChild(el);
-      if (deletedRecord) this.store.remove(deletedRecord.id);
+      if (!deletedRecord) return;
+      deletionRuntime.restore(deletedRecord.id);
+      this.store.remove(deletedRecord.id);
       if (annotation) this.store.restore(annotation);
     };
 
