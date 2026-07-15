@@ -40,6 +40,10 @@ describe('DEFAULT_SETTINGS — 阶段 11 新字段', () => {
     expect(DEFAULT_SETTINGS.toolbarPosition).toBeNull();
   });
 
+  it('deletionLayout 默认保留原位置', () => {
+    expect(DEFAULT_SETTINGS.deletionLayout).toBe('preserve-space');
+  });
+
   it('shortcuts 默认含 registry 全部 id', () => {
     expect(DEFAULT_SETTINGS.shortcuts).toEqual(buildDefaultShortcuts());
     expect(DEFAULT_SETTINGS.shortcuts.undo).toBe('Mod+Z');
@@ -65,6 +69,12 @@ describe('DEFAULT_SETTINGS — 阶段 11 新字段', () => {
     // 未存储字段回退默认
     expect(merged.longPressMs).toBe(300);
     expect(merged.dragThreshold).toBe(0);
+  });
+
+  it('旧存储缺少 deletionLayout 时回退默认值', () => {
+    const stored: Partial<Settings> = { theme: 'dark' };
+    const merged = { ...DEFAULT_SETTINGS, ...stored };
+    expect(merged.deletionLayout).toBe('preserve-space');
   });
 });
 

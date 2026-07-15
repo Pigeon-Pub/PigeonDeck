@@ -5,11 +5,15 @@
 
 import { ShortcutId, buildDefaultShortcuts } from './shortcuts-def';
 
+export type DeletionLayout = 'preserve-space' | 'reflow';
+
 export interface Settings {
   /** 元素 hover 标签（默认开启） */
   hoverLabel: boolean;
   /** 标注卡片默认展开（默认关闭） */
   cardDefaultExpanded: boolean;
+  /** 删除后布局：默认保留原位置，也可允许页面自动重排。 */
+  deletionLayout: DeletionLayout;
   /**
    * 移动/批注模式默认选择粒度（默认 'element'）：
    * 'element' = 命中元素本身（不爬升，默认）
@@ -75,6 +79,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   hoverLabel: true,
   cardDefaultExpanded: false,
+  deletionLayout: 'preserve-space',
   defaultGranularity: 'element',
   historyLimit: 50,
   exportLang: 'en',
