@@ -24,7 +24,7 @@ export interface ShortcutDef {
   category: ShortcutCategory;
   /** i18n key（渲染时经 t() 解析），不在此调用 t()。 */
   labelKey: string;
-  descKey?: string;
+  descKey: string;
   kind: ShortcutKind;
   /** 护栏：录制时若组合无修饰键则拒绝（防裸 Enter 吞掉文本框换行）。 */
   requireModifier?: boolean;
@@ -32,12 +32,12 @@ export interface ShortcutDef {
 
 /** 全部快捷键定义（唯一真相源）。 */
 export const SHORTCUT_DEFS = [
-  { id: 'undo', defaultCombo: 'Mod+Z', category: 'global', labelKey: 'tb_undo', kind: 'combo' },
-  { id: 'redo', defaultCombo: 'Mod+Shift+Z', category: 'global', labelKey: 'tb_redo', kind: 'combo' },
-  { id: 'exit', defaultCombo: 'Escape', category: 'global', labelKey: 'set_sc_exit', kind: 'combo' },
-  { id: 'save', defaultCombo: 'Mod+Enter', category: 'editing', labelKey: 'set_sc_save', kind: 'combo', requireModifier: true },
-  { id: 'delete', defaultCombo: 'Delete', category: 'selection', labelKey: 'set_sc_delete', kind: 'combo' },
-  { id: 'moveFree', defaultCombo: 'Alt', category: 'move', labelKey: 'set_sc_movefree', kind: 'modifier' },
+  { id: 'undo', defaultCombo: 'Mod+Z', category: 'global', labelKey: 'tb_undo', descKey: 'set_tip_sc_undo', kind: 'combo' },
+  { id: 'redo', defaultCombo: 'Mod+Shift+Z', category: 'global', labelKey: 'tb_redo', descKey: 'set_tip_sc_redo', kind: 'combo' },
+  { id: 'exit', defaultCombo: 'Escape', category: 'global', labelKey: 'set_sc_exit', descKey: 'set_tip_sc_exit', kind: 'combo' },
+  { id: 'save', defaultCombo: 'Mod+Enter', category: 'editing', labelKey: 'set_sc_save', descKey: 'set_tip_sc_save', kind: 'combo', requireModifier: true },
+  { id: 'delete', defaultCombo: 'Delete', category: 'selection', labelKey: 'set_sc_delete', descKey: 'set_tip_sc_delete', kind: 'combo' },
+  { id: 'moveFree', defaultCombo: 'Alt', category: 'move', labelKey: 'set_sc_movefree', descKey: 'set_tip_sc_movefree', kind: 'modifier' },
 ] as const satisfies readonly ShortcutDef[];
 
 export type ShortcutId = (typeof SHORTCUT_DEFS)[number]['id'];

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- 修复删除标注在图片导出中缺少标注框和删除卡片，以及清空后无法恢复被删除内容的问题。
+
+### Added
+
+- 新增删除后保留原位置或让页面自动重排的设置，并为设置面板全部设置项补充悬浮解释。
+
 ## [1.0.0] - 2026-07-13
 
 PigeonDeck 首个正式发布版本，标志 V1 功能闭环。以下为自 v0.1.0 起累积的全部变更。

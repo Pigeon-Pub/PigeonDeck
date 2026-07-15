@@ -7,7 +7,7 @@
    ============================================================ */
 
 import { Controller } from './controller';
-import { Settings, saveSettings, clampNumber } from '../state/settings';
+import { DeletionLayout, Settings, saveSettings, clampNumber } from '../state/settings';
 import { Overlay } from './overlay';
 import { History } from '../state/history';
 import { SelectionResolver } from './selection';
@@ -324,7 +324,8 @@ export class SettingsManager {
             },
             onClose,
           })
-        )
+        ),
+        t('set_tip_ui_language')
       )
     );
 
@@ -344,7 +345,8 @@ export class SettingsManager {
             saveSettings({ theme: this.settings.theme });
             setTheme(this.settings.theme);
           }
-        )
+        ),
+        t('set_tip_theme')
       )
     );
 
@@ -364,7 +366,8 @@ export class SettingsManager {
             saveSettings({ defaultGranularity: this.settings.defaultGranularity });
             this.resolver.setGranularity(this.settings.defaultGranularity);
           }
-        )
+        ),
+        t('set_tip_granularity')
       )
     );
 
@@ -377,10 +380,41 @@ export class SettingsManager {
       this.onResetPosition();
       this.toast.show(t('toast_position_reset'), 'ok');
     });
-    root.appendChild(this.srow(t('set_position'), t('set_position_sub'), resetBtn));
+    root.appendChild(
+      this.srow(t('set_position'), t('set_position_sub'), resetBtn, t('set_tip_position'))
+    );
   }
 
   private renderInteraction(root: HTMLElement): void {
+    root.appendChild(
+      this.srow(
+        t('set_deletion_layout'),
+        null,
+        this.segText(
+          [
+            {
+              value: 'preserve-space',
+              label: t('set_delete_preserve'),
+              title: t('set_delete_preserve_tip'),
+              testid: 'pd-set-delete-preserve',
+            },
+            {
+              value: 'reflow',
+              label: t('set_delete_reflow'),
+              title: t('set_delete_reflow_tip'),
+              testid: 'pd-set-delete-reflow',
+            },
+          ],
+          this.settings.deletionLayout,
+          (value) => {
+            this.settings.deletionLayout = value as DeletionLayout;
+            saveSettings({ deletionLayout: this.settings.deletionLayout });
+          }
+        ),
+        t('set_tip_deletion_layout')
+      )
+    );
+
     // 长按时长
     root.appendChild(
       this.srow(
@@ -389,7 +423,8 @@ export class SettingsManager {
         this.numControl(this.settings.longPressMs, t('set_unit_ms'), 50, 50, 2000, 'pd-set-longpress', (v) => {
           this.settings.longPressMs = v;
           saveSettings({ longPressMs: v });
-        })
+        }),
+        t('set_tip_longpress')
       )
     );
 
@@ -401,7 +436,8 @@ export class SettingsManager {
         this.numControl(this.settings.dragThreshold, t('set_unit_ms'), 50, 0, 2000, 'pd-set-drag', (v) => {
           this.settings.dragThreshold = v;
           saveSettings({ dragThreshold: v });
-        })
+        }),
+        t('set_tip_drag_threshold')
       )
     );
 
@@ -414,7 +450,8 @@ export class SettingsManager {
           this.settings.historyLimit = v;
           saveSettings({ historyLimit: v });
           this.history.setLimit(v);
-        })
+        }),
+        t('set_tip_history_limit')
       )
     );
 
@@ -426,7 +463,8 @@ export class SettingsManager {
         this.switchControl(this.settings.cardDefaultExpanded, 'pd-set-card-expand', (on) => {
           this.settings.cardDefaultExpanded = on;
           saveSettings({ cardDefaultExpanded: on });
-        })
+        }),
+        t('set_tip_card_expand')
       )
     );
 
@@ -438,7 +476,8 @@ export class SettingsManager {
         this.switchControl(this.settings.showModbar, 'pd-set-show-modbar', (on) => {
           this.settings.showModbar = on;
           saveSettings({ showModbar: on });
-        })
+        }),
+        t('set_tip_show_modbar')
       )
     );
 
@@ -451,7 +490,8 @@ export class SettingsManager {
           this.settings.hoverLabel = on;
           saveSettings({ hoverLabel: on });
           this.overlay.updateSettings(this.settings);
-        })
+        }),
+        t('set_tip_hover_label')
       )
     );
   }
@@ -468,7 +508,14 @@ export class SettingsManager {
       saveSettings({ shortcuts: { ...this.settings.shortcuts } });
       this.renderSection();
     });
-    root.appendChild(this.srow(t('set_shortcuts'), t('set_shortcuts_sub'), resetBtn));
+    root.appendChild(
+      this.srow(
+        t('set_shortcuts'),
+        t('set_shortcuts_sub'),
+        resetBtn,
+        t('set_tip_shortcuts')
+      )
+    );
 
     // 按分类分组渲染（顺序照 SHORTCUT_DEFS 出现顺序）
     let lastCat: ShortcutCategory | null = null;
@@ -482,14 +529,14 @@ export class SettingsManager {
       }
       root.appendChild(
         def.kind === 'modifier'
-          ? this.modifierRow(def.id, t(def.labelKey))
-          : this.shortcutRow(def.id, t(def.labelKey))
+          ? this.modifierRow(def.id, t(def.labelKey), t(def.descKey))
+          : this.shortcutRow(def.id, t(def.labelKey), t(def.descKey))
       );
     }
   }
 
   /** 单条组合键行：动作名 + 当前组合展示 + 录制按钮。 */
-  private shortcutRow(action: ShortcutId, label: string): HTMLElement {
+  private shortcutRow(action: ShortcutId, label: string, tip: string): HTMLElement {
     const ctl = document.createElement('div');
     ctl.className = 'pd-sc-ctl';
 
@@ -506,11 +553,11 @@ export class SettingsManager {
     recBtn.addEventListener('click', () => this.startRecording(action, recBtn));
     ctl.appendChild(recBtn);
 
-    return this.srow(label, null, ctl);
+    return this.srow(label, null, ctl, tip);
   }
 
   /** 单条修饰键行（如 Alt 自由移动）：分段选择器切换按住哪个修饰键。 */
-  private modifierRow(action: ShortcutId, label: string): HTMLElement {
+  private modifierRow(action: ShortcutId, label: string, tip: string): HTMLElement {
     const seg = this.segText(
       MODIFIER_TOKENS.map((token) => ({
         value: token,
@@ -523,7 +570,7 @@ export class SettingsManager {
         saveSettings({ shortcuts: { ...this.settings.shortcuts } });
       }
     );
-    return this.srow(label, null, seg);
+    return this.srow(label, null, seg, tip);
   }
 
   /** 进入录制：一次性 capture keydown 监听，捕获完整组合后校验护栏/冲突并保存。 */
@@ -614,7 +661,8 @@ export class SettingsManager {
             },
             onClose,
           })
-        )
+        ),
+        t('set_tip_export_language')
       )
     );
 
@@ -633,7 +681,8 @@ export class SettingsManager {
             this.settings.imageMethod = v as 'clipboard' | 'download';
             saveSettings({ imageMethod: this.settings.imageMethod });
           }
-        )
+        ),
+        t('set_tip_image_method')
       )
     );
 
@@ -645,7 +694,8 @@ export class SettingsManager {
         this.switchControl(this.settings.watermark, 'pd-set-watermark', (on) => {
           this.settings.watermark = on;
           saveSettings({ watermark: on });
-        })
+        }),
+        t('set_tip_watermark')
       )
     );
   }
@@ -657,7 +707,14 @@ export class SettingsManager {
     onboardBtn.setAttribute('data-testid', 'pd-set-onboarding');
     onboardBtn.textContent = t('set_onboarding_open');
     onboardBtn.addEventListener('click', () => this.onOpenOnboarding());
-    root.appendChild(this.srow(t('set_onboarding'), t('set_onboarding_sub'), onboardBtn));
+    root.appendChild(
+      this.srow(
+        t('set_onboarding'),
+        t('set_onboarding_sub'),
+        onboardBtn,
+        t('set_tip_onboarding')
+      )
+    );
 
     // 检查更新（V1 占位：toast 当前已是最新）
     const updateBtn = document.createElement('button');
@@ -665,7 +722,14 @@ export class SettingsManager {
     updateBtn.setAttribute('data-testid', 'pd-set-check-update');
     updateBtn.textContent = t('set_check_update_btn');
     updateBtn.addEventListener('click', () => this.toast.show(t('toast_update_latest'), 'ok'));
-    root.appendChild(this.srow(t('set_check_update'), t('set_check_update_sub'), updateBtn));
+    root.appendChild(
+      this.srow(
+        t('set_check_update'),
+        t('set_check_update_sub'),
+        updateBtn,
+        t('set_tip_check_update')
+      )
+    );
 
     // GitHub 主页
     const githubBtn = document.createElement('button');
@@ -675,7 +739,9 @@ export class SettingsManager {
     githubBtn.addEventListener('click', () =>
       window.open('https://github.com/Pigeon-Pub/PigeonDeck', '_blank', 'noopener')
     );
-    root.appendChild(this.srow(t('set_github'), t('set_github_sub'), githubBtn));
+    root.appendChild(
+      this.srow(t('set_github'), t('set_github_sub'), githubBtn, t('set_tip_github'))
+    );
 
     // 反馈与问题 → 跳 GitHub issues
     const feedbackBtn = document.createElement('button');
@@ -685,7 +751,9 @@ export class SettingsManager {
     feedbackBtn.addEventListener('click', () =>
       window.open('https://github.com/Pigeon-Pub/PigeonDeck/issues', '_blank', 'noopener')
     );
-    root.appendChild(this.srow(t('set_feedback'), null, feedbackBtn));
+    root.appendChild(
+      this.srow(t('set_feedback'), null, feedbackBtn, t('set_tip_feedback'))
+    );
 
     // 关于区
     const about = document.createElement('div');
@@ -709,9 +777,10 @@ export class SettingsManager {
 
   // ---- 控件工厂 ----
 
-  private srow(label: string, sub: string | null, control: HTMLElement): HTMLElement {
+  private srow(label: string, sub: string | null, control: HTMLElement, tip: string): HTMLElement {
     const row = document.createElement('div');
     row.className = 'pd-srow';
+    row.title = tip;
     const k = document.createElement('span');
     k.className = 'k';
     k.textContent = label;
@@ -792,7 +861,7 @@ export class SettingsManager {
   }
 
   private segText(
-    opts: Array<{ value: string; label: string; testid: string }>,
+    opts: Array<{ value: string; label: string; title?: string; testid: string }>,
     current: string,
     onSelect: (value: string) => void
   ): HTMLElement {
@@ -801,6 +870,7 @@ export class SettingsManager {
     for (const o of opts) {
       const btn = document.createElement('button');
       if (o.value === current) btn.classList.add('on');
+      if (o.title) btn.title = o.title;
       btn.setAttribute('data-testid', o.testid);
       btn.textContent = o.label;
       btn.addEventListener('click', () => {

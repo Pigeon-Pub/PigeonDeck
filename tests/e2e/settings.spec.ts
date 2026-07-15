@@ -145,6 +145,16 @@ async function storedShortcuts(): Promise<Record<string, string>> {
   });
 }
 
+async function storedDeletionLayout(): Promise<string> {
+  const workers = context.serviceWorkers();
+  if (workers.length === 0) return '';
+  return workers[0].evaluate(async () => {
+    const result = await chrome.storage.local.get('settings');
+    const settings = result['settings'] as { deletionLayout?: string } | undefined;
+    return settings?.deletionLayout ?? '';
+  });
+}
+
 /** 展开工具盘 + 打开设置面板 */
 async function openSettings(page: Page): Promise<void> {
   await clickShadowEl(page, 'pd-btn-settings');
@@ -247,6 +257,39 @@ test('⑤ 历史上限步进 → 数值更新且重开保留', async () => {
   await clickShadowEl(page, 'pd-set-nav-interaction');
   await waitShadowVisible(page, '[data-testid="pd-set-history"]');
   expect(await shadowNumValue(page, 'pd-set-history')).toBe('60');
+
+  await page.close();
+});
+
+test('删除布局默认保留位置，可切换并持久化', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await openSettings(page);
+  await clickShadowEl(page, 'pd-set-nav-interaction');
+  await waitShadowVisible(page, '[data-testid="pd-set-delete-preserve"]');
+
+  expect(await shadowSwitchOn(page, 'pd-set-delete-preserve')).toBe(true);
+  await clickShadowEl(page, 'pd-set-delete-reflow');
+  await expect.poll(() => storedDeletionLayout(), { timeout: 5000 }).toBe('reflow');
+
+  await page.close();
+});
+
+test('每个设置行都有悬浮解释', async () => {
+  const page = await openFixturePage();
+  await expandToolbar(page);
+  await openSettings(page);
+
+  for (const section of ['general', 'interaction', 'shortcuts', 'output', 'help']) {
+    await clickShadowEl(page, `pd-set-nav-${section}`);
+    const missing = await page.evaluate(() => {
+      const root = document.querySelector('#pd-host')?.shadowRoot;
+      return [...(root?.querySelectorAll('.pd-srow') ?? [])].filter(
+        (row) => !row.getAttribute('title')?.trim()
+      ).length;
+    });
+    expect(missing).toBe(0);
+  }
 
   await page.close();
 });
