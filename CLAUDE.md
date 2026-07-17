@@ -67,3 +67,24 @@ npx wrangler pages deploy site --project-name pigeondeck --branch main --commit-
 
 - 域名 `pigeon.pub` 的 DNS 已整域托管在 Cloudflare；`deck` 是指向 Pages 的橙云 CNAME。
 - 凭证只放本机 `.secrets/deploy-credentials.md`（已被 `.gitignore` 忽略）；**任何凭证与 `.secrets/` 都不得提交**。
+
+## 扩展发布（Edge Add-ons）
+
+发布受「发 GitHub Release」这道明确授权闸门控制：在 GitHub 发布 Release 时，`.github/workflows/edge-publish.yml` 自动构建并通过 Edge Publish API 推送新版本。日常 push / PR 不会触发发布。
+
+发布一版：
+1. 抬高 `public/manifest.json` 的 `version`（须大于商店线上版本）。
+2. 提交并在 GitHub 上 **Publish release**（tag 如 `v1.0.1`）。
+3. Actions 自动：`npm ci` → `npm run build` → 打包 `dist/` → 上传 → 轮询 → 发布；之后由微软审核（数小时~数天）。
+
+密钥存于 GitHub 仓库 Secrets：`EDGE_API_KEY` / `EDGE_CLIENT_ID` / `EDGE_PRODUCT_ID`（API Key 会过期，重建后需更新 Secret）。
+
+本地手动兜底（须自设同名环境变量作为显式授权）：
+
+```powershell
+$env:EDGE_API_KEY='<见 .secrets/>'; $env:EDGE_CLIENT_ID='<见 .secrets/>'; $env:EDGE_PRODUCT_ID='<见 .secrets/>'
+powershell -ExecutionPolicy Bypass -File scripts/edge-publish.ps1   # 可加 -SkipBuild / -Notes "说明"
+```
+
+- 脚本只打包 `dist/`（`manifest.json` 在 zip 根）；首次上架需在 Partner Center 手动完成，API 仅用于版本更新。
+- 有提交处于审核中时不能再发（会报错），需等审核结束。

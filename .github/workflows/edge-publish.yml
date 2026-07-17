@@ -1,0 +1,29 @@
+name: Publish to Edge Add-ons
+
+# 明确授权闸门：仅当在 GitHub 上「发布 Release」时触发。
+# 日常 push / PR 不会发布扩展。
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Publish to Edge Add-ons
+        shell: pwsh
+        env:
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+        run: ./scripts/edge-publish.ps1 -SkipBuild -Notes "Release ${{ github.event.release.tag_name }}"
